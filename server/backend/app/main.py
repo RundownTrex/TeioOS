@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI 
 
 from app.core.config import settings
+
+from app.api.router import apirouter
 
 app = FastAPI(
     title=settings.app_name,
@@ -8,8 +10,4 @@ app = FastAPI(
 )
 
 
-@app.get("/")
-def root():
-    return {
-        "message": "Welcome to TeioOS Exam Server"
-    }
+app.include_router(apirouter)

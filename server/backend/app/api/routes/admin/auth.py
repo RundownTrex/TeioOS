@@ -14,24 +14,21 @@ router = APIRouter()
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 
-@router.post("/login", response_model=APIResponse[Token])
+@router.post("/login", response_model=Token)
 def login_admin(
     form_data: OAuth2FormDep,
     auth_service: AuthServiceDep,
-) -> APIResponse[Token]:
+) -> Token:
     """
     Authenticate an administrator using username and password.
     Returns a stateless JWT login token.
+    Must return standard OAuth2 format so Swagger UI can parse it.
     """
     token = auth_service.authenticate_admin(
         username=form_data.username,
         password=form_data.password,
     )
-    return APIResponse(
-        success=True,
-        message="Login successful",
-        data=token
-    )
+    return token
 
 
 @router.get("/me", response_model=APIResponse[AdminProfile])

@@ -1,24 +1,21 @@
 from typing import Sequence
 from uuid import UUID
 from datetime import datetime
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
 from app.models.exam_schedule import ExamSchedule, ExamScheduleStatus
+from app.repositories.base_repository import BaseRepository
 
 
-class ExamScheduleRepository:
+class ExamScheduleRepository(BaseRepository[ExamSchedule]):
     """
     Data access layer for ExamSchedule entities.
     Executes raw SQL queries via SQLAlchemy 2.0.
     """
 
     def __init__(self, session: Session):
-        self.session = session
-
-    def get_by_id(self, schedule_id: UUID) -> ExamSchedule | None:
-        stmt = select(ExamSchedule).where(ExamSchedule.id == schedule_id)
-        return self.session.execute(stmt).scalars().first()
+        super().__init__(ExamSchedule, session)
 
     def get_all(self, skip: int = 0, limit: int = 20, exam_id: UUID | None = None) -> Sequence[ExamSchedule]:
         stmt = select(ExamSchedule).order_by(ExamSchedule.start_time.desc())
@@ -28,9 +25,10 @@ class ExamScheduleRepository:
         return self.session.execute(stmt).scalars().all()
 
     def get_count(self, exam_id: UUID | None = None) -> int:
-        stmt = select(func.count()).select_from(ExamSchedule)
-        if exam_id:
-            stmt = stmt.where(ExamSchedule.exam_id == exam_id)
+        if not exam_id:
+            return super().get_count()
+        from sqlalchemy import func
+        stmt = select(func.count()).select_from(ExamSchedule).where(ExamSchedule.exam_id == exam_id)
         return self.session.execute(stmt).scalar_one()
 
     def get_overlapping_schedules(
@@ -58,10 +56,3 @@ class ExamScheduleRepository:
             stmt = stmt.where(ExamSchedule.id != exclude_schedule_id)
             
         return self.session.execute(stmt).scalars().all()
-
-    def create(self, schedule: ExamSchedule) -> ExamSchedule:
-        self.session.add(schedule)
-        return schedule
-
-    def delete(self, schedule: ExamSchedule) -> None:
-        self.session.delete(schedule)

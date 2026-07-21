@@ -14,6 +14,7 @@ from app.api.routes.admin.questions import router as admin_questions_router
 from app.api.routes.admin.options import router as admin_options_router
 from app.api.routes.admin.results import router as admin_results_router
 from app.api.routes.admin.dashboard import router as admin_dashboard_router
+from app.api.routes.admin.subjects import router as admin_subjects_router
 from app.api.routes.student.auth import router as student_auth_router
 
 
@@ -23,6 +24,7 @@ apirouter.include_router(root_router)
 apirouter.include_router(health_router)
 apirouter.include_router(admin_auth_router, prefix="/admin/auth", tags=["Admin Auth"])
 apirouter.include_router(admin_departments_router, prefix="/admin/departments", tags=["Admin Departments"])
+apirouter.include_router(admin_subjects_router, prefix="/admin/subjects", tags=["Admin Subjects"])
 apirouter.include_router(admin_classes_router, prefix="/admin/classes", tags=["Admin Classes"])
 apirouter.include_router(admin_students_router, prefix="/admin/students", tags=["Admin Students"])
 apirouter.include_router(admin_users_router, prefix="/admin/users", tags=["Admin Users"])

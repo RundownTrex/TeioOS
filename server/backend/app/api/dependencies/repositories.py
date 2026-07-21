@@ -15,6 +15,7 @@ from app.repositories.option_repository import OptionRepository
 from app.repositories.student_exam_repository import StudentExamRepository
 from app.repositories.result_repository import ResultRepository
 from app.repositories.dashboard_repository import DashboardRepository
+from app.repositories.subject_repository import SubjectRepository
 
 
 def get_user_repository(db: SessionDep) -> UserRepository:
@@ -65,6 +66,10 @@ def get_dashboard_repository(db: SessionDep) -> DashboardRepository:
     return DashboardRepository(db)
 
 
+def get_subject_repository(db: SessionDep) -> SubjectRepository:
+    return SubjectRepository(db)
+
+
 # Aliases for clean injection in other layers
 UserRepoDep = Annotated[UserRepository, Depends(get_user_repository)]
 StudentRepoDep = Annotated[StudentRepository, Depends(get_student_repository)]
@@ -78,3 +83,4 @@ OptionRepoDep = Annotated[OptionRepository, Depends(get_option_repository)]
 StudentExamRepoDep = Annotated[StudentExamRepository, Depends(get_student_exam_repository)]
 ResultRepoDep = Annotated[ResultRepository, Depends(get_result_repository)]
 DashboardRepoDep = Annotated[DashboardRepository, Depends(get_dashboard_repository)]
+SubjectRepoDep = Annotated[SubjectRepository, Depends(get_subject_repository)]

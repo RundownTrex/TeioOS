@@ -1,8 +1,8 @@
-"""initial_schema
+"""initial_schema_with_subject
 
-Revision ID: 3f7a1d2d7ba7
+Revision ID: 7add1ee22e86
 Revises: 
-Create Date: 2026-07-20 18:20:01.001712
+Create Date: 2026-07-21 18:55:50.352102
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3f7a1d2d7ba7'
+revision: str = '7add1ee22e86'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -55,20 +55,51 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_classes_department_id'), 'classes', ['department_id'], unique=False)
     op.create_index(op.f('ix_classes_name'), 'classes', ['name'], unique=False)
+    op.create_table('subjects',
+    sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('subject_code', sa.String(length=50), nullable=False),
+    sa.Column('department_id', sa.Uuid(), nullable=False),
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['department_id'], ['departments.id'], name=op.f('fk_subjects_department_id_departments'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_subjects')),
+    sa.UniqueConstraint('department_id', 'name', name='uq_subject_department_name'),
+    sa.UniqueConstraint('department_id', 'subject_code', name='uq_subject_department_code')
+    )
+    op.create_index(op.f('ix_subjects_department_id'), 'subjects', ['department_id'], unique=False)
+    op.create_index(op.f('ix_subjects_name'), 'subjects', ['name'], unique=False)
+    op.create_index(op.f('ix_subjects_subject_code'), 'subjects', ['subject_code'], unique=False)
     op.create_table('exams',
     sa.Column('title', sa.String(length=255), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('duration_minutes', sa.Integer(), nullable=False),
     sa.Column('total_marks', sa.Integer(), nullable=False),
     sa.Column('created_by', sa.Uuid(), nullable=False),
+    sa.Column('subject_id', sa.Uuid(), nullable=False),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['created_by'], ['users.id'], name=op.f('fk_exams_created_by_users'), ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['subject_id'], ['subjects.id'], name=op.f('fk_exams_subject_id_subjects'), ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_exams'))
     )
     op.create_index(op.f('ix_exams_created_by'), 'exams', ['created_by'], unique=False)
+    op.create_index(op.f('ix_exams_subject_id'), 'exams', ['subject_id'], unique=False)
     op.create_index(op.f('ix_exams_title'), 'exams', ['title'], unique=False)
+    op.create_table('students',
+    sa.Column('roll_number', sa.String(length=100), nullable=False),
+    sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('date_of_birth', sa.Date(), nullable=False),
+    sa.Column('class_id', sa.Uuid(), nullable=False),
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['class_id'], ['classes.id'], name=op.f('fk_students_class_id_classes'), ondelete='RESTRICT'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_students'))
+    )
+    op.create_index(op.f('ix_students_class_id'), 'students', ['class_id'], unique=False)
+    op.create_index(op.f('ix_students_roll_number'), 'students', ['roll_number'], unique=True)
     op.create_table('exam_schedules',
     sa.Column('start_time', sa.DateTime(timezone=True), nullable=False),
     sa.Column('end_time', sa.DateTime(timezone=True), nullable=False),
@@ -94,19 +125,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_questions'))
     )
     op.create_index(op.f('ix_questions_exam_id'), 'questions', ['exam_id'], unique=False)
-    op.create_table('students',
-    sa.Column('roll_number', sa.String(length=100), nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=False),
-    sa.Column('date_of_birth', sa.Date(), nullable=False),
-    sa.Column('class_id', sa.Uuid(), nullable=False),
-    sa.Column('id', sa.Uuid(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['class_id'], ['classes.id'], name=op.f('fk_students_class_id_classes'), ondelete='RESTRICT'),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_students'))
-    )
-    op.create_index(op.f('ix_students_class_id'), 'students', ['class_id'], unique=False)
-    op.create_index(op.f('ix_students_roll_number'), 'students', ['roll_number'], unique=True)
     op.create_table('exam_sessions',
     sa.Column('login_time', sa.DateTime(timezone=True), nullable=True),
     sa.Column('start_time', sa.DateTime(timezone=True), nullable=True),
@@ -202,16 +220,21 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_exam_sessions_student_id'), table_name='exam_sessions')
     op.drop_index(op.f('ix_exam_sessions_exam_schedule_id'), table_name='exam_sessions')
     op.drop_table('exam_sessions')
-    op.drop_index(op.f('ix_students_roll_number'), table_name='students')
-    op.drop_index(op.f('ix_students_class_id'), table_name='students')
-    op.drop_table('students')
     op.drop_index(op.f('ix_questions_exam_id'), table_name='questions')
     op.drop_table('questions')
     op.drop_index(op.f('ix_exam_schedules_exam_id'), table_name='exam_schedules')
     op.drop_table('exam_schedules')
+    op.drop_index(op.f('ix_students_roll_number'), table_name='students')
+    op.drop_index(op.f('ix_students_class_id'), table_name='students')
+    op.drop_table('students')
     op.drop_index(op.f('ix_exams_title'), table_name='exams')
+    op.drop_index(op.f('ix_exams_subject_id'), table_name='exams')
     op.drop_index(op.f('ix_exams_created_by'), table_name='exams')
     op.drop_table('exams')
+    op.drop_index(op.f('ix_subjects_subject_code'), table_name='subjects')
+    op.drop_index(op.f('ix_subjects_name'), table_name='subjects')
+    op.drop_index(op.f('ix_subjects_department_id'), table_name='subjects')
+    op.drop_table('subjects')
     op.drop_index(op.f('ix_classes_name'), table_name='classes')
     op.drop_index(op.f('ix_classes_department_id'), table_name='classes')
     op.drop_table('classes')

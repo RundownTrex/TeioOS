@@ -10,9 +10,12 @@ from app.api.dependencies.repositories import (
     SessionRepoDep,
     DepartmentRepoDep,
     ClassRepoDep,
+    QuestionRepoDep,
+    OptionRepoDep,
     StudentExamRepoDep,
     ResultRepoDep,
     DashboardRepoDep,
+    SubjectRepoDep,
 )
 from app.services.auth_service import AuthService
 from app.services.student_auth_service import StudentAuthService
@@ -26,6 +29,7 @@ from app.services.student_exam_service import StudentExamService
 from app.services.result_service import ResultService
 from app.services.dashboard_service import DashboardService
 from app.services.department_service import DepartmentService
+from app.services.subject_service import SubjectService
 from app.services.class_service import ClassService
 
 
@@ -50,8 +54,8 @@ def get_student_service(db: SessionDep, student_repo: StudentRepoDep, class_repo
     return StudentService(db, student_repo, class_repo)
 
 
-def get_exam_service(db: SessionDep, exam_repo: ExamRepoDep, user_repo: UserRepoDep) -> ExamService:
-    return ExamService(db, exam_repo, user_repo)
+def get_exam_service(db: SessionDep, exam_repo: ExamRepoDep, user_repo: UserRepoDep, subject_repo: SubjectRepoDep) -> ExamService:
+    return ExamService(db, exam_repo, user_repo, subject_repo)
 
 
 def get_exam_schedule_service(db: SessionDep, schedule_repo: ExamScheduleRepoDep, exam_repo: ExamRepoDep) -> ExamScheduleService:
@@ -68,6 +72,10 @@ def get_option_service(db: SessionDep, option_repo: OptionRepoDep, question_repo
 
 def get_department_service(db: SessionDep, department_repo: DepartmentRepoDep) -> DepartmentService:
     return DepartmentService(db, department_repo)
+
+
+def get_subject_service(db: SessionDep, subject_repo: SubjectRepoDep, department_repo: DepartmentRepoDep) -> SubjectService:
+    return SubjectService(db, subject_repo, department_repo)
 
 
 def get_class_service(db: SessionDep, class_repo: ClassRepoDep, department_repo: DepartmentRepoDep) -> ClassService:
@@ -101,6 +109,7 @@ ExamScheduleServiceDep = Annotated[ExamScheduleService, Depends(get_exam_schedul
 QuestionServiceDep = Annotated[QuestionService, Depends(get_question_service)]
 OptionServiceDep = Annotated[OptionService, Depends(get_option_service)]
 DepartmentServiceDep = Annotated[DepartmentService, Depends(get_department_service)]
+SubjectServiceDep = Annotated[SubjectService, Depends(get_subject_service)]
 ClassServiceDep = Annotated[ClassService, Depends(get_class_service)]
 StudentExamServiceDep = Annotated[StudentExamService, Depends(get_student_exam_service)]
 ResultServiceDep = Annotated[ResultService, Depends(get_result_service)]

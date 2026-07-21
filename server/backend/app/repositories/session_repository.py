@@ -5,12 +5,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.exam_session import ExamSession, SessionStatus
-from app.repositories.base import BaseRepository
+from app.repositories.base_repository import BaseRepository
 
-
-class SessionRepository(BaseRepository[ExamSession, Any, Any]):
-    def __init__(self, db: Session):
-        super().__init__(ExamSession, db)
+class SessionRepository(BaseRepository[ExamSession]):
+    def __init__(self, session: Session):
+        super().__init__(ExamSession, session)
 
     def get_or_create_session(self, student_id: uuid.UUID, schedule_id: uuid.UUID) -> ExamSession:
         """
@@ -24,7 +23,7 @@ class SessionRepository(BaseRepository[ExamSession, Any, Any]):
             ExamSession.exam_schedule_id == schedule_id,
         )
 
-        session = self.db.scalars(stmt).first()
+        session = self.session.scalars(stmt).first()
         now = datetime.now(timezone.utc)
 
         if not session:
@@ -37,8 +36,8 @@ class SessionRepository(BaseRepository[ExamSession, Any, Any]):
                 start_time=now,  # They start immediately upon login in kiosk mode
                 is_auto_submitted=False,
             )
-            self.db.add(session)
-            self.db.flush()
+            self.session.add(session)
+            self.session.flush()
         else:
             # They are reconnecting, just update login_time
             session.login_time = now
@@ -46,7 +45,7 @@ class SessionRepository(BaseRepository[ExamSession, Any, Any]):
                 session.status = SessionStatus.IN_PROGRESS
                 if not session.start_time:
                     session.start_time = now
-            self.db.add(session)
-            self.db.flush()
+            self.session.add(session)
+            self.session.flush()
 
         return session

@@ -5,6 +5,7 @@ from app.db.base import BaseModel
 
 if TYPE_CHECKING:
     from app.models.class_ import Class
+    from app.models.subject import Subject
 
 
 class Department(BaseModel):
@@ -17,6 +18,13 @@ class Department(BaseModel):
     # deletion instead of loading all children into memory to SET NULL / DELETE.
     classes: Mapped[List["Class"]] = relationship(
         "Class",
+        back_populates="department",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    subjects: Mapped[List["Subject"]] = relationship(
+        "Subject",
         back_populates="department",
         cascade="all, delete-orphan",
         passive_deletes=True,

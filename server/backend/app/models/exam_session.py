@@ -14,9 +14,10 @@ if TYPE_CHECKING:
 
 
 class SessionStatus(str, enum.Enum):
-    PENDING = "pending"
+    READY = "ready"
     IN_PROGRESS = "in_progress"
     SUBMITTED = "submitted"
+    AUTO_SUBMITTED = "auto_submitted"
     EXPIRED = "expired"
     TERMINATED = "terminated"
 
@@ -28,7 +29,7 @@ class ExamSession(BaseModel):
     start_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     submit_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[SessionStatus] = mapped_column(
-        SAEnum(SessionStatus), default=SessionStatus.PENDING, nullable=False
+        SAEnum(SessionStatus), default=SessionStatus.READY, nullable=False
     )
 
     machine_id: Mapped[str | None] = mapped_column(String(255), nullable=True)

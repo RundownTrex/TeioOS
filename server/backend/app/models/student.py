@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 from typing import List, TYPE_CHECKING
-from sqlalchemy import String, ForeignKey, Date
+from sqlalchemy import String, ForeignKey, Date, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import BaseModel
 
@@ -15,8 +15,10 @@ class Student(BaseModel):
     __tablename__ = "students"
 
     roll_number: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     # Foreign Key
     class_id: Mapped[uuid.UUID] = mapped_column(

@@ -2,9 +2,11 @@ from typing import Sequence
 from uuid import UUID
 from datetime import datetime
 from sqlalchemy import select, and_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.exam_schedule import ExamSchedule, ExamScheduleStatus
+from app.models.exam import Exam
+from app.models.subject import Subject
 from app.repositories.base_repository import BaseRepository
 
 
@@ -16,6 +18,15 @@ class ExamScheduleRepository(BaseRepository[ExamSchedule]):
 
     def __init__(self, session: Session):
         super().__init__(ExamSchedule, session)
+
+    def get_by_id_with_details(self, id: UUID) -> ExamSchedule | None:
+        stmt = select(ExamSchedule).where(ExamSchedule.id == id).options(
+            joinedload(ExamSchedule.exam)
+            .joinedload(Exam.subject)
+            .joinedload(Subject.department),
+            joinedload(ExamSchedule.assigned_students)
+        )
+        return self.session.execute(stmt).scalars().first()
 
     def get_all(self, skip: int = 0, limit: int = 20, exam_id: UUID | None = None) -> Sequence[ExamSchedule]:
         stmt = select(ExamSchedule).order_by(ExamSchedule.start_time.desc())
@@ -55,4 +66,18 @@ class ExamScheduleRepository(BaseRepository[ExamSchedule]):
         if exclude_schedule_id:
             stmt = stmt.where(ExamSchedule.id != exclude_schedule_id)
             
+        return self.session.execute(stmt).scalars().all()
+
+    def get_active_schedules_for_student_list(self, student_id: UUID) -> Sequence[ExamSchedule]:
+        """Returns all ACTIVE or SCHEDULED exams assigned to a student."""
+        stmt = select(ExamSchedule).where(
+            and_(
+                ExamSchedule.status.in_([ExamScheduleStatus.ACTIVE, ExamScheduleStatus.SCHEDULED]),
+                ExamSchedule.assigned_students.any(id=student_id)
+            )
+        ).options(
+            joinedload(ExamSchedule.exam)
+            .joinedload(Exam.subject)
+            .joinedload(Subject.department)
+        )
         return self.session.execute(stmt).scalars().all()

@@ -18,13 +18,13 @@ def login_student(
 ) -> APIResponse[Token]:
     """
     Authenticate a student using Roll Number (username) and DOB (password).
-    This is an all-in-one kiosk endpoint: it verifies credentials, finds
-    the active exam schedule, creates the session, and returns the Elevated
-    Exam Token.
+    This endpoint verifies credentials and returns a Base Student JWT.
+    It does not grant access to exam questions. The student must explicitly
+    start an exam to receive an Elevated Exam Token.
     """
     token = auth_service.authenticate_student(
         roll_number=form_data.username,
-        raw_dob=form_data.password,
+        password=form_data.password,
     )
     return APIResponse(
         success=True,

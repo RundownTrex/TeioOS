@@ -15,16 +15,17 @@ from app.core.exceptions import AuthenticationException, AuthorizationException
 # Explicitly named extractor to avoid OAuth2 Server confusion
 # We use this merely to extract the Bearer token from the Authorization header.
 # tokenUrl is required by OpenAPI, we can point it to a primary login route.
-jwt_token_extractor = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/admin/auth/login"
-)
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+security = HTTPBearer()
 
 
-def get_token_payload(token: str = Depends(jwt_token_extractor)) -> TokenPayload:
+def get_token_payload(credentials: HTTPAuthorizationCredentials = Depends(security)) -> TokenPayload:
     """
-    Decodes the JWT, validates its signature and expiration statelessly,
+    Decodes the JWT from Bearer authorization header, validates its signature and expiration statelessly,
     and returns the structured TokenPayload.
     """
+    token = credentials.credentials
     try:
         payload = jwt.decode(
             token, settings.secret_key, algorithms=[settings.algorithm]

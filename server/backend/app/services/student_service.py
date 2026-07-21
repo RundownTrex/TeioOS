@@ -52,7 +52,7 @@ class StudentService:
             name=data.name,
             date_of_birth=data.date_of_birth,
             class_id=data.class_id,
-            password_hash=get_password_hash(data.password),
+            password_hash=get_password_hash(str(data.date_of_birth)),
             is_active=True
         )
         try:
@@ -81,12 +81,11 @@ class StudentService:
             student.name = data.name
         if data.date_of_birth:
             student.date_of_birth = data.date_of_birth
+            student.password_hash = get_password_hash(str(data.date_of_birth))
         if data.class_id:
             student.class_id = data.class_id
         if data.is_active is not None:
             student.is_active = data.is_active
-        if data.password:
-            student.password_hash = get_password_hash(data.password)
 
         try:
             self.db.commit()

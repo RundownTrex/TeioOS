@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     database_user: str = "teioos_user"
     database_password: str = ""
 
+    # Security
+    secret_key: str = "default_unsafe_secret_key_change_in_production"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 1440  # 1 day default
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

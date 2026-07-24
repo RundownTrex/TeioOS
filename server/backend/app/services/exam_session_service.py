@@ -140,7 +140,7 @@ class ExamSessionService:
             ).where(
                 ExamSession.student_id == student_id,
                 ExamSession.exam_schedule_id == schedule_id
-            ).with_for_update()
+            ).with_for_update(of=ExamSession)
             
             session = self.db.scalars(stmt).first()
             if not session:

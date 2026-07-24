@@ -1,10 +1,12 @@
+from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
-from app.api.dependencies.services import ResultServiceDep
+from app.api.dependencies.services import ResultServiceDep, EvaluationServiceDep
 from app.schemas.result import ResultResponse
+from app.schemas.evaluation import StudentAnswerEvaluationResponse
 from app.schemas.pagination import PaginatedData
 from app.schemas.response import APIResponse
 
@@ -51,3 +53,34 @@ def get_result(
         message="Result retrieved successfully",
         data=result,
     )
+
+
+@router.get("/{exam_session_id}/answers", response_model=APIResponse[List[StudentAnswerEvaluationResponse]])
+def get_session_answers(
+    exam_session_id: UUID,
+    evaluation_service: EvaluationServiceDep,
+    _=Depends(require_admin),
+):
+    """Retrieve all student answers (MCQ and Descriptive) for an exam session."""
+    answers = evaluation_service.get_answers_for_session(exam_session_id)
+    return APIResponse(
+        success=True,
+        message="Session student answers retrieved successfully",
+        data=answers,
+    )
+
+
+@router.post("/{exam_session_id}/publish", response_model=APIResponse[ResultResponse])
+def publish_result(
+    exam_session_id: UUID,
+    result_service: ResultServiceDep,
+    _=Depends(require_admin),
+):
+    """Publish the final result for an exam session after all descriptive answers are evaluated."""
+    result = result_service.publish_result(exam_session_id)
+    return APIResponse(
+        success=True,
+        message="Result published successfully",
+        data=result,
+    )
+

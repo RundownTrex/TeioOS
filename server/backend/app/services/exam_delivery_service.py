@@ -3,12 +3,14 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 
+from app.models.question import QuestionType
 from app.models.exam_session import SessionStatus
 
 from app.repositories.session_repository import SessionRepository
 from app.repositories.exam_schedule_repository import ExamScheduleRepository
 from app.repositories.question_repository import QuestionRepository
 from app.repositories.student_answer_repository import StudentAnswerRepository
+from app.services.student_answer_service import StudentAnswerService
 from app.schemas.student_exam_delivery import ExamQuestionsPayload, QuestionDisplay, OptionDisplay
 from app.core.exceptions import BusinessRuleException, AuthorizationException
 
@@ -21,12 +23,14 @@ class ExamDeliveryService:
         schedule_repo: ExamScheduleRepository,
         question_repo: QuestionRepository,
         answer_repo: StudentAnswerRepository,
+        answer_service: StudentAnswerService | None = None,
     ):
         self.db = db
         self.session_repo = session_repo
         self.schedule_repo = schedule_repo
         self.question_repo = question_repo
         self.answer_repo = answer_repo
+        self.answer_service = answer_service or StudentAnswerService(db, question_repo, answer_repo)
 
     def _validate_session_active(self, session_id: uuid.UUID, schedule_id: uuid.UUID):
         session = self.session_repo.get_by_id(session_id)
@@ -49,42 +53,44 @@ class ExamDeliveryService:
         session, schedule = self._validate_session_active(session_id, schedule_id)
         
         # 1. Fetch questions with options
-        # We need all questions for the exam_id
         questions = self.question_repo.get_all(exam_id=schedule.exam_id, limit=1000)
 
         # 2. Fetch previously saved answers
         saved_answers = self.answer_repo.get_all_by_session(session_id)
-        saved_answers_map = {ans.question_id: ans.selected_option_id for ans in saved_answers}
+        saved_answers_option_map = {ans.question_id: ans.selected_option_id for ans in saved_answers}
+        saved_answers_text_map = {ans.question_id: ans.answer_text for ans in saved_answers}
 
-        # 3. Sanitize output (stripping correct options, metadata)
+        # 3. Sanitize output
         display_questions = []
         for q in questions:
-            options_display = [
-                OptionDisplay(
-                    id=opt.id,
-                    option_text=opt.option_text,
-                    display_order=opt.display_order
-                ) for opt in q.options
-            ]
-            
-            # SORTING: Options currently follow display_order. 
-            # In the future, this can be replaced with a seeded randomizer using session_id.
-            options_display.sort(key=lambda opt: opt.display_order)
+            if q.question_type == QuestionType.MCQ:
+                options_display = [
+                    OptionDisplay(
+                        id=opt.id,
+                        option_text=opt.option_text,
+                        display_order=opt.display_order
+                    ) for opt in q.options
+                ]
+                options_display.sort(key=lambda opt: opt.display_order)
+            else:
+                options_display = []
+
 
             display_questions.append(
                 QuestionDisplay(
                     id=q.id,
                     question_text=q.question_text,
+                    question_type=q.question_type,
                     marks=q.marks,
                     negative_marks=q.negative_marks,
                     display_order=q.display_order,
+                    max_characters=q.max_characters,
                     options=options_display,
-                    saved_answer_option_id=saved_answers_map.get(q.id)
+                    saved_answer_option_id=saved_answers_option_map.get(q.id),
+                    saved_answer_text=saved_answers_text_map.get(q.id)
                 )
             )
 
-        # SORTING: Questions currently follow display_order.
-        # In the future, this can be replaced with a seeded randomizer using session_id.
         display_questions.sort(key=lambda q: q.display_order)
 
         return ExamQuestionsPayload(
@@ -92,7 +98,14 @@ class ExamDeliveryService:
             server_current_time=datetime.now(timezone.utc)
         )
 
-    def save_answer(self, session_id: uuid.UUID, schedule_id: uuid.UUID, question_id: uuid.UUID, option_id: uuid.UUID) -> None:
+    def save_answer(
+        self,
+        session_id: uuid.UUID,
+        schedule_id: uuid.UUID,
+        question_id: uuid.UUID,
+        selected_option_id: uuid.UUID | None = None,
+        answer_text: str | None = None,
+    ) -> None:
         session, schedule = self._validate_session_active(session_id, schedule_id)
 
         # Validate question belongs to the exam
@@ -100,12 +113,11 @@ class ExamDeliveryService:
         if not question or question.exam_id != schedule.exam_id:
             raise BusinessRuleException("Invalid question for this exam")
 
-        # Validate option belongs to the question
-        valid_option = any(opt.id == option_id for opt in question.options)
-        if not valid_option:
-            raise BusinessRuleException("Invalid option for this question")
+        # Delegate answer validation and upsert to StudentAnswerService
+        self.answer_service.save_student_answer(
+            session_id=session_id,
+            question_id=question_id,
+            selected_option_id=selected_option_id,
+            answer_text=answer_text,
+        )
 
-        # True PostgreSQL UPSERT
-        self.answer_repo.upsert_answer(session_id, question_id, option_id)
-
-        self.db.commit()

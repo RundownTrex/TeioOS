@@ -6,6 +6,7 @@ from app.db.base import BaseModel
 
 if TYPE_CHECKING:
     from app.models.exam import Exam
+    from app.models.student_answer import StudentAnswer
 
 class UserRole(str, enum.Enum):
     ADMIN = "admin"
@@ -25,3 +26,10 @@ class User(BaseModel):
         "Exam", 
         back_populates="creator"
     )
+
+    evaluated_answers: Mapped[List["StudentAnswer"]] = relationship(
+        "StudentAnswer",
+        back_populates="evaluator",
+        foreign_keys="[StudentAnswer.evaluated_by]",
+    )
+

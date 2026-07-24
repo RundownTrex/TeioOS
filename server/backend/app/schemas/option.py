@@ -8,7 +8,8 @@ class OptionBase(BaseModel):
     is_correct: bool = Field(False, description="Whether this option is the correct answer")
 
 class OptionCreate(OptionBase):
-    question_id: UUID = Field(..., description="ID of the question this option belongs to")
+    question_id: UUID | None = Field(None, description="ID of the question this option belongs to")
+
 
 class OptionUpdate(BaseModel):
     option_text: str | None = None

@@ -23,17 +23,24 @@ class StudentAnswerRepository(BaseRepository[StudentAnswer]):
         stmt = select(StudentAnswer).where(StudentAnswer.exam_session_id == session_id)
         return self.session.scalars(stmt).all()
 
-    def upsert_answer(self, session_id: uuid.UUID, question_id: uuid.UUID, option_id: uuid.UUID) -> None:
+    def upsert_answer(
+        self,
+        session_id: uuid.UUID,
+        question_id: uuid.UUID,
+        option_id: uuid.UUID | None = None,
+        answer_text: str | None = None,
+    ) -> None:
         """
         True PostgreSQL UPSERT.
         Insert the new answer. On constraint violation (uq_session_question_answer),
-        update the selected_option_id and answered_at fields so the last answer wins.
+        update selected_option_id, answer_text, and answered_at fields so the last answer wins.
         """
         stmt = insert(StudentAnswer).values(
             id=uuid.uuid4(),
             exam_session_id=session_id,
             question_id=question_id,
             selected_option_id=option_id,
+            answer_text=answer_text,
             answered_at=datetime.now(timezone.utc),
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -44,9 +51,11 @@ class StudentAnswerRepository(BaseRepository[StudentAnswer]):
             constraint="uq_session_question_answer",
             set_=dict(
                 selected_option_id=stmt.excluded.selected_option_id,
+                answer_text=stmt.excluded.answer_text,
                 answered_at=stmt.excluded.answered_at,
                 updated_at=datetime.now(timezone.utc)
             )
         )
         
         self.session.execute(stmt)
+

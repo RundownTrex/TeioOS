@@ -84,5 +84,18 @@ class ResultRepository:
             
         return self.session.execute(stmt).scalar_one()
 
-    # Create/Update/Delete are intentionally omitted from this API layer
-    # as Results are managed internally by the exam submission lifecycle.
+    def get_by_session_id(self, session_id: UUID) -> Result | None:
+        stmt = (
+            select(Result)
+            .options(
+                joinedload(Result.exam_session).joinedload(ExamSession.student),
+                joinedload(Result.exam_session).joinedload(ExamSession.exam_schedule).joinedload(ExamSchedule.exam)
+            )
+            .where(Result.exam_session_id == session_id)
+        )
+        return self.session.execute(stmt).scalars().first()
+
+    def update(self, result: Result) -> Result:
+        self.session.add(result)
+        return result
+

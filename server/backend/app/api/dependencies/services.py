@@ -35,6 +35,7 @@ from app.services.class_service import ClassService
 from app.services.exam_session_service import ExamSessionService
 from app.services.exam_delivery_service import ExamDeliveryService
 from app.services.result_calculation_service import ResultCalculationService
+from app.services.evaluation_service import EvaluationService
 
 
 def get_auth_service(db: SessionDep, user_repo: UserRepoDep) -> AuthService:
@@ -129,6 +130,16 @@ def get_exam_delivery_service(
     return ExamDeliveryService(db, session_repo, schedule_repo, question_repo, answer_repo)
 
 
+def get_evaluation_service(
+    db: SessionDep,
+    answer_repo: StudentAnswerRepoDep,
+    question_repo: QuestionRepoDep,
+    user_repo: UserRepoDep,
+    result_calc_service: Annotated[ResultCalculationService, Depends(get_result_calculation_service)],
+) -> EvaluationService:
+    return EvaluationService(db, answer_repo, question_repo, user_repo, result_calc_service)
+
+
 # Aliases for clean injection in routes
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 StudentAuthServiceDep = Annotated[StudentAuthService, Depends(get_student_auth_service)]
@@ -146,3 +157,5 @@ ResultServiceDep = Annotated[ResultService, Depends(get_result_service)]
 DashboardServiceDep = Annotated[DashboardService, Depends(get_dashboard_service)]
 ExamSessionServiceDep = Annotated[ExamSessionService, Depends(get_exam_session_service)]
 ExamDeliveryServiceDep = Annotated[ExamDeliveryService, Depends(get_exam_delivery_service)]
+EvaluationServiceDep = Annotated[EvaluationService, Depends(get_evaluation_service)]
+

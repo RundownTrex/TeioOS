@@ -1,7 +1,7 @@
 import uuid
 from typing import List, TYPE_CHECKING
 from sqlalchemy import Text, Integer, Boolean, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from app.db.base import BaseModel
 
 if TYPE_CHECKING:
@@ -36,3 +36,12 @@ class Option(BaseModel):
         back_populates="selected_option",
         passive_deletes=True,
     )
+
+    @validates("question")
+    def validate_question(self, key: str, question: "Question | None") -> "Question | None":
+        if question is not None:
+            from app.models.question import QuestionType
+            if question.question_type == QuestionType.DESCRIPTIVE:
+                raise ValueError("Descriptive questions cannot have options.")
+        return question
+

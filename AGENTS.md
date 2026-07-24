@@ -16,7 +16,7 @@ The objective is to create an integrated examination platform consisting of:
 - A secure examination server
 - A React-based administrator dashboard
 - A React-based student examination client
-- Automated deployment using Ansible
+- Automated deployment using Docker and Ansible
 
 The project is a proof-of-concept intended for educational institutions such as colleges, universities, coaching centers, and schools.
 
@@ -26,7 +26,7 @@ The project is a proof-of-concept intended for educational institutions such as 
 
 Unlike existing solutions that primarily focus on security, TeioOS places equal emphasis on accessibility.
 
-The research investigates how an examination operating system can provide a secure examination environment while remaining usable for students with accessibility needs.
+The research investigates how accessibility can be integrated into a secure Linux-based examination operating system while maintaining examination security, usability, and fairness.
 
 Accessibility features may include:
 
@@ -36,6 +36,9 @@ Accessibility features may include:
 - Adjustable font sizes
 - Text-to-speech
 - Focus indicators
+- Orca screen reader compatibility
+- Text-to-Speech (TTS)
+- Speech-to-Text (STT)
 - Accessible forms
 - ARIA-compliant React interfaces
 - Reduced motion support
@@ -354,7 +357,8 @@ Document public APIs and reusable modules.
 
 Current implementation targets:
 
-- MCQ-based examinations only
+- MCQ-based examinations
+- Descriptive examinations
 - Single examination server
 - PostgreSQL database
 - Local network deployment
@@ -366,7 +370,6 @@ Current implementation targets:
 The following are considered future enhancements:
 
 - Question bank
-- Subjective examinations
 - Remote online proctoring
 - AI-assisted invigilation
 - Multi-server deployments

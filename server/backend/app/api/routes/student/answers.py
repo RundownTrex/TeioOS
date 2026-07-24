@@ -25,6 +25,7 @@ def save_answer(
         session_id=UUID(token_payload.exam_session_id),
         schedule_id=UUID(token_payload.exam_schedule_id),
         question_id=submission.question_id,
-        option_id=submission.selected_option_id
+        selected_option_id=submission.selected_option_id,
+        answer_text=submission.answer_text,
     )
     return APIResponse(success=True, message="Answer saved successfully")

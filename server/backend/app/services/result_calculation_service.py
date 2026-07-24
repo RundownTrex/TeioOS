@@ -1,12 +1,13 @@
 import uuid
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.result import Result
+from app.models.question import QuestionType
+from app.models.result import Result, EvaluationStatus
 from app.repositories.session_repository import SessionRepository
 from app.repositories.question_repository import QuestionRepository
 from app.repositories.student_answer_repository import StudentAnswerRepository
 from app.core.exceptions import BusinessRuleException
-from sqlalchemy import select
 
 
 class ResultCalculationService:
@@ -24,7 +25,9 @@ class ResultCalculationService:
 
     def calculate_for_session(self, session_id: uuid.UUID) -> Result:
         """
-        Calculates the result for an exam session and adds it to the DB session.
+        Calculates the result for an exam session and adds/updates it in the DB session.
+        Evaluates MCQ questions automatically and incorporates evaluated descriptive answers.
+        Updates evaluation_status (COMPLETED, PENDING, or PARTIALLY_EVALUATED).
         Does NOT commit the transaction. The caller must commit.
         """
         session = self.session_repo.get_by_id(session_id)
@@ -33,41 +36,50 @@ class ResultCalculationService:
 
         # Get questions for the exam
         questions = self.question_repo.get_all(exam_id=session.exam_schedule.exam_id, limit=1000)
-        
-        # Build answer key
-        # Map question_id -> (marks, negative_marks, correct_option_id)
-        answer_key = {}
-        total_marks = session.exam_schedule.exam.total_marks
-        for q in questions:
-            correct_opt = next((o for o in q.options if o.is_correct), None)
-            if correct_opt:
-                answer_key[q.id] = {
-                    "marks": q.marks,
-                    "negative_marks": q.negative_marks,
-                    "correct_option_id": correct_opt.id
-                }
 
         # Get student's answers
         student_answers = self.answer_repo.get_all_by_session(session_id)
+        student_answers_map = {ans.question_id: ans for ans in student_answers}
 
+        total_marks = session.exam_schedule.exam.total_marks
         obtained_marks = 0.0
-        for ans in student_answers:
-            key = answer_key.get(ans.question_id)
-            if not key:
-                continue
-            
-            if ans.selected_option_id == key["correct_option_id"]:
-                obtained_marks += key["marks"]
-            else:
-                obtained_marks -= key["negative_marks"]
 
-        # Prevent negative total score if needed (assuming 0 is minimum)
+        # Track descriptive evaluation statistics
+        descriptive_questions_count = 0
+        evaluated_descriptive_count = 0
+
+        for q in questions:
+            ans = student_answers_map.get(q.id)
+
+            if q.question_type == QuestionType.MCQ:
+                if ans and ans.selected_option_id:
+                    correct_opt = next((o for o in q.options if o.is_correct), None)
+                    if correct_opt and ans.selected_option_id == correct_opt.id:
+                        obtained_marks += q.marks
+                    else:
+                        obtained_marks -= q.negative_marks
+            elif q.question_type == QuestionType.DESCRIPTIVE:
+                descriptive_questions_count += 1
+                if ans and ans.awarded_marks is not None:
+                    evaluated_descriptive_count += 1
+                    obtained_marks += ans.awarded_marks
+
         if obtained_marks < 0:
             obtained_marks = 0.0
 
         percentage = (obtained_marks / total_marks * 100) if total_marks > 0 else 0.0
 
-        # Grade logic (basic example)
+        # Determine Evaluation Status
+        if descriptive_questions_count == 0:
+            evaluation_status = EvaluationStatus.COMPLETED
+        elif evaluated_descriptive_count == 0:
+            evaluation_status = EvaluationStatus.PENDING
+        elif evaluated_descriptive_count == descriptive_questions_count:
+            evaluation_status = EvaluationStatus.COMPLETED
+        else:
+            evaluation_status = EvaluationStatus.PARTIALLY_EVALUATED
+
+        # Grade calculation
         grade = None
         if percentage >= 90:
             grade = "A"
@@ -80,7 +92,6 @@ class ResultCalculationService:
         else:
             grade = "F"
 
-        # Check if a result already exists for this session (for idempotency)
         existing_result = self.db.scalars(
             select(Result).where(Result.exam_session_id == session_id)
         ).first()
@@ -89,6 +100,7 @@ class ResultCalculationService:
             existing_result.obtained_marks = obtained_marks
             existing_result.percentage = percentage
             existing_result.grade = grade
+            existing_result.evaluation_status = evaluation_status
             return existing_result
 
         result = Result(
@@ -96,7 +108,9 @@ class ResultCalculationService:
             obtained_marks=obtained_marks,
             percentage=percentage,
             grade=grade,
-            published_at=None  # Not published by default
+            evaluation_status=evaluation_status,
+            published_at=None
         )
         self.db.add(result)
         return result
+

@@ -3,6 +3,8 @@ from uuid import UUID
 from datetime import datetime
 from typing import List, Optional
 
+from app.models.question import QuestionType
+
 
 # --- Display Models (Sanitized for Student Client) ---
 
@@ -21,13 +23,16 @@ class QuestionDisplay(BaseModel):
     
     id: UUID
     question_text: str
+    question_type: QuestionType = QuestionType.MCQ
     marks: float
     negative_marks: float
     display_order: int
-    options: List[OptionDisplay]
+    max_characters: Optional[int] = None
+    options: List[OptionDisplay] = []
     
     # Support recovery by including any previously saved answer
     saved_answer_option_id: Optional[UUID] = None
+    saved_answer_text: Optional[str] = None
 
 
 class ExamQuestionsPayload(BaseModel):
@@ -41,7 +46,9 @@ class ExamQuestionsPayload(BaseModel):
 class AnswerSubmission(BaseModel):
     """Payload for POST /answers."""
     question_id: UUID
-    selected_option_id: UUID
+    selected_option_id: Optional[UUID] = None
+    answer_text: Optional[str] = None
+
 
 
 class ExamSubmitRequest(BaseModel):

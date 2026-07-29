@@ -1,5 +1,6 @@
 from typing import Annotated
 from uuid import UUID
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Request, Header
 
 from app.api.dependencies.auth import require_student, get_active_exam_student
@@ -25,12 +26,15 @@ def list_assigned_exams(
     session_service: ExamSessionServiceDep,
 ):
     """
-    List all active or scheduled exams assigned to the student.
+    List all active or scheduled exams assigned to the student that have not expired.
     Requires Base Student JWT.
     """
     schedules = session_service.get_assigned_schedules(UUID(token_payload.sub))
+    now = datetime.now(timezone.utc)
     data = []
     for sched in schedules:
+        if sched.end_time and sched.end_time < now:
+            continue
         data.append(StudentAvailableExamResponse(
             schedule_id=sched.id,
             subject_name=sched.exam.subject.name,

@@ -16,15 +16,14 @@ class ResultBase(BaseModel):
 class ResultStudentInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
-    first_name: str
-    last_name: str
+    name: str
     roll_number: str
 
 class ResultExamInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
-    title: str
     total_marks: float
+    duration_minutes: int | None = None
 
 class ResultScheduleInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)

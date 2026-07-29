@@ -134,7 +134,7 @@ app/
 ## Frontend
 
 - React
-- TypeScript
+- Javascript
 - Vite
 
 ## Deployment

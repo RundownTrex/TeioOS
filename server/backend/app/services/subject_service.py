@@ -1,6 +1,6 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from app.models.subject import Subject
 from app.repositories.subject_repository import SubjectRepository
@@ -107,6 +107,12 @@ class SubjectService:
         try:
             self.subject_repo.delete(subject)
             self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            raise BusinessRuleException(
+                detail=f"Cannot delete subject '{subject.name}' because it has active dependencies."
+            )
         except SQLAlchemyError:
             self.db.rollback()
             raise
+

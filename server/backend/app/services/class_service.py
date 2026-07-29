@@ -1,13 +1,13 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from app.models.class_ import Class
 from app.repositories.class_repository import ClassRepository
 from app.repositories.department_repository import DepartmentRepository
 from app.schemas.class_ import ClassCreate, ClassUpdate
 from app.schemas.pagination import PaginatedData
-from app.core.exceptions import ConflictException, NotFoundException
+from app.core.exceptions import ConflictException, NotFoundException, BusinessRuleException
 
 class ClassService:
     def __init__(
@@ -94,9 +94,20 @@ class ClassService:
 
     def delete_class(self, class_id: UUID) -> None:
         class_obj = self.get_class(class_id)
+
+        if class_obj.students:
+            raise BusinessRuleException(
+                detail=f"Cannot delete class '{class_obj.name}' because it has enrolled students."
+            )
+
         try:
             self.class_repo.delete(class_obj)
             self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            raise BusinessRuleException(
+                detail=f"Cannot delete class '{class_obj.name}' because it has active dependencies."
+            )
         except SQLAlchemyError:
             self.db.rollback()
             raise

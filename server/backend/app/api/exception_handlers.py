@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi import status
 from fastapi.exceptions import RequestValidationError
+from sqlalchemy.exc import IntegrityError
 
 from app.core.exceptions import (
     AuthenticationException,
@@ -117,6 +118,19 @@ def add_exception_handlers(app: FastAPI) -> None:
             content=response_model.model_dump(mode='json'),
         )
 
+    @app.exception_handler(IntegrityError)
+    async def integrity_exception_handler(request: Request, exc: IntegrityError):
+        logger.warning(f"IntegrityError at {request.url.path}: {str(exc)}")
+        response_model = APIResponse(
+            success=False,
+            message="Database integrity conflict",
+            errors=["Operation failed due to database constraint restrictions or conflict."]
+        )
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content=response_model.model_dump(mode='json'),
+        )
+
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
         logger.error(f"Unhandled Exception at {request.url.path}: {str(exc)}", exc_info=True)
@@ -129,3 +143,4 @@ def add_exception_handlers(app: FastAPI) -> None:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=response_model.model_dump(mode='json'),
         )
+

@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 from app.models.question import QuestionType
-from app.schemas.option import OptionCreate, OptionResponse
+from app.schemas.option import OptionCreateInQuestion, OptionResponse
 
 
 # --- Questions ---
@@ -19,7 +19,7 @@ class QuestionBase(BaseModel):
 
 
 class QuestionCreate(QuestionBase):
-    options: list[OptionCreate] | None = Field(None, description="List of MCQ options (required for MCQ, forbidden for DESCRIPTIVE)")
+    options: list[OptionCreateInQuestion] | None = Field(None, description="List of MCQ options (required for MCQ, forbidden for DESCRIPTIVE)")
 
 
 class QuestionUpdate(BaseModel):
@@ -30,7 +30,7 @@ class QuestionUpdate(BaseModel):
     display_order: int | None = None
     max_characters: int | None = None
     exam_id: UUID | None = None
-    options: list[OptionCreate] | None = Field(None, description="Provide this to fully replace existing options")
+    options: list[OptionCreateInQuestion] | None = Field(None, description="Provide this to fully replace existing options")
 
 
 class QuestionResponse(QuestionBase):

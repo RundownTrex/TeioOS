@@ -1,6 +1,6 @@
 from typing import Sequence
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session, joinedload
 
@@ -69,10 +69,12 @@ class ExamScheduleRepository(BaseRepository[ExamSchedule]):
         return self.session.execute(stmt).scalars().all()
 
     def get_active_schedules_for_student_list(self, student_id: UUID) -> Sequence[ExamSchedule]:
-        """Returns all ACTIVE or SCHEDULED exams assigned to a student."""
+        """Returns all ACTIVE or SCHEDULED exams assigned to a student that have not expired."""
+        now = datetime.now(timezone.utc)
         stmt = select(ExamSchedule).where(
             and_(
                 ExamSchedule.status.in_([ExamScheduleStatus.ACTIVE, ExamScheduleStatus.SCHEDULED]),
+                ExamSchedule.end_time >= now,
                 ExamSchedule.assigned_students.any(id=student_id)
             )
         ).options(

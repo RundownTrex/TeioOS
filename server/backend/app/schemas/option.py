@@ -7,8 +7,15 @@ class OptionBase(BaseModel):
     display_order: int = Field(..., description="Order of the option (e.g. 1, 2, 3)")
     is_correct: bool = Field(False, description="Whether this option is the correct answer")
 
+
+class OptionCreateInQuestion(OptionBase):
+    """Schema for creating an option when embedded inside QuestionCreate."""
+    pass
+
+
 class OptionCreate(OptionBase):
-    question_id: UUID | None = Field(None, description="ID of the question this option belongs to")
+    """Schema for creating a standalone option for an existing question."""
+    question_id: UUID = Field(..., description="ID of the question this option belongs to")
 
 
 class OptionUpdate(BaseModel):
@@ -24,3 +31,4 @@ class OptionResponse(OptionBase):
     question_id: UUID
     created_at: datetime
     updated_at: datetime
+

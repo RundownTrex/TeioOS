@@ -1,0 +1,35 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Global Body & Document Defaults */
+  body {
+    background-color: var(--color-bg-canvas);
+    color: var(--color-text-main);
+    font-family: var(--font-family-sans);
+    line-height: var(--line-height-normal);
+  }
+
+  /* Global Focus Ring Management (WCAG 2.1 AA Compliant) */
+  *:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color) !important;
+    outline-offset: var(--focus-ring-offset) !important;
+    box-shadow: var(--focus-ring-shadow) !important;
+  }
+
+  /* Accessible Screen Reader Only Utility Class */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}

@@ -1,12 +1,12 @@
 from uuid import UUID
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from app.models.department import Department
 from app.repositories.department_repository import DepartmentRepository
 from app.schemas.department import DepartmentCreate, DepartmentUpdate
 from app.schemas.pagination import PaginatedData
-from app.core.exceptions import ConflictException, NotFoundException
+from app.core.exceptions import ConflictException, NotFoundException, BusinessRuleException
 
 class DepartmentService:
     def __init__(self, db: Session, department_repo: DepartmentRepository):
@@ -59,9 +59,28 @@ class DepartmentService:
 
     def delete_department(self, department_id: UUID) -> None:
         department = self.get_department(department_id)
+
+        for subject in department.subjects:
+            if subject.exams:
+                raise BusinessRuleException(
+                    detail=f"Cannot delete department '{department.name}' because subject '{subject.name}' has assigned exams."
+                )
+
+        for class_obj in department.classes:
+            if class_obj.students:
+                raise BusinessRuleException(
+                    detail=f"Cannot delete department '{department.name}' because class '{class_obj.name}' has enrolled students."
+                )
+
         try:
             self.department_repo.delete(department)
             self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            raise BusinessRuleException(
+                detail=f"Cannot delete department '{department.name}' because it has active dependencies."
+            )
         except SQLAlchemyError:
             self.db.rollback()
             raise
+

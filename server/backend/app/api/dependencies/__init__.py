@@ -4,7 +4,6 @@ from app.api.dependencies.repositories import (
     StudentRepoDep,
     ExamRepoDep,
     ExamScheduleRepoDep,
-    SessionRepoDep,
 )
 from app.api.dependencies.services import (
     AuthServiceDep,
@@ -34,7 +33,6 @@ __all__ = [
     "StudentRepoDep",
     "ExamRepoDep",
     "ExamScheduleRepoDep",
-    "SessionRepoDep",
     
     # Services
     "AuthServiceDep",

@@ -4,7 +4,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.result import Result
-from app.models.exam_session import ExamSession
+from app.models.student_exam import StudentExam
 from app.models.exam_schedule import ExamSchedule
 from app.models.student import Student
 
@@ -22,8 +22,8 @@ class ResultRepository:
         stmt = (
             select(Result)
             .options(
-                joinedload(Result.exam_session).joinedload(ExamSession.student),
-                joinedload(Result.exam_session).joinedload(ExamSession.exam_schedule).joinedload(ExamSchedule.exam)
+                joinedload(Result.student_exam).joinedload(StudentExam.student),
+                joinedload(Result.student_exam).joinedload(StudentExam.exam_schedule).joinedload(ExamSchedule.exam)
             )
             .where(Result.id == result_id)
         )
@@ -31,71 +31,67 @@ class ResultRepository:
 
     def _build_filter_query(self, student_id: UUID | None = None, exam_id: UUID | None = None, class_id: UUID | None = None):
         """Helper to build the base query with necessary joins for filtering."""
-        stmt = select(Result).join(Result.exam_session)
-        
+        stmt = select(Result).join(Result.student_exam)
+
         if class_id:
-            # Join Student to filter by class
-            stmt = stmt.join(ExamSession.student).where(Student.class_id == class_id)
-        
+            stmt = stmt.join(StudentExam.student).where(Student.class_id == class_id)
+
         if exam_id:
-            # Join ExamSchedule to filter by exam
-            stmt = stmt.join(ExamSession.exam_schedule).where(ExamSchedule.exam_id == exam_id)
-            
+            stmt = stmt.join(StudentExam.exam_schedule).where(ExamSchedule.exam_id == exam_id)
+
         if student_id:
-            stmt = stmt.where(ExamSession.student_id == student_id)
-            
+            stmt = stmt.where(StudentExam.student_id == student_id)
+
         return stmt
 
     def get_all(
-        self, 
-        skip: int = 0, 
-        limit: int = 20, 
-        student_id: UUID | None = None, 
-        exam_id: UUID | None = None, 
+        self,
+        skip: int = 0,
+        limit: int = 20,
+        student_id: UUID | None = None,
+        exam_id: UUID | None = None,
         class_id: UUID | None = None
     ) -> Sequence[Result]:
         stmt = self._build_filter_query(student_id, exam_id, class_id)
-        
-        # Eager load relationships for the response
+
         stmt = stmt.options(
-            joinedload(Result.exam_session).joinedload(ExamSession.student),
-            joinedload(Result.exam_session).joinedload(ExamSession.exam_schedule).joinedload(ExamSchedule.exam)
+            joinedload(Result.student_exam).joinedload(StudentExam.student),
+            joinedload(Result.student_exam).joinedload(StudentExam.exam_schedule).joinedload(ExamSchedule.exam)
         )
-        
+
         stmt = stmt.order_by(Result.published_at.desc().nulls_last()).offset(skip).limit(limit)
         return self.session.execute(stmt).scalars().all()
 
     def get_count(
-        self, 
-        student_id: UUID | None = None, 
-        exam_id: UUID | None = None, 
+        self,
+        student_id: UUID | None = None,
+        exam_id: UUID | None = None,
         class_id: UUID | None = None
     ) -> int:
-        stmt = select(func.count()).select_from(Result).join(Result.exam_session)
-        
+        stmt = select(func.count()).select_from(Result).join(Result.student_exam)
+
         if class_id:
-            stmt = stmt.join(ExamSession.student).where(Student.class_id == class_id)
-            
+            stmt = stmt.join(StudentExam.student).where(Student.class_id == class_id)
+
         if exam_id:
-            stmt = stmt.join(ExamSession.exam_schedule).where(ExamSchedule.exam_id == exam_id)
-            
+            stmt = stmt.join(StudentExam.exam_schedule).where(ExamSchedule.exam_id == exam_id)
+
         if student_id:
-            stmt = stmt.where(ExamSession.student_id == student_id)
-            
+            stmt = stmt.where(StudentExam.student_id == student_id)
+
         return self.session.execute(stmt).scalar_one()
 
-    def get_by_session_id(self, session_id: UUID) -> Result | None:
+    def get_by_student_exam_id(self, student_exam_id: UUID) -> Result | None:
         stmt = (
             select(Result)
             .options(
-                joinedload(Result.exam_session).joinedload(ExamSession.student),
-                joinedload(Result.exam_session).joinedload(ExamSession.exam_schedule).joinedload(ExamSchedule.exam)
+                joinedload(Result.student_exam).joinedload(StudentExam.student),
+                joinedload(Result.student_exam).joinedload(StudentExam.exam_schedule).joinedload(ExamSchedule.exam)
             )
-            .where(Result.exam_session_id == session_id)
+            .where(Result.student_exam_id == student_exam_id)
         )
         return self.session.execute(stmt).scalars().first()
 
     def update(self, result: Result) -> Result:
         self.session.add(result)
         return result
-

@@ -71,8 +71,8 @@ class EvaluationService:
         answer.evaluated_at = datetime.now(timezone.utc)
         answer.evaluated_by = evaluator_id
 
-        # Recalculate exam session result
-        self.result_calc_service.calculate_for_session(answer.exam_session_id)
+        # Recalculate exam assignment result
+        self.result_calc_service.calculate_for_session(answer.student_exam_id)
 
         self.db.commit()
         self.db.refresh(answer)

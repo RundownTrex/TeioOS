@@ -9,7 +9,7 @@ from app.db.base import BaseModel
 if TYPE_CHECKING:
     from app.models.exam import Exam
     from app.models.student import Student
-    from app.models.exam_session import ExamSession
+    from app.models.student_exam import StudentExam
 
 
 class ExamScheduleStatus(str, enum.Enum):
@@ -46,12 +46,12 @@ class ExamSchedule(BaseModel):
         "Student",
         secondary="student_exams",
         back_populates="assigned_schedules",
+        overlaps="exam_assignments,student_exams",
     )
 
-    # No ORM-level cascade here. The FK uses ondelete="RESTRICT", meaning the
-    # database will block deletion of a schedule that has existing sessions.
-    # An ORM cascade="all, delete-orphan" would contradict that intent.
-    sessions: Mapped[List["ExamSession"]] = relationship(
-        "ExamSession",
+    # Direct link to exam assignments (with session tracking)
+    student_exams: Mapped[List["StudentExam"]] = relationship(
+        "StudentExam",
         back_populates="exam_schedule",
+        overlaps="assigned_students,assigned_schedules",
     )

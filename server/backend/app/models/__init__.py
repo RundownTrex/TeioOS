@@ -7,16 +7,15 @@ from app.models.exam import Exam
 from app.models.question import Question, QuestionType
 from app.models.option import Option
 from app.models.exam_schedule import ExamSchedule
-from app.models.student_exam import StudentExam
-from app.models.exam_session import ExamSession
+from app.models.student_exam import StudentExam, AssignmentStatus
 from app.models.student_answer import StudentAnswer
 from app.models.result import Result, EvaluationStatus
 
 # Ensure they are available for Alembic to auto-generate migrations
 __all__ = [
-    "User", "Department", "Subject", "Class", "Student", 
-    "Exam", "Question", "QuestionType", "Option", 
-    "ExamSchedule", "StudentExam", "ExamSession",
+    "User", "Department", "Subject", "Class", "Student",
+    "Exam", "Question", "QuestionType", "Option",
+    "ExamSchedule", "StudentExam", "AssignmentStatus",
     "StudentAnswer", "Result", "EvaluationStatus"
 ]
 

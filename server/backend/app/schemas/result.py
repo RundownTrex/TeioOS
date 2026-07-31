@@ -10,7 +10,7 @@ class ResultBase(BaseModel):
     grade: str | None = Field(None, description="Grade awarded")
     evaluation_status: EvaluationStatus = Field(EvaluationStatus.COMPLETED, description="Status of evaluation: PENDING, PARTIALLY_EVALUATED, or COMPLETED")
     published_at: datetime | None = Field(None, description="When the result was published")
-    exam_session_id: UUID = Field(..., description="ID of the associated exam session")
+    student_exam_id: UUID = Field(..., description="ID of the associated student exam assignment")
 
 
 class ResultStudentInfo(BaseModel):
@@ -30,20 +30,18 @@ class ResultScheduleInfo(BaseModel):
     id: UUID
     exam: ResultExamInfo
 
-class ResultSessionInfo(BaseModel):
+class ResultStudentExamInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     student: ResultStudentInfo
     exam_schedule: ResultScheduleInfo
-    
+
 class ResultResponse(ResultBase):
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     created_at: datetime
     updated_at: datetime
-    
-    # We will attach student and exam info for the admin dashboard
-    # The actual ORM structure is Result -> ExamSession -> Student / ExamSchedule -> Exam
-    # We can either let Pydantic extract this if we model it accurately, or return just the session.
-    exam_session: ResultSessionInfo | None = None
+
+    # The actual ORM structure is Result -> StudentExam -> Student / ExamSchedule -> Exam
+    student_exam: ResultStudentExamInfo | None = None

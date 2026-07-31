@@ -93,7 +93,7 @@ export const QuestionPalette = ({
       </div>
 
       {/* Palette Footer: Legend & Fixed Submit CTA */}
-      <div className="mt-4 pt-3 border-t border-border-main flex flex-col gap-3">
+      <div className="mt-4 flex flex-col gap-3">
         <QuestionLegend />
 
         <SubmitButton

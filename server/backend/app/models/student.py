@@ -8,7 +8,7 @@ from app.db.base import BaseModel
 if TYPE_CHECKING:
     from app.models.class_ import Class
     from app.models.exam_schedule import ExamSchedule
-    from app.models.exam_session import ExamSession
+    from app.models.student_exam import StudentExam
 
 
 class Student(BaseModel):
@@ -38,11 +38,14 @@ class Student(BaseModel):
         "ExamSchedule",
         secondary="student_exams",
         back_populates="assigned_students",
+        overlaps="exam_assignments,student_exams",
     )
 
-    exam_sessions: Mapped[List["ExamSession"]] = relationship(
-        "ExamSession",
+    # Direct link to exam assignments (with session tracking)
+    exam_assignments: Mapped[List["StudentExam"]] = relationship(
+        "StudentExam",
         back_populates="student",
+        overlaps="assigned_schedules",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )

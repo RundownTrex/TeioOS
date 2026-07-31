@@ -29,7 +29,7 @@ class Option(BaseModel):
         back_populates="options",
     )
 
-    # No delete-orphan here — ExamSession owns the orphan lifecycle of
+    # No delete-orphan here — StudentExam owns the orphan lifecycle of
     # StudentAnswer. passive_deletes lets the DB CASCADE handle cleanup.
     answers: Mapped[List["StudentAnswer"]] = relationship(
         "StudentAnswer",

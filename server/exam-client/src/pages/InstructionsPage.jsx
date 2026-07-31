@@ -93,9 +93,9 @@ export const InstructionsPage = () => {
           }
 
           let remainingSeconds = data.durationMinutes * 60;
-          if (startData.server_current_time && startData.end_time) {
+          if (startData.server_current_time && startData.expires_at) {
             const serverNowMs = new Date(startData.server_current_time).getTime();
-            const endMs = new Date(startData.end_time).getTime();
+            const endMs = new Date(startData.expires_at).getTime();
             remainingSeconds = Math.max(0, Math.floor((endMs - serverNowMs) / 1000));
           }
 

@@ -3,10 +3,10 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 
+from app.models.student_exam import StudentExam, AssignmentStatus
 from app.models.question import QuestionType
-from app.models.exam_session import SessionStatus
 
-from app.repositories.session_repository import SessionRepository
+from app.repositories.student_exam_repository import StudentExamRepository
 from app.repositories.exam_schedule_repository import ExamScheduleRepository
 from app.repositories.question_repository import QuestionRepository
 from app.repositories.student_answer_repository import StudentAnswerRepository
@@ -19,44 +19,55 @@ class ExamDeliveryService:
     def __init__(
         self,
         db: Session,
-        session_repo: SessionRepository,
+        assignment_repo: StudentExamRepository,
         schedule_repo: ExamScheduleRepository,
         question_repo: QuestionRepository,
         answer_repo: StudentAnswerRepository,
         answer_service: StudentAnswerService | None = None,
     ):
         self.db = db
-        self.session_repo = session_repo
+        self.assignment_repo = assignment_repo
         self.schedule_repo = schedule_repo
         self.question_repo = question_repo
         self.answer_repo = answer_repo
         self.answer_service = answer_service or StudentAnswerService(db, question_repo, answer_repo)
 
-    def _validate_session_active(self, session_id: uuid.UUID, schedule_id: uuid.UUID):
-        session = self.session_repo.get_by_id(session_id)
-        if not session or session.exam_schedule_id != schedule_id:
+    def _validate_assignment_active(self, assignment_id: uuid.UUID, schedule_id: uuid.UUID):
+        """
+        Validates that the exam assignment (session) is active and has not expired.
+        Auto-marks as EXPIRED if the individual timer has elapsed.
+        """
+        assignment = self.assignment_repo.get_by_id(assignment_id)
+        if not assignment or assignment.exam_schedule_id != schedule_id:
             raise AuthorizationException("Invalid session")
 
-        if session.status != SessionStatus.IN_PROGRESS:
+        if assignment.status != AssignmentStatus.IN_PROGRESS:
             raise BusinessRuleException("Exam session is not active")
 
-        schedule = self.schedule_repo.get_by_id(schedule_id)
         current_time = datetime.now(timezone.utc)
-        
-        # Buffer of 10 seconds for network latency on answers
-        if current_time > schedule.end_time:
+
+        # --- Check individual session timer expiry ---
+        if assignment.expires_at and current_time > assignment.expires_at:
+            assignment.status = AssignmentStatus.EXPIRED
+            assignment.last_activity_at = current_time
+            self.db.commit()
             raise BusinessRuleException("Exam time has expired")
 
-        return session, schedule
+        return assignment
 
-    def get_questions_for_session(self, session_id: uuid.UUID, schedule_id: uuid.UUID) -> ExamQuestionsPayload:
-        session, schedule = self._validate_session_active(session_id, schedule_id)
-        
+    def get_questions_for_session(self, assignment_id: uuid.UUID, schedule_id: uuid.UUID) -> ExamQuestionsPayload:
+        assignment = self._validate_assignment_active(assignment_id, schedule_id)
+
+        # Update last activity timestamp
+        assignment.last_activity_at = datetime.now(timezone.utc)
+        self.db.commit()
+
         # 1. Fetch questions with options
+        schedule = self.schedule_repo.get_by_id(schedule_id)
         questions = self.question_repo.get_all(exam_id=schedule.exam_id, limit=1000)
 
         # 2. Fetch previously saved answers
-        saved_answers = self.answer_repo.get_all_by_session(session_id)
+        saved_answers = self.answer_repo.get_all_by_session(assignment_id)
         saved_answers_option_map = {ans.question_id: ans.selected_option_id for ans in saved_answers}
         saved_answers_text_map = {ans.question_id: ans.answer_text for ans in saved_answers}
 
@@ -74,7 +85,6 @@ class ExamDeliveryService:
                 options_display.sort(key=lambda opt: opt.display_order)
             else:
                 options_display = []
-
 
             display_questions.append(
                 QuestionDisplay(
@@ -100,24 +110,27 @@ class ExamDeliveryService:
 
     def save_answer(
         self,
-        session_id: uuid.UUID,
+        assignment_id: uuid.UUID,
         schedule_id: uuid.UUID,
         question_id: uuid.UUID,
         selected_option_id: uuid.UUID | None = None,
         answer_text: str | None = None,
     ) -> None:
-        session, schedule = self._validate_session_active(session_id, schedule_id)
+        assignment = self._validate_assignment_active(assignment_id, schedule_id)
+
+        # Update last activity timestamp
+        assignment.last_activity_at = datetime.now(timezone.utc)
 
         # Validate question belongs to the exam
+        schedule = self.schedule_repo.get_by_id(schedule_id)
         question = self.question_repo.get_by_id(question_id)
         if not question or question.exam_id != schedule.exam_id:
             raise BusinessRuleException("Invalid question for this exam")
 
         # Delegate answer validation and upsert to StudentAnswerService
         self.answer_service.save_student_answer(
-            session_id=session_id,
+            session_id=assignment_id,
             question_id=question_id,
             selected_option_id=selected_option_id,
             answer_text=answer_text,
         )
-

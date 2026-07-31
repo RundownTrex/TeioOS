@@ -21,11 +21,19 @@ export const useStartExam = () => {
       };
     },
     onSuccess: ({ startData, questionsData }, scheduleId) => {
+      // Compute remaining seconds from server-authoritative expires_at
+      let remainingSeconds = 0;
+      if (startData.server_current_time && startData.expires_at) {
+        const serverNowMs = new Date(startData.server_current_time).getTime();
+        const endMs = new Date(startData.expires_at).getTime();
+        remainingSeconds = Math.max(0, Math.floor((endMs - serverNowMs) / 1000));
+      }
+
       initExamSession({
-        token: startData.token,
+        token: startData.access_token,
         scheduleId,
         questionsData: questionsData?.questions || [],
-        remainingSeconds: startData.remaining_seconds,
+        remainingSeconds,
       });
     },
   });

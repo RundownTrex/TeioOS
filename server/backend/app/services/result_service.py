@@ -40,20 +40,20 @@ class ResultService:
             raise NotFoundException(resource_name="Result")
         return result
 
-    def get_result_by_session(self, session_id: UUID) -> Result:
+    def get_result_by_student_exam(self, student_exam_id: UUID) -> Result:
         """
-        Fetch a result by its exam session ID.
+        Fetch a result by its student exam (assignment) ID.
         """
-        result = self.result_repo.get_by_session_id(session_id)
+        result = self.result_repo.get_by_student_exam_id(student_exam_id)
         if not result:
             raise NotFoundException(resource_name="Result")
         return result
 
-    def publish_result(self, session_id: UUID) -> Result:
+    def publish_result(self, student_exam_id: UUID) -> Result:
         """
-        Publishes the result for an exam session after verifying evaluation_status == COMPLETED.
+        Publishes the result for an exam assignment after verifying evaluation_status == COMPLETED.
         """
-        result = self.result_repo.get_by_session_id(session_id)
+        result = self.result_repo.get_by_student_exam_id(student_exam_id)
         if not result:
             raise NotFoundException(resource_name="Result")
 

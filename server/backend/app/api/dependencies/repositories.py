@@ -7,7 +7,6 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.student_repository import StudentRepository
 from app.repositories.exam_repository import ExamRepository
 from app.repositories.exam_schedule_repository import ExamScheduleRepository
-from app.repositories.session_repository import SessionRepository
 from app.repositories.department_repository import DepartmentRepository
 from app.repositories.class_repository import ClassRepository
 from app.repositories.question_repository import QuestionRepository
@@ -35,10 +34,6 @@ def get_exam_repository(db: SessionDep) -> ExamRepository:
 
 def get_exam_schedule_repository(db: SessionDep) -> ExamScheduleRepository:
     return ExamScheduleRepository(db)
-
-
-def get_session_repository(db: SessionDep) -> SessionRepository:
-    return SessionRepository(db)
 
 
 def get_department_repository(db: SessionDep) -> DepartmentRepository:
@@ -78,7 +73,6 @@ UserRepoDep = Annotated[UserRepository, Depends(get_user_repository)]
 StudentRepoDep = Annotated[StudentRepository, Depends(get_student_repository)]
 ExamRepoDep = Annotated[ExamRepository, Depends(get_exam_repository)]
 ExamScheduleRepoDep = Annotated[ExamScheduleRepository, Depends(get_exam_schedule_repository)]
-SessionRepoDep = Annotated[SessionRepository, Depends(get_session_repository)]
 DepartmentRepoDep = Annotated[DepartmentRepository, Depends(get_department_repository)]
 ClassRepoDep = Annotated[ClassRepository, Depends(get_class_repository)]
 QuestionRepoDep = Annotated[QuestionRepository, Depends(get_question_repository)]

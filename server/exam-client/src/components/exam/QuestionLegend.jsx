@@ -12,7 +12,7 @@ export const QuestionLegend = ({ className = '' }) => {
     <div
       role="region"
       aria-label="Question palette status legend"
-      className={`py-3 border-t border-border-main text-xs select-none ${className}`}
+      className={`pt-3 border-t border-border-main text-xs select-none ${className}`}
     >
       <span className="font-bold text-text-main block mb-2 uppercase tracking-wider text-[11px]">
         Status Legend:

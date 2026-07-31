@@ -1,9 +1,13 @@
+import uuid
 from typing import Sequence
 from uuid import UUID
 from sqlalchemy import select, func, and_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
-from app.models.student_exam import StudentExam
+from app.models.student_exam import StudentExam, AssignmentStatus
+from app.models.exam_schedule import ExamSchedule
+from app.models.exam import Exam
+from app.models.subject import Subject
 from app.repositories.base_repository import BaseRepository
 
 
@@ -24,6 +28,21 @@ class StudentExamRepository(BaseRepository[StudentExam]):
             )
         )
         return self.session.execute(stmt).scalars().first()
+
+    def get_by_student_and_schedule(self, student_id: uuid.UUID, schedule_id: uuid.UUID) -> StudentExam | None:
+        """Retrieves the exam assignment (which tracks the session) for a student and schedule."""
+        stmt = select(StudentExam).where(
+            StudentExam.student_id == student_id,
+            StudentExam.exam_schedule_id == schedule_id,
+        )
+        return self.session.scalars(stmt).first()
+
+    def get_by_id_with_schedule(self, id: uuid.UUID) -> StudentExam | None:
+        """Eager-loads the exam_schedule and exam for session validation."""
+        stmt = select(StudentExam).options(
+            joinedload(StudentExam.exam_schedule).joinedload(ExamSchedule.exam)
+        ).where(StudentExam.id == id)
+        return self.session.scalars(stmt).first()
 
     def get_all_for_schedule(self, exam_schedule_id: UUID, skip: int = 0, limit: int = 20) -> Sequence[StudentExam]:
         stmt = select(StudentExam).where(StudentExam.exam_schedule_id == exam_schedule_id).offset(skip).limit(limit)

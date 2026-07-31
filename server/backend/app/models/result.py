@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import BaseModel
 
 if TYPE_CHECKING:
-    from app.models.exam_session import ExamSession
+    from app.models.student_exam import StudentExam
 
 
 class EvaluationStatus(str, enum.Enum):
@@ -31,18 +31,17 @@ class Result(BaseModel):
     )
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    # Foreign Key — unique=True enforces the 1:1 relationship at the column level,
-    # which is more idiomatic than a separate UniqueConstraint for single-column uniqueness.
-    exam_session_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("exam_sessions.id", ondelete="CASCADE"),
+    # Foreign Key — unique=True enforces the 1:1 relationship at the column level
+    student_exam_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("student_exams.id", ondelete="CASCADE"),
         unique=True,
         index=True,
         nullable=False,
     )
 
     # Relationships
-    exam_session: Mapped["ExamSession"] = relationship(
-        "ExamSession",
+    student_exam: Mapped["StudentExam"] = relationship(
+        "StudentExam",
         back_populates="result",
     )
 

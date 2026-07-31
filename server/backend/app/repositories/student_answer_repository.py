@@ -14,13 +14,13 @@ class StudentAnswerRepository(BaseRepository[StudentAnswer]):
 
     def get_by_session_and_question(self, session_id: uuid.UUID, question_id: uuid.UUID) -> StudentAnswer | None:
         stmt = select(StudentAnswer).where(
-            StudentAnswer.exam_session_id == session_id,
+            StudentAnswer.student_exam_id == session_id,
             StudentAnswer.question_id == question_id,
         )
         return self.session.scalars(stmt).first()
 
     def get_all_by_session(self, session_id: uuid.UUID) -> Sequence[StudentAnswer]:
-        stmt = select(StudentAnswer).where(StudentAnswer.exam_session_id == session_id)
+        stmt = select(StudentAnswer).where(StudentAnswer.student_exam_id == session_id)
         return self.session.scalars(stmt).all()
 
     def upsert_answer(
@@ -32,12 +32,12 @@ class StudentAnswerRepository(BaseRepository[StudentAnswer]):
     ) -> None:
         """
         True PostgreSQL UPSERT.
-        Insert the new answer. On constraint violation (uq_session_question_answer),
+        Insert the new answer. On constraint violation (uq_student_exam_question_answer),
         update selected_option_id, answer_text, and answered_at fields so the last answer wins.
         """
         stmt = insert(StudentAnswer).values(
             id=uuid.uuid4(),
-            exam_session_id=session_id,
+            student_exam_id=session_id,
             question_id=question_id,
             selected_option_id=option_id,
             answer_text=answer_text,
@@ -48,7 +48,7 @@ class StudentAnswerRepository(BaseRepository[StudentAnswer]):
         
         # On conflict (a row with the same session_id + question_id exists), update it
         stmt = stmt.on_conflict_do_update(
-            constraint="uq_session_question_answer",
+            constraint="uq_student_exam_question_answer",
             set_=dict(
                 selected_option_id=stmt.excluded.selected_option_id,
                 answer_text=stmt.excluded.answer_text,

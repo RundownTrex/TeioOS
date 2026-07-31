@@ -93,7 +93,7 @@ class ExamStartResponse(BaseModel):
     token_type: str = "bearer"
     exam_session_id: UUID
     server_current_time: datetime
-    end_time: datetime
+    expires_at: datetime
 
 
 class ExamSubmitConfirmation(BaseModel):

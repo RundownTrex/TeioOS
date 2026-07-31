@@ -58,7 +58,7 @@ class Question(BaseModel):
         order_by="Option.display_order",
     )
 
-    # No delete-orphan here — ExamSession owns the orphan lifecycle of
+    # No delete-orphan here — StudentExam owns the orphan lifecycle of
     # StudentAnswer. Using passive_deletes lets the DB CASCADE handle cleanup
     # if a Question is deleted directly.
     answers: Mapped[List["StudentAnswer"]] = relationship(

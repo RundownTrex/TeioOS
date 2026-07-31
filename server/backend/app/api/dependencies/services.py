@@ -7,12 +7,11 @@ from app.api.dependencies.repositories import (
     StudentRepoDep,
     ExamRepoDep,
     ExamScheduleRepoDep,
-    SessionRepoDep,
+    StudentExamRepoDep,
     DepartmentRepoDep,
     ClassRepoDep,
     QuestionRepoDep,
     OptionRepoDep,
-    StudentExamRepoDep,
     ResultRepoDep,
     DashboardRepoDep,
     SubjectRepoDep,
@@ -104,30 +103,30 @@ def get_dashboard_service(dashboard_repo: DashboardRepoDep) -> DashboardService:
 
 def get_result_calculation_service(
     db: SessionDep,
-    session_repo: SessionRepoDep,
+    student_exam_repo: StudentExamRepoDep,
     question_repo: QuestionRepoDep,
     answer_repo: StudentAnswerRepoDep,
 ) -> ResultCalculationService:
-    return ResultCalculationService(db, session_repo, question_repo, answer_repo)
+    return ResultCalculationService(db, student_exam_repo, question_repo, answer_repo)
 
 
 def get_exam_session_service(
     db: SessionDep,
-    session_repo: SessionRepoDep,
+    student_exam_repo: StudentExamRepoDep,
     schedule_repo: ExamScheduleRepoDep,
     result_calc_service: Annotated[ResultCalculationService, Depends(get_result_calculation_service)],
 ) -> ExamSessionService:
-    return ExamSessionService(db, session_repo, schedule_repo, result_calc_service)
+    return ExamSessionService(db, student_exam_repo, schedule_repo, result_calc_service)
 
 
 def get_exam_delivery_service(
     db: SessionDep,
-    session_repo: SessionRepoDep,
+    student_exam_repo: StudentExamRepoDep,
     schedule_repo: ExamScheduleRepoDep,
     question_repo: QuestionRepoDep,
     answer_repo: StudentAnswerRepoDep,
 ) -> ExamDeliveryService:
-    return ExamDeliveryService(db, session_repo, schedule_repo, question_repo, answer_repo)
+    return ExamDeliveryService(db, student_exam_repo, schedule_repo, question_repo, answer_repo)
 
 
 def get_evaluation_service(

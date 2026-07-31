@@ -22,13 +22,6 @@ export const QuestionTile = ({
       'bg-subtle text-text-muted border-border-main hover:border-border-strong hover:bg-surface',
   };
 
-  const statusIcons = {
-    ANSWERED: '✓',
-    UNANSWERED: '!',
-    REVIEW: '*',
-    UNVISITED: '',
-  };
-
   const ariaStatusLabels = {
     ANSWERED: 'Answered',
     UNANSWERED: 'Unanswered',
@@ -44,20 +37,15 @@ export const QuestionTile = ({
       disabled={isDisabled}
       aria-label={`Question ${index + 1}: ${ariaStatusLabels[status] || 'Unvisited'}${isActive ? ', Currently selected' : ''}`}
       aria-current={isActive ? 'true' : undefined}
-      className={`w-10 h-10 rounded-lg border flex flex-col items-center justify-center font-mono text-xs transition-all duration-normal ease-in-out active:scale-95 select-none relative ${
+      className={`w-10 h-10 rounded-lg border flex items-center justify-center font-mono text-xs font-bold transition-all duration-normal ease-in-out active:scale-95 select-none relative ${
         statusStyles[status] || statusStyles.UNVISITED
       } ${
         isActive
-          ? 'ring-2 ring-navy-primary ring-offset-1 border-navy-primary font-extrabold shadow-xs'
+          ? 'ring-2 ring-navy-primary ring-offset-1 border-navy-primary shadow-xs'
           : ''
       } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
     >
       <span className="leading-none">{displayNum}</span>
-      {statusIcons[status] && (
-        <span className="text-[9px] font-black leading-none mt-0.5" aria-hidden="true">
-          {statusIcons[status]}
-        </span>
-      )}
     </button>
   );
 };

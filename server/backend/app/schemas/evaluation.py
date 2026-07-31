@@ -13,7 +13,7 @@ class StudentAnswerEvaluationResponse(BaseModel):
 
     id: UUID
     answered_at: datetime
-    exam_session_id: UUID
+    student_exam_id: UUID
     question_id: UUID
     selected_option_id: UUID | None = None
     answer_text: str | None = None

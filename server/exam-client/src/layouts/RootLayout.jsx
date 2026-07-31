@@ -3,10 +3,29 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { SkipLinks } from '../components/layout/SkipLinks';
 import { AccessibilityModal } from '../components/accessibility/AccessibilityModal';
 import { ShortcutHelpModal } from '../components/accessibility/ShortcutHelpModal';
+import { useShortcuts } from '../hooks/useShortcuts';
+import { useAccessibility } from '../hooks/useAccessibility';
 import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 export const RootLayout = () => {
   const location = useLocation();
+  const { registerHandler, unregisterHandler } = useShortcuts();
+  const { isModalOpen, toggleModal } = useAccessibility();
+
+  // Register global accessibility shortcut (Alt+A) on mount so it works on every page
+  useEffect(() => {
+    registerHandler('accessibility', () => {
+      const willOpen = !isModalOpen;
+      toggleModal();
+      announceToScreenReader(
+        willOpen ? 'Opened Accessibility Preferences Dialog' : 'Closed Accessibility Preferences Dialog'
+      );
+    });
+
+    return () => {
+      unregisterHandler('accessibility');
+    };
+  }, [registerHandler, unregisterHandler, toggleModal, isModalOpen]);
 
   // Automatic Screen Reader Announcement on Route Page Change
   useEffect(() => {

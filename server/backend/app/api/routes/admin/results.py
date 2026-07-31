@@ -55,14 +55,14 @@ def get_result(
     )
 
 
-@router.get("/{exam_session_id}/answers", response_model=APIResponse[List[StudentAnswerEvaluationResponse]])
+@router.get("/{student_exam_id}/answers", response_model=APIResponse[List[StudentAnswerEvaluationResponse]])
 def get_session_answers(
-    exam_session_id: UUID,
+    student_exam_id: UUID,
     evaluation_service: EvaluationServiceDep,
     _=Depends(require_admin),
 ):
-    """Retrieve all student answers (MCQ and Descriptive) for an exam session."""
-    answers = evaluation_service.get_answers_for_session(exam_session_id)
+    """Retrieve all student answers (MCQ and Descriptive) for an exam assignment."""
+    answers = evaluation_service.get_answers_for_session(student_exam_id)
     return APIResponse(
         success=True,
         message="Session student answers retrieved successfully",
@@ -70,14 +70,14 @@ def get_session_answers(
     )
 
 
-@router.post("/{exam_session_id}/publish", response_model=APIResponse[ResultResponse])
+@router.post("/{student_exam_id}/publish", response_model=APIResponse[ResultResponse])
 def publish_result(
-    exam_session_id: UUID,
+    student_exam_id: UUID,
     result_service: ResultServiceDep,
     _=Depends(require_admin),
 ):
-    """Publish the final result for an exam session after all descriptive answers are evaluated."""
-    result = result_service.publish_result(exam_session_id)
+    """Publish the final result for an exam assignment after all descriptive answers are evaluated."""
+    result = result_service.publish_result(student_exam_id)
     return APIResponse(
         success=True,
         message="Result published successfully",

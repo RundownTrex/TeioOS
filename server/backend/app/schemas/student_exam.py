@@ -7,9 +7,16 @@ class StudentAssignmentCreate(BaseModel):
 
 class StudentAssignmentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     student_id: UUID
     exam_schedule_id: UUID
+    started_at: datetime | None = None
+    expires_at: datetime | None = None
+    submitted_at: datetime | None = None
+    last_activity_at: datetime | None = None
+    status: str | None = None
+    resume_count: int = 0
+    is_auto_submitted: bool = False
     created_at: datetime
     updated_at: datetime

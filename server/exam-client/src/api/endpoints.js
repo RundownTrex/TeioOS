@@ -9,7 +9,9 @@ export const API_ENDPOINTS = {
   // Exam Endpoints
   ASSIGNED_EXAMS: '/student/exams/',
   INSTRUCTIONS: (scheduleId) => `/student/exams/${scheduleId}/instructions`,
+  SESSION: (scheduleId) => `/student/exams/${scheduleId}/session`,
   START_EXAM: (scheduleId) => `/student/exams/${scheduleId}/start`,
+  PAUSE_EXAM: (scheduleId) => `/student/exams/${scheduleId}/pause`,
   QUESTIONS: (scheduleId) => `/student/exams/${scheduleId}/questions`,
   SUBMIT_EXAM: (scheduleId) => `/student/exams/${scheduleId}/submit`,
 

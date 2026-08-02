@@ -8,6 +8,7 @@ export const STORAGE_KEYS = {
   ACCESSIBILITY_SETTINGS: 'teioos_accessibility_settings',
   SHORTCUT_SETTINGS: 'teioos_shortcut_settings',
   ACTIVE_EXAM_ID: 'teioos_active_exam_id',
+  EXAM_SESSION_PAYLOAD: 'teioos_exam_session_payload',
   OFFLINE_QUEUE: 'teioos_offline_queue',
   SUBMISSION_QUEUE: 'teioos_submission_queue',
   EXAM_ANSWERS_CACHE: 'teioos_exam_answers_cache_',
@@ -18,6 +19,15 @@ export const EXAM_STATUS = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   EXPIRED: 'EXPIRED',
+};
+
+export const EXAM_SESSION_STATUS = {
+  PENDING: 'pending',
+  IN_PROGRESS: 'in_progress',
+  SUBMITTED: 'submitted',
+  AUTO_SUBMITTED: 'auto_submitted',
+  EXPIRED: 'expired',
+  TERMINATED: 'terminated',
 };
 
 export const SYNC_STATUS = {
@@ -38,3 +48,5 @@ export const THEMES = {
 };
 
 export const FONT_SCALES = [100, 125, 150, 175, 200];
+
+export const SESSION_SYNC_INTERVAL_MS = 30000;

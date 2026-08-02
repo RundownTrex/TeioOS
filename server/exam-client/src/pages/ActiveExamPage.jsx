@@ -2,7 +2,9 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import { ExamLayout } from '../layouts/ExamLayout';
 import { useExam } from '../hooks/useExam';
+import { useAuthoritativeTimer } from '../hooks/useAuthoritativeTimer';
 import { useExamQuestions } from '../features/exams/hooks/useExamQuestions';
+import { useExamSession } from '../features/exams/hooks/useExamSession';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useTTS } from '../hooks/useTTS';
 import { useSTT } from '../hooks/useSTT';
@@ -18,15 +20,17 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { ErrorState } from '../components/ui/ErrorState';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
-import { SYNC_STATUS } from '../utils/constants';
+import { SYNC_STATUS, SESSION_SYNC_INTERVAL_MS, EXAM_SESSION_STATUS, STORAGE_KEYS } from '../utils/constants';
 import { announceToScreenReader } from '../utils/ariaAnnounce';
 import { formatDuration } from '../utils/formatters';
+import { getItem } from '../utils/storage';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import {
   enqueueOfflineAnswer,
   flushOfflineQueue,
   cacheLocalAnswers,
-  restoreLocalAnswers,
+  cacheWorkbenchState,
+  restoreWorkbenchState,
   enqueueSubmission,
   flushSubmissionQueue,
   mergeAnswersWithConflictResolution,
@@ -100,7 +104,7 @@ const MOCK_QUESTIONS = [
 export const ActiveExamPage = () => {
   const { scheduleId = 'cs-401' } = useParams();
   const navigate = useNavigate();
-  const { endTime, elevatedToken } = useExam();
+  const { session, elevatedToken, syncExamSession } = useExam();
   const { registerHandler, unregisterHandler } = useShortcuts();
   const { speakText, togglePauseResume, stopSpeech, repeatSpeech } = useTTS();
   const { toggleDictation } = useSTT();
@@ -108,6 +112,12 @@ export const ActiveExamPage = () => {
   useDocumentTitle('Active Examination');
 
   const { data: apiQuestionsData, isLoading, isError, error, refetch } = useExamQuestions(scheduleId);
+
+  // Periodic server synchronization of the authoritative session + clock offset
+  const { data: sessionSnapshot, refetch: refetchSession } = useExamSession(scheduleId, {
+    refetchInterval: SESSION_SYNC_INTERVAL_MS,
+    refetchOnWindowFocus: true,
+  });
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answersMap, setAnswersMap] = useState({});
@@ -119,6 +129,29 @@ export const ActiveExamPage = () => {
   const [isSubmittingPaper, setIsSubmittingPaper] = useState(false);
 
   const debounceTimerRef = useRef(null);
+  const autoSubmitRef = useRef(null);
+
+  // True when the server has frozen the individual timer because the candidate
+  // left the exam (page closed/hidden or inactivity fallback). While paused,
+  // examination time is not counted and answering is disabled until resume.
+  const isPaused =
+    sessionSnapshot?.status === EXAM_SESSION_STATUS.IN_PROGRESS &&
+    Boolean(sessionSnapshot?.paused_at);
+
+  const pausedRef = useRef(false);
+  useEffect(() => {
+    pausedRef.current = isPaused;
+  }, [isPaused]);
+
+  // Fire-and-forget pause signal: freezes the server-side individual timer so
+  // examination time is only counted while the candidate is actively present.
+  // Reads the token from storage to avoid stale closures in unload handlers.
+  const sendPauseSignal = useCallback(() => {
+    const storedToken = getItem(STORAGE_KEYS.BASE_TOKEN, sessionStorage);
+    if (storedToken && scheduleId) {
+      examsApi.pauseExam(scheduleId, storedToken);
+    }
+  }, [scheduleId]);
 
   // Process live backend questions or fallback to mock questions
   const questions = useMemo(() => {
@@ -144,23 +177,82 @@ export const ActiveExamPage = () => {
     return MOCK_QUESTIONS;
   }, [apiQuestionsData]);
 
-  // Restore unsaved responses & merge with server state on initial load (Session Recovery)
+  // Restore answers, review flags and visited set immediately from the local
+  // resilience cache so nothing is lost on refresh/restart (Session Recovery)
   useEffect(() => {
-    const cachedLocal = restoreLocalAnswers(scheduleId);
-    if (apiQuestionsData?.questions) {
-      const mergedMap = mergeAnswersWithConflictResolution(apiQuestionsData.questions, cachedLocal);
-      setAnswersMap(mergedMap);
-    } else if (Object.keys(cachedLocal).length > 0) {
-      setAnswersMap(cachedLocal);
+    const cached = restoreWorkbenchState(scheduleId);
+    setAnswersMap((prev) => ({ ...cached.answersMap, ...prev }));
+    if (cached.flaggedSet.size > 0) {
+      setFlaggedSet(cached.flaggedSet);
+    }
+    if (cached.visitedSet.size > 0) {
+      setVisitedSet(cached.visitedSet);
+    }
+  }, [scheduleId]);
+
+  // Once server questions arrive: merge server-saved answers into gaps and
+  // restore the current question index, clamped to the real question count
+  const hasRestoredIndexRef = useRef(false);
+  useEffect(() => {
+    if (!apiQuestionsData?.questions || hasRestoredIndexRef.current) return;
+    hasRestoredIndexRef.current = true;
+    const cached = restoreWorkbenchState(scheduleId);
+    const mergedMap = mergeAnswersWithConflictResolution(apiQuestionsData.questions, cached.answersMap);
+    setAnswersMap((prev) => ({ ...mergedMap, ...prev }));
+    const totalQuestions = apiQuestionsData.questions.length;
+    const restoredIndex = Math.min(cached.currentIndex, totalQuestions - 1);
+    if (restoredIndex > 0) {
+      setCurrentIndex(restoredIndex);
+      setVisitedSet((prev) => new Set(prev).add(restoredIndex));
     }
   }, [apiQuestionsData, scheduleId]);
 
-  // Cache answers locally whenever answersMap changes
+  // Cache the complete workbench state whenever it changes so a refresh,
+  // browser restart or power failure loses nothing (Session Recovery).
+  // Skip the first run: the restore effects land one commit later, and we
+  // must not overwrite the cached state with the empty initial state.
+  const hasHydratedRef = useRef(false);
   useEffect(() => {
-    if (Object.keys(answersMap).length > 0) {
-      cacheLocalAnswers(scheduleId, answersMap);
+    if (!hasHydratedRef.current) {
+      hasHydratedRef.current = true;
+      return;
     }
-  }, [answersMap, scheduleId]);
+    cacheWorkbenchState(scheduleId, { answersMap, currentIndex, flaggedSet, visitedSet });
+  }, [answersMap, currentIndex, flaggedSet, visitedSet, scheduleId]);
+
+  // Final synchronous flush on page unload (browser refresh/restart/power loss)
+  // plus a best-effort pause signal so the server freezes the individual timer.
+  // If this request never arrives (e.g. hard power loss), the server-side
+  // inactivity sweeper pauses the session as a fallback.
+  useEffect(() => {
+    const flushWorkbench = () => {
+      cacheWorkbenchState(scheduleId, { answersMap, currentIndex, flaggedSet, visitedSet });
+      sendPauseSignal();
+    };
+    window.addEventListener('beforeunload', flushWorkbench);
+    window.addEventListener('pagehide', flushWorkbench);
+    return () => {
+      window.removeEventListener('beforeunload', flushWorkbench);
+      window.removeEventListener('pagehide', flushWorkbench);
+    };
+  }, [answersMap, currentIndex, flaggedSet, visitedSet, scheduleId, sendPauseSignal]);
+
+  // Pause the instant the tab/window is hidden (alt-tab, window switch, screen
+  // lock): the server freezes the timer and the candidate resumes where they
+  // left off. While hidden, the periodic session poll is suspended by the
+  // query client, so the inactivity sweeper would otherwise pause after the
+  // configured timeout — this makes the pause immediate instead.
+  useEffect(() => {
+    const handleVisibilityHidden = () => {
+      if (document.visibilityState === 'hidden') {
+        sendPauseSignal();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityHidden);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityHidden);
+    };
+  }, [sendPauseSignal]);
 
   // Network Online/Offline Recovery Listener
   useEffect(() => {
@@ -171,6 +263,8 @@ export const ActiveExamPage = () => {
       try {
         await flushOfflineQueue(elevatedToken);
         await flushSubmissionQueue(elevatedToken);
+        // Re-synchronize the authoritative session timer on reconnect
+        await refetchSession();
         setSyncStatus(SYNC_STATUS.SAVED);
       } catch (err) {
         setSyncStatus(SYNC_STATUS.LOCAL);
@@ -190,16 +284,14 @@ export const ActiveExamPage = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [elevatedToken]);
+  }, [elevatedToken, refetchSession]);
 
-  // Initialize server-authoritative countdown duration from server endTime
-  const [secondsRemaining, setSecondsRemaining] = useState(() => {
-    if (endTime) {
-      const remainingMs = new Date(endTime).getTime() - Date.now();
-      return Math.max(0, Math.floor(remainingMs / 1000));
+  // Session state is absent or not started: route to the resume/instructions flow
+  useEffect(() => {
+    if (sessionSnapshot && !sessionSnapshot.status) {
+      navigate(`/exam/${scheduleId}/resume`, { replace: true });
     }
-    return 8140; // Baseline 2h 15m 40s
-  });
+  }, [sessionSnapshot, scheduleId, navigate]);
 
   const currentQuestion = questions[currentIndex] || questions[0];
   const totalQuestions = questions.length;
@@ -234,27 +326,52 @@ export const ActiveExamPage = () => {
     speakText(speechText, `Question ${currentIndex + 1}`);
   }, [currentIndex, totalQuestions, currentQuestion]);
 
-  // Server-authoritative timer countdown effect
+  // Synchronize authoritative session + clock offset from periodic snapshot
   useEffect(() => {
-    const timer = setInterval(() => {
-      setSecondsRemaining((prev) => {
-        if (prev === 300) {
-          announceToScreenReader('Attention candidate: 5 minutes remaining in examination session.', 'assertive');
-        }
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleAutoSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [scheduleId, navigate, elevatedToken]);
+    if (!sessionSnapshot?.status) return;
+    syncExamSession(sessionSnapshot, sessionSnapshot.server_current_time);
+  }, [sessionSnapshot, syncExamSession]);
+
+  // The backend remains authoritative: any terminal server state forces the
+  // submitted terminal screen regardless of the local countdown. A paused
+  // session (candidate left the exam) routes to the resume screen, where the
+  // frozen timer can be restarted.
+  useEffect(() => {
+    const status = sessionSnapshot?.status;
+    if (!status) return;
+    if (isPaused) {
+      navigate(`/exam/${scheduleId}/resume`, { replace: true });
+      return;
+    }
+    const terminal = [
+      EXAM_SESSION_STATUS.SUBMITTED,
+      EXAM_SESSION_STATUS.AUTO_SUBMITTED,
+      EXAM_SESSION_STATUS.EXPIRED,
+      EXAM_SESSION_STATUS.TERMINATED,
+    ];
+    if (terminal.includes(status)) {
+      navigate(`/exam/${scheduleId}/submitted`, { replace: true });
+    }
+  }, [sessionSnapshot, scheduleId, navigate, isPaused]);
+
+  // Server-authoritative countdown derived from the absolute session expiry.
+  // Survives refresh, reconnect and browser restart because it never trusts a
+  // locally decremented value. Fires handleAutoSubmit exactly once at zero.
+  // While the session is paused the countdown is disabled: the server has
+  // frozen the timer and the old expires_at is no longer authoritative.
+  const { secondsRemaining, hasExpired } = useAuthoritativeTimer({
+    expiresAt: session?.expiresAt || null,
+    clockOffsetMs: session?.clockOffsetMs || 0,
+    enabled: Boolean(session?.expiresAt) && !isPaused,
+    onExpire: () => {
+      if (autoSubmitRef.current) autoSubmitRef.current();
+    },
+  });
 
   // Debounced & Resilient answer saving to server or offline queue
   const persistAnswerToBackend = useCallback(
     async (questionId, optionId, textValue) => {
+      if (hasExpired) return; // stop autosave once the timer reaches zero
       setSyncStatus(SYNC_STATUS.SAVING);
 
       if (!navigator.onLine) {
@@ -269,15 +386,23 @@ export const ActiveExamPage = () => {
         }
         setSyncStatus(SYNC_STATUS.SAVED);
       } catch (err) {
+        const terminal = err?.code === 'SESSION_SUBMITTED' || err?.code === 'SESSION_EXPIRED';
+        if (terminal) {
+          // Server already considers the session terminal: answers are no longer accepted.
+          setSyncStatus(SYNC_STATUS.SAVED);
+          navigate(`/exam/${scheduleId}/submitted`, { replace: true });
+          return;
+        }
         console.warn('Network save error, fallback to offline queue:', err);
         enqueueOfflineAnswer(scheduleId, questionId, optionId, textValue);
         setSyncStatus(SYNC_STATUS.LOCAL);
       }
     },
-    [scheduleId, elevatedToken]
+    [scheduleId, elevatedToken, hasExpired, navigate]
   );
 
   const handleSelectOption = (optionId) => {
+    if (hasExpired) return; // disable answering once time is up
     setAnswersMap((prev) => {
       const updated = { ...prev, [currentIndex]: optionId };
       cacheLocalAnswers(scheduleId, updated);
@@ -290,6 +415,7 @@ export const ActiveExamPage = () => {
   };
 
   const handleTextChange = (text) => {
+    if (hasExpired) return; // disable answering once time is up
     setAnswersMap((prev) => {
       const updated = { ...prev, [currentIndex]: text };
       cacheLocalAnswers(scheduleId, updated);
@@ -316,6 +442,7 @@ export const ActiveExamPage = () => {
   };
 
   const handleClearResponse = () => {
+    if (hasExpired) return; // disable answering once time is up
     setAnswersMap((prev) => {
       const next = { ...prev };
       delete next[currentIndex];
@@ -342,6 +469,8 @@ export const ActiveExamPage = () => {
         announceToScreenReader(`Question ${currentIndex + 1} review mark removed`);
         speakText(`Question ${currentIndex + 1} review mark removed`, 'Review Unmarked');
       }
+      // Synchronous persist so the flag survives a power loss mid-session
+      cacheWorkbenchState(scheduleId, { answersMap, currentIndex, flaggedSet: next, visitedSet });
       return next;
     });
   };
@@ -353,6 +482,7 @@ export const ActiveExamPage = () => {
   };
 
   const handleManualSave = () => {
+    if (hasExpired) return; // disable answering once time is up
     if (currentQuestion?.id) {
       const val = answersMap[currentIndex];
       const optId = currentQuestion.type === 'MCQ' ? val : null;
@@ -375,8 +505,11 @@ export const ActiveExamPage = () => {
         enqueueSubmission(scheduleId, false);
       }
     } catch (err) {
-      console.warn('Submit API network error, enqueued for recovery:', err);
-      enqueueSubmission(scheduleId, false);
+      const terminal = err?.code === 'SESSION_SUBMITTED' || err?.code === 'SESSION_EXPIRED';
+      console.warn('Submit API error:', err);
+      if (!terminal) {
+        enqueueSubmission(scheduleId, false);
+      }
     } finally {
       setIsSubmittingPaper(false);
       setIsSubmitModalOpen(false);
@@ -385,8 +518,25 @@ export const ActiveExamPage = () => {
   };
 
   const handleAutoSubmit = async () => {
+    // Guard against a stale local countdown firing while the server has the
+    // session paused: the frozen timer must not be ended. Route the candidate
+    // to the resume screen instead; the server deadline is shifted on resume.
+    if (pausedRef.current) {
+      navigate(`/exam/${scheduleId}/resume`, { replace: true });
+      return;
+    }
+
     announceToScreenReader('Examination time expired. Submitting answers automatically...', 'assertive');
     speakText('Examination time expired. Submitting answers automatically...', 'Auto Submitting Exam');
+
+    // Final synchronization: refresh the authoritative session snapshot before submitting
+    try {
+      if (navigator.onLine && scheduleId) {
+        await refetchSession();
+      }
+    } catch (err) {
+      console.warn('Final synchronization before auto-submit failed:', err);
+    }
 
     try {
       if (navigator.onLine && elevatedToken && scheduleId) {
@@ -395,12 +545,17 @@ export const ActiveExamPage = () => {
         enqueueSubmission(scheduleId, true);
       }
     } catch (err) {
-      console.warn('Auto-submit API network error, enqueued for recovery:', err);
-      enqueueSubmission(scheduleId, true);
+      const terminal = err?.code === 'SESSION_SUBMITTED' || err?.code === 'SESSION_EXPIRED';
+      console.warn('Auto-submit API error:', err);
+      if (!terminal) {
+        enqueueSubmission(scheduleId, true);
+      }
     } finally {
       navigate(`/exam/${scheduleId}/submitted`, { replace: true });
     }
   };
+
+  autoSubmitRef.current = handleAutoSubmit;
 
   // Register Global Keyboard Shortcuts & Web Speech API TTS/STT Handlers
   useEffect(() => {
@@ -610,6 +765,7 @@ export const ActiveExamPage = () => {
             onSelectOption={handleSelectOption}
             answerText={currentQuestion.type === 'DESCRIPTIVE' ? currentAnswer : ''}
             onChangeAnswerText={handleTextChange}
+            isDisabled={hasExpired}
           />
         </div>
 

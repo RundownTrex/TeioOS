@@ -1,6 +1,5 @@
 from typing import Annotated
 from uuid import UUID
-from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Request, Header
 
 from app.api.dependencies.auth import require_student, get_active_exam_student
@@ -15,6 +14,7 @@ from app.schemas.student_exam_delivery import (
     ExamQuestionsPayload,
     ExamSubmitRequest,
     ExamSubmitConfirmation,
+    ExamSessionSnapshotResponse,
 )
 
 router = APIRouter()
@@ -26,27 +26,12 @@ def list_assigned_exams(
     session_service: ExamSessionServiceDep,
 ):
     """
-    List all active or scheduled exams assigned to the student that have not expired.
+    List all exams assigned to the student together with the candidate's personal
+    exam session. Timing is exposed via the session (started_at, expires_at,
+    duration), not derived from the schedule window.
     Requires Base Student JWT.
     """
-    schedules = session_service.get_assigned_schedules(UUID(token_payload.sub))
-    now = datetime.now(timezone.utc)
-    data = []
-    for sched in schedules:
-        if sched.end_time and sched.end_time < now:
-            continue
-        data.append(StudentAvailableExamResponse(
-            schedule_id=sched.id,
-            subject_name=sched.exam.subject.name,
-            subject_code=sched.exam.subject.subject_code,
-            department_name=sched.exam.subject.department.name,
-            duration_minutes=sched.exam.duration_minutes,
-            total_marks=sched.exam.total_marks,
-            status=sched.status,
-            start_time=sched.start_time,
-            end_time=sched.end_time
-        ))
-
+    data = session_service.get_assigned_exams(UUID(token_payload.sub))
     return APIResponse(
         success=True,
         message="Assigned exams retrieved successfully",
@@ -64,21 +49,31 @@ def get_exam_instructions(
     Get instructions and details for an exam before starting.
     Requires Base Student JWT.
     """
-    schedule = session_service.get_schedule_instructions(UUID(token_payload.sub), schedule_id)
-    data = ExamInstructionResponse(
-        schedule_id=schedule.id,
-        subject_name=schedule.exam.subject.name,
-        subject_code=schedule.exam.subject.subject_code,
-        department_name=schedule.exam.subject.department.name,
-        duration_minutes=schedule.exam.duration_minutes,
-        total_marks=schedule.exam.total_marks,
-        start_time=schedule.start_time,
-        end_time=schedule.end_time,
-        status=schedule.status
-    )
+    data = session_service.get_exam_instructions(UUID(token_payload.sub), schedule_id)
     return APIResponse(
         success=True,
         message="Exam instructions retrieved",
+        data=data
+    )
+
+
+@router.get("/{schedule_id}/session", response_model=APIResponse[ExamSessionSnapshotResponse])
+def get_exam_session(
+    schedule_id: UUID,
+    token_payload: Annotated[TokenPayload, Depends(require_student)],
+    session_service: ExamSessionServiceDep,
+):
+    """
+    Returns the candidate's personal examination session (assignmentId, startedAt,
+    expiresAt, submittedAt, status, duration, lastActivityAt) and the authoritative
+    server time. The frontend renders all timing from this object and recomputes its
+    clock offset from server_current_time. Returns 404 if no session has been started yet.
+    Requires Base Student JWT.
+    """
+    data = session_service.get_exam_session(UUID(token_payload.sub), schedule_id)
+    return APIResponse(
+        success=True,
+        message="Exam session retrieved",
         data=data
     )
 
@@ -94,6 +89,8 @@ def start_exam(
     """
     Starts or resumes an exam session. 
     Issues an Elevated Exam Token required for all subsequent exam endpoints.
+    Resuming a paused session shifts the individual deadline forward by the
+    pause duration so paused time is never counted as examination time.
     """
     data = session_service.start_exam_session(
         student_id=UUID(token_payload.sub), 
@@ -104,6 +101,27 @@ def start_exam(
     return APIResponse(
         success=True,
         message="Exam started successfully",
+        data=data
+    )
+
+
+@router.post("/{schedule_id}/pause", response_model=APIResponse[ExamSessionSnapshotResponse])
+def pause_exam(
+    schedule_id: UUID,
+    token_payload: Annotated[TokenPayload, Depends(require_student)],
+    session_service: ExamSessionServiceDep,
+):
+    """
+    Pauses the candidate's individual exam timer (candidate left the exam).
+    While paused, examination time is not counted; it resumes (and the deadline
+    is shifted) when the candidate calls POST /start again. Idempotent.
+    Sent by the exam workbench on page close/hide and used as a fallback by the
+    server-side inactivity sweeper. Requires Base Student JWT.
+    """
+    data = session_service.pause_exam_session(UUID(token_payload.sub), schedule_id)
+    return APIResponse(
+        success=True,
+        message="Exam session paused",
         data=data
     )
 

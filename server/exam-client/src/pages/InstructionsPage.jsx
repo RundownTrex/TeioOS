@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ExamLayout } from '../layouts/ExamLayout';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Checkbox } from '../components/ui/Checkbox';
@@ -39,6 +40,7 @@ const DEFAULT_INSTRUCTIONS_DATA = {
 export const InstructionsPage = () => {
   const { scheduleId = 'cs-401' } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [hasAgreed, setHasAgreed] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [startError, setStartError] = useState('');
@@ -50,12 +52,26 @@ export const InstructionsPage = () => {
 
   const { data: apiInstructions, isLoading, isError, error, refetch } = useExamInstructions(scheduleId);
 
-  // Auto-redirect candidate to dashboard if exam is already submitted/completed
+  // Auto-redirect candidate to dashboard if exam is already submitted/completed,
+  // or to the terminal submitted screen if their personal session is terminal
   useEffect(() => {
     if (apiInstructions?.status === 'COMPLETED' || apiInstructions?.status === 'SUBMITTED') {
       navigate('/dashboard', { replace: true });
+      return;
     }
-  }, [apiInstructions, navigate]);
+    const sessionStatus = apiInstructions?.session?.status;
+    if (
+      sessionStatus === 'submitted' ||
+      sessionStatus === 'auto_submitted' ||
+      sessionStatus === 'expired' ||
+      sessionStatus === 'terminated'
+    ) {
+      navigate(`/exam/${scheduleId}/submitted`, { replace: true });
+    } else if (sessionStatus === 'in_progress') {
+      // Session already started: candidate should resume rather than begin again
+      navigate(`/exam/${scheduleId}/resume`, { replace: true });
+    }
+  }, [apiInstructions, scheduleId, navigate]);
 
   // 1-second ticker for real-time kiosk CTA button auto-unlocking
   useEffect(() => {
@@ -92,18 +108,20 @@ export const InstructionsPage = () => {
             throw new Error('Failed to obtain examination access token from backend server.');
           }
 
-          let remainingSeconds = data.durationMinutes * 60;
-          if (startData.server_current_time && startData.expires_at) {
-            const serverNowMs = new Date(startData.server_current_time).getTime();
-            const endMs = new Date(startData.expires_at).getTime();
-            remainingSeconds = Math.max(0, Math.floor((endMs - serverNowMs) / 1000));
-          }
-
-          // Initialize session with live elevated JWT token & authoritative timer context
+          // Initialize session with live elevated JWT token & authoritative
+          // session payload (expires_at + server time) from the backend
           initExamSession({
             token: startData.access_token,
             scheduleId: scheduleId,
-            remainingSeconds: remainingSeconds,
+            session: startData.session,
+            serverCurrentTime: startData.server_current_time,
+          });
+
+          // Seed the shared session query with the fresh snapshot so the active
+          // page mounts with an unpaused session instead of a stale cached one.
+          queryClient.setQueryData(['examSession', scheduleId, baseToken], {
+            server_current_time: startData.server_current_time,
+            ...startData.session,
           });
 
           navigate(`/exam/${scheduleId}/active`);
@@ -114,7 +132,14 @@ export const InstructionsPage = () => {
             apiErr?.details ||
             'Failed to start examination session. You may have already submitted this exam.';
 
+          if (apiErr?.code === 'SESSION_SUBMITTED') {
+            // Server already has the submission: route to the terminal screen
+            navigate(`/exam/${scheduleId}/submitted`, { replace: true });
+            return;
+          }
+
           if (
+            apiErr?.code === 'SESSION_EXPIRED' ||
             errorMsg.toLowerCase().includes('already submitted') ||
             errorMsg.toLowerCase().includes('closed') ||
             errorMsg.toLowerCase().includes('completed')

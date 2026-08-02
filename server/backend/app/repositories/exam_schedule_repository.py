@@ -1,12 +1,13 @@
 from typing import Sequence
 from uuid import UUID
 from datetime import datetime, timezone
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_, func
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.exam_schedule import ExamSchedule, ExamScheduleStatus
 from app.models.exam import Exam
 from app.models.subject import Subject
+from app.models.student_exam import StudentExam, AssignmentStatus
 from app.repositories.base_repository import BaseRepository
 
 
@@ -69,13 +70,34 @@ class ExamScheduleRepository(BaseRepository[ExamSchedule]):
         return self.session.execute(stmt).scalars().all()
 
     def get_active_schedules_for_student_list(self, student_id: UUID) -> Sequence[ExamSchedule]:
-        """Returns all ACTIVE or SCHEDULED exams assigned to a student that have not expired."""
+        """
+        Returns the exams assigned to a student that they can act on:
+        - schedules currently inside the availability window (ACTIVE/SCHEDULED and not yet ended), or
+        - schedules where the student already has a PENDING/IN_PROGRESS session, so that a
+          candidate mid-examination can resume or submit even if the window has closed.
+        """
         now = datetime.now(timezone.utc)
+        has_running_assignment = (
+            select(func.count())
+            .select_from(StudentExam)
+            .where(
+                StudentExam.student_id == student_id,
+                StudentExam.exam_schedule_id == ExamSchedule.id,
+                StudentExam.status.in_([AssignmentStatus.PENDING, AssignmentStatus.IN_PROGRESS]),
+            )
+            .scalar_subquery()
+            > 0
+        )
         stmt = select(ExamSchedule).where(
             and_(
-                ExamSchedule.status.in_([ExamScheduleStatus.ACTIVE, ExamScheduleStatus.SCHEDULED]),
-                ExamSchedule.end_time >= now,
-                ExamSchedule.assigned_students.any(id=student_id)
+                ExamSchedule.assigned_students.any(id=student_id),
+                or_(
+                    and_(
+                        ExamSchedule.status.in_([ExamScheduleStatus.ACTIVE, ExamScheduleStatus.SCHEDULED]),
+                        ExamSchedule.end_time >= now,
+                    ),
+                    has_running_assignment,
+                ),
             )
         ).options(
             joinedload(ExamSchedule.exam)

@@ -11,6 +11,10 @@ from app.core.exceptions import (
     ConflictException,
     ValidationException,
     BusinessRuleException,
+    ExamUnavailableException,
+    SessionExpiredException,
+    SessionAlreadySubmittedException,
+    SessionPausedException,
 )
 from app.schemas.response import APIResponse
 import logging
@@ -76,6 +80,58 @@ def add_exception_handlers(app: FastAPI) -> None:
         )
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
+            content=response_model.model_dump(mode='json'),
+        )
+
+    @app.exception_handler(ExamUnavailableException)
+    async def exam_unavailable_exception_handler(request: Request, exc: ExamUnavailableException):
+        logger.warning(f"ExamUnavailableException at {request.url.path}: {exc.detail}")
+        response_model = APIResponse(
+            success=False,
+            message="Examination unavailable",
+            errors=[exc.detail]
+        )
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=response_model.model_dump(mode='json'),
+        )
+
+    @app.exception_handler(SessionExpiredException)
+    async def session_expired_exception_handler(request: Request, exc: SessionExpiredException):
+        logger.warning(f"SessionExpiredException at {request.url.path}: {exc.detail}")
+        response_model = APIResponse(
+            success=False,
+            message="Exam session expired",
+            errors=[exc.detail]
+        )
+        return JSONResponse(
+            status_code=status.HTTP_410_GONE,
+            content=response_model.model_dump(mode='json'),
+        )
+
+    @app.exception_handler(SessionAlreadySubmittedException)
+    async def session_already_submitted_exception_handler(request: Request, exc: SessionAlreadySubmittedException):
+        logger.warning(f"SessionAlreadySubmittedException at {request.url.path}: {exc.detail}")
+        response_model = APIResponse(
+            success=False,
+            message="Exam already submitted",
+            errors=[exc.detail]
+        )
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content=response_model.model_dump(mode='json'),
+        )
+
+    @app.exception_handler(SessionPausedException)
+    async def session_paused_exception_handler(request: Request, exc: SessionPausedException):
+        logger.warning(f"SessionPausedException at {request.url.path}: {exc.detail}")
+        response_model = APIResponse(
+            success=False,
+            message="Exam session paused",
+            errors=[exc.detail]
+        )
+        return JSONResponse(
+            status_code=status.HTTP_423_LOCKED,
             content=response_model.model_dump(mode='json'),
         )
 

@@ -64,6 +64,12 @@ export const flushOfflineQueue = async (elevatedToken, onProgress) => {
       syncedCount++;
       if (onProgress) onProgress({ syncedCount, total: queue.length });
     } catch (err) {
+      // 409/410 mean the session is terminal (submitted/expired); the answer is
+      // no longer accepted and the queued item should be dropped, not retried.
+      if (err?.code === 'SESSION_SUBMITTED' || err?.code === 'SESSION_EXPIRED') {
+        syncedCount++;
+        continue;
+      }
       console.warn('Failed to flush offline answer item:', item, err);
       errorCount++;
       remainingQueue.push(item);
@@ -83,22 +89,50 @@ export const flushOfflineQueue = async (elevatedToken, onProgress) => {
 
 export const cacheLocalAnswers = (scheduleId, answersMap) => {
   if (!scheduleId) return;
+  cacheWorkbenchState(scheduleId, { answersMap });
+};
+
+export const restoreLocalAnswers = (scheduleId) => {
+  return restoreWorkbenchState(scheduleId).answersMap;
+};
+
+export const cacheWorkbenchState = (
+  scheduleId,
+  { answersMap, currentIndex, flaggedSet, visitedSet }
+) => {
+  if (!scheduleId) return;
   const cacheKey = `${STORAGE_KEYS.EXAM_ANSWERS_CACHE}${scheduleId}`;
+  const existing = getItem(cacheKey, localStorage) || {};
   setItem(
     cacheKey,
     {
-      answersMap,
+      answersMap: answersMap ?? existing.answersMap ?? {},
+      currentIndex: currentIndex ?? existing.currentIndex ?? 0,
+      flaggedSet: Array.from(flaggedSet ?? existing.flaggedSet ?? []),
+      visitedSet: Array.from(visitedSet ?? existing.visitedSet ?? []),
       updatedAt: Date.now(),
     },
     localStorage
   );
 };
 
-export const restoreLocalAnswers = (scheduleId) => {
-  if (!scheduleId) return {};
+export const restoreWorkbenchState = (scheduleId) => {
+  if (!scheduleId) {
+    return {
+      answersMap: {},
+      currentIndex: 0,
+      flaggedSet: new Set(),
+      visitedSet: new Set(),
+    };
+  }
   const cacheKey = `${STORAGE_KEYS.EXAM_ANSWERS_CACHE}${scheduleId}`;
   const data = getItem(cacheKey, localStorage);
-  return data?.answersMap || {};
+  return {
+    answersMap: data?.answersMap || {},
+    currentIndex: Number(data?.currentIndex) || 0,
+    flaggedSet: new Set(data?.flaggedSet || []),
+    visitedSet: new Set(data?.visitedSet || []),
+  };
 };
 
 export const enqueueSubmission = (scheduleId, isAutoSubmit = false) => {
@@ -125,6 +159,10 @@ export const flushSubmissionQueue = async (elevatedToken) => {
         await examsApi.submitExam(item.scheduleId, elevatedToken, item.isAutoSubmit);
       }
     } catch (err) {
+      // 409/410 mean the session is already terminal; nothing to flush.
+      if (err?.code === 'SESSION_SUBMITTED' || err?.code === 'SESSION_EXPIRED') {
+        continue;
+      }
       console.warn('Failed to flush submission item:', item, err);
       remaining.push(item);
     }

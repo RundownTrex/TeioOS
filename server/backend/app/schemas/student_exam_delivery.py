@@ -58,6 +58,35 @@ class ExamSubmitRequest(BaseModel):
 
 # --- Response Models ---
 
+class ExamSessionResponse(BaseModel):
+    """
+    The candidate's personal examination session.
+
+    The frontend derives all examination timing from this object (expires_at,
+    started_at, duration) instead of the ExamSchedule availability window.
+    """
+    model_config = ConfigDict(from_attributes=True)
+
+    assignment_id: UUID
+    started_at: datetime | None = None
+    expires_at: datetime | None = None
+    submitted_at: datetime | None = None
+    status: str
+    duration: int
+    last_activity_at: datetime | None = None
+    paused_at: datetime | None = None
+
+
+class ExamSessionSnapshotResponse(ExamSessionResponse):
+    """Snapshot of the candidate's exam session plus the authoritative server time.
+
+    Extends ExamSessionResponse so all session fields remain at the top level,
+    with `server_current_time` added alongside. The frontend recomputes its clock
+    offset from `server_current_time` on every periodic synchronization.
+    """
+    server_current_time: datetime
+
+
 class ExamInstructionResponse(BaseModel):
     """Payload for GET /instructions."""
     model_config = ConfigDict(from_attributes=True)
@@ -71,6 +100,7 @@ class ExamInstructionResponse(BaseModel):
     start_time: datetime
     end_time: datetime
     status: str
+    session: ExamSessionResponse | None = None
 
 class StudentAvailableExamResponse(BaseModel):
     """Payload for GET / (Available Exams list)."""
@@ -85,6 +115,7 @@ class StudentAvailableExamResponse(BaseModel):
     status: str
     start_time: datetime
     end_time: datetime
+    session: ExamSessionResponse | None = None
 
 
 class ExamStartResponse(BaseModel):
@@ -94,6 +125,7 @@ class ExamStartResponse(BaseModel):
     exam_session_id: UUID
     server_current_time: datetime
     expires_at: datetime
+    session: ExamSessionResponse
 
 
 class ExamSubmitConfirmation(BaseModel):

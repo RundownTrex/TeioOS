@@ -20,6 +20,18 @@ class Settings(BaseSettings):
     secret_key: str = "default_unsafe_secret_key_change_in_production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 1440  # 1 day default
+
+    # Examination timing
+    # Interval (seconds) between server-side sweeps that auto-submit sessions
+    # whose individual timer (expires_at) has elapsed. Server time only.
+    auto_submit_sweep_interval_seconds: int = 60
+    # After this many seconds without server-authoritative activity, an active
+    # session is paused automatically (covers browser close, network loss and
+    # power failure when the client could not signal the pause itself).
+    exam_inactivity_timeout_seconds: int = 60
+    # Safety net: a session paused for longer than this many minutes is
+    # auto-submitted so an abandoned exam still produces a result.
+    exam_max_pause_minutes: int = 120
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

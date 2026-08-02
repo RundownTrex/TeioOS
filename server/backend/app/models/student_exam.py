@@ -2,7 +2,7 @@ import uuid
 import enum
 from datetime import datetime
 from typing import List, TYPE_CHECKING
-from sqlalchemy import String, Boolean, Integer, DateTime, ForeignKey, Enum as SAEnum, UniqueConstraint
+from sqlalchemy import String, Boolean, Integer, DateTime, ForeignKey, Enum as SAEnum, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import BaseModel
 
@@ -39,6 +39,10 @@ class StudentExam(BaseModel):
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Updated on each server-authoritative interaction
     last_activity_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Set when the candidate leaves the exam: the individual timer is frozen
+    # while paused_at is set and expires_at is shifted forward by the pause
+    # duration when the session is resumed. NULL while the session is active.
+    paused_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # --- Session state ---
     # native_enum=False so SQLAlchemy serializes/deserializes using the
@@ -71,6 +75,8 @@ class StudentExam(BaseModel):
 
     __table_args__ = (
         UniqueConstraint("student_id", "exam_schedule_id", name="uq_student_exam_schedule"),
+        # Supports the server-side auto-submit sweep over expired sessions.
+        Index("ix_student_exams_status_expires_at", "status", "expires_at"),
     )
 
     # Relationships

@@ -12,7 +12,13 @@ from app.repositories.question_repository import QuestionRepository
 from app.repositories.student_answer_repository import StudentAnswerRepository
 from app.services.student_answer_service import StudentAnswerService
 from app.schemas.student_exam_delivery import ExamQuestionsPayload, QuestionDisplay, OptionDisplay
-from app.core.exceptions import BusinessRuleException, AuthorizationException
+from app.core.exceptions import (
+    BusinessRuleException,
+    ExamUnavailableException,
+    SessionExpiredException,
+    SessionAlreadySubmittedException,
+    SessionPausedException,
+)
 
 
 class ExamDeliveryService:
@@ -32,26 +38,47 @@ class ExamDeliveryService:
         self.answer_repo = answer_repo
         self.answer_service = answer_service or StudentAnswerService(db, question_repo, answer_repo)
 
-    def _validate_assignment_active(self, assignment_id: uuid.UUID, schedule_id: uuid.UUID):
+    def _validate_assignment_active(self, assignment_id: uuid.UUID, schedule_id: uuid.UUID) -> StudentExam:
         """
-        Validates that the exam assignment (session) is active and has not expired.
-        Auto-marks as EXPIRED if the individual timer has elapsed.
+        Validates every examination request before serving content:
+
+        - assignment exists          -> 404 ExamUnavailableException
+        - assignment is active       -> 409/410 based on the terminal state
+        - current server time < expires_at -> 410 SessionExpiredException
+
+        The assignment is auto-marked EXPIRED once the individual timer has elapsed.
         """
         assignment = self.assignment_repo.get_by_id(assignment_id)
         if not assignment or assignment.exam_schedule_id != schedule_id:
-            raise AuthorizationException("Invalid session")
+            raise ExamUnavailableException("Exam session not found")
 
-        if assignment.status != AssignmentStatus.IN_PROGRESS:
-            raise BusinessRuleException("Exam session is not active")
+        if assignment.status in (AssignmentStatus.SUBMITTED, AssignmentStatus.AUTO_SUBMITTED):
+            raise SessionAlreadySubmittedException("Exam has already been submitted")
+
+        if assignment.status == AssignmentStatus.TERMINATED:
+            raise SessionExpiredException("Exam session has been terminated")
+
+        # A paused session has a frozen timer: answering is not allowed until
+        # the candidate resumes (POST /start shifts the deadline). The paused
+        # check must precede the expiry check because the unshifted deadline may
+        # have passed while the session was paused without it being expired.
+        if assignment.paused_at is not None:
+            raise SessionPausedException("Exam session is paused")
 
         current_time = datetime.now(timezone.utc)
 
         # --- Check individual session timer expiry ---
-        if assignment.expires_at and current_time > assignment.expires_at:
-            assignment.status = AssignmentStatus.EXPIRED
-            assignment.last_activity_at = current_time
-            self.db.commit()
-            raise BusinessRuleException("Exam time has expired")
+        if assignment.status == AssignmentStatus.EXPIRED or (
+            assignment.expires_at is not None and current_time >= assignment.expires_at
+        ):
+            if assignment.status != AssignmentStatus.EXPIRED:
+                assignment.status = AssignmentStatus.EXPIRED
+                assignment.last_activity_at = current_time
+                self.db.commit()
+            raise SessionExpiredException("Exam time has expired")
+
+        if assignment.status != AssignmentStatus.IN_PROGRESS:
+            raise ExamUnavailableException("Exam session is not active")
 
         return assignment
 

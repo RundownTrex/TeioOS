@@ -46,3 +46,35 @@ class BusinessRuleException(Exception):
     def __init__(self, detail: str = "Business rule violation"):
         self.detail = detail
         super().__init__(self.detail)
+
+
+class ExamUnavailableException(Exception):
+    """Raised when an examination or its session is not available (HTTP 404)."""
+    def __init__(self, detail: str = "Examination is not available"):
+        self.detail = detail
+        super().__init__(self.detail)
+
+
+class SessionExpiredException(Exception):
+    """Raised when the candidate's personal exam session timer has elapsed (HTTP 410)."""
+    def __init__(self, detail: str = "Exam session has expired"):
+        self.detail = detail
+        super().__init__(self.detail)
+
+
+class SessionAlreadySubmittedException(Exception):
+    """Raised when the candidate's exam session has already been submitted (HTTP 409)."""
+    def __init__(self, detail: str = "Exam has already been submitted"):
+        self.detail = detail
+        super().__init__(self.detail)
+
+
+class SessionPausedException(Exception):
+    """Raised when a request targets a paused exam session (HTTP 423).
+
+    The candidate's individual timer is frozen while the session is paused;
+    the session must be resumed (POST /start) before answering can continue.
+    """
+    def __init__(self, detail: str = "Exam session is paused"):
+        self.detail = detail
+        super().__init__(self.detail)

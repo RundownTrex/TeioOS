@@ -47,6 +47,14 @@ axiosClient.interceptors.response.use(
       message: error.response?.data?.detail || error.response?.data?.message || error.message || 'An unexpected error occurred',
       status: status || 500,
       details: error.response?.data?.detail || null,
+      code:
+        status === 409
+          ? 'SESSION_SUBMITTED'
+          : status === 410
+            ? 'SESSION_EXPIRED'
+            : status === 423
+              ? 'SESSION_PAUSED'
+              : undefined,
     };
 
     return Promise.reject(formattedError);

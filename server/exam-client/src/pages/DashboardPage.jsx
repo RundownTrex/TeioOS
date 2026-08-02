@@ -8,9 +8,10 @@ import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState } from '../components/ui/ErrorState';
-import { ArrowRight, User, Clock, Lock } from 'lucide-react';
+import { ArrowRight, User, Clock, Lock, RotateCcw } from 'lucide-react';
 import { formatDateTime } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { EXAM_SESSION_STATUS } from '../utils/constants';
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
@@ -33,15 +34,30 @@ export const DashboardPage = () => {
     accessibilityProfile: 'Standard Light Mode (TTS Enabled)',
   };
 
-  // Filter out any completed, submitted or cancelled exam schedules
+  const isTerminalSession = (exam) => {
+    const status = exam?.session?.status;
+    return [
+      EXAM_SESSION_STATUS.SUBMITTED,
+      EXAM_SESSION_STATUS.AUTO_SUBMITTED,
+      EXAM_SESSION_STATUS.EXPIRED,
+      EXAM_SESSION_STATUS.TERMINATED,
+    ].includes(status);
+  };
+
+  const isInProgress = (exam) => exam?.session?.status === EXAM_SESSION_STATUS.IN_PROGRESS;
+
+  // Filter out any completed, submitted, expired or cancelled exams
   const activeExams = (assignedExams || []).filter((exam) => {
+    if (isTerminalSession(exam)) return false;
     if (exam.status === 'COMPLETED' || exam.status === 'SUBMITTED' || exam.status === 'CANCELLED') return false;
+    if (isInProgress(exam)) return true;
     if (!exam.end_time) return true;
     const endTimeMs = new Date(exam.end_time).getTime();
     return endTimeMs > now;
   });
 
   const completedExams = (assignedExams || []).filter((exam) => {
+    if (isTerminalSession(exam)) return true;
     if (exam.status === 'COMPLETED' || exam.status === 'SUBMITTED') return true;
     if (exam.end_time) {
       const endTimeMs = new Date(exam.end_time).getTime();
@@ -119,8 +135,13 @@ export const DashboardPage = () => {
             {activeExams.map((exam) => {
               const startTimeMs = exam.start_time ? new Date(exam.start_time).getTime() : 0;
               const isUpcoming = startTimeMs > now;
-              const statusText = isUpcoming ? 'SCHEDULED' : (exam.status || 'READY TO START');
-              const badgeVariant = isUpcoming ? 'info' : 'success';
+              const resumeActive = isInProgress(exam);
+              const statusText = resumeActive
+                ? 'IN PROGRESS'
+                : isUpcoming
+                  ? 'SCHEDULED'
+                  : (exam.status || 'READY TO START');
+              const badgeVariant = resumeActive ? 'info' : isUpcoming ? 'info' : 'success';
 
               return (
                 <Card key={exam.schedule_id} className="border border-navy-primary/30 hover:border-navy-primary bg-surface shadow-sm transition-all duration-normal">
@@ -145,6 +166,13 @@ export const DashboardPage = () => {
                       <div><strong>Total Marks:</strong> {exam.total_marks}</div>
                     </div>
 
+                    {resumeActive && (
+                      <div className="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-300 text-blue-900 text-xs rounded-md">
+                        <Clock className="w-4 h-4 shrink-0 text-navy-primary" aria-hidden="true" />
+                        <span>An active examination session was detected for this paper. Resume to continue without losing any time.</span>
+                      </div>
+                    )}
+
                     {isUpcoming && (
                       <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-300 text-amber-900 text-xs rounded-md">
                         <Clock className="w-4 h-4 shrink-0 text-amber-600" aria-hidden="true" />
@@ -153,16 +181,29 @@ export const DashboardPage = () => {
                     )}
 
                     <div className="pt-2">
-                      <Button
-                        variant={isUpcoming ? 'secondary' : 'primary'}
-                        size="lg"
-                        fullWidth={true}
-                        onClick={() => navigate(`/exam/${exam.schedule_id}/instructions`)}
-                        rightIcon={isUpcoming ? <Lock className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
-                        ariaLabel={`Proceed to Examination Instructions for ${exam.subject_name}`}
-                      >
-                        {isUpcoming ? 'Read Instructions (Exam Scheduled)' : 'Proceed to Examination Instructions'}
-                      </Button>
+                      {resumeActive ? (
+                        <Button
+                          variant="primary"
+                          size="lg"
+                          fullWidth={true}
+                          onClick={() => navigate(`/exam/${exam.schedule_id}/resume`)}
+                          rightIcon={<RotateCcw className="w-4 h-4" />}
+                          ariaLabel={`Resume active examination for ${exam.subject_name}`}
+                        >
+                          Resume Examination
+                        </Button>
+                      ) : (
+                        <Button
+                          variant={isUpcoming ? 'secondary' : 'primary'}
+                          size="lg"
+                          fullWidth={true}
+                          onClick={() => navigate(`/exam/${exam.schedule_id}/instructions`)}
+                          rightIcon={isUpcoming ? <Lock className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                          ariaLabel={`Proceed to Examination Instructions for ${exam.subject_name}`}
+                        >
+                          {isUpcoming ? 'Read Instructions (Exam Scheduled)' : 'Proceed to Examination Instructions'}
+                        </Button>
+                      )}
                     </div>
                   </CardBody>
                 </Card>

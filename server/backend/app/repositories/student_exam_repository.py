@@ -2,7 +2,7 @@ import uuid
 from typing import Sequence
 from uuid import UUID
 from datetime import datetime, timedelta
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.student_exam import StudentExam, AssignmentStatus
@@ -98,19 +98,53 @@ class StudentExamRepository(BaseRepository[StudentExam]):
 
     def get_paused_overdue(self, now: datetime, max_pause_minutes: int, limit: int = 200) -> Sequence[StudentExam]:
         """
-        Returns paused sessions that have been paused longer than the maximum
-        allowed pause duration. These are auto-submitted as a safety net so an
-        abandoned exam still produces a result.
+        Returns paused sessions that should be auto-submitted as a safety net.
+
+        A paused session is only auto-submitted when at least one of the
+        following is true:
+
+        1. The exam schedule's availability window (end_time) has closed — the
+           candidate can no longer re-enter the exam regardless of how much
+           individual timer time they had remaining.
+        2. The candidate's individual timer has genuinely run out — i.e. the
+           frozen remaining time (expires_at - paused_at) is zero or negative,
+           meaning all examination time has been consumed.
+
+        The old behaviour of auto-submitting after a fixed pause duration alone
+        was incorrect: it would force-submit sessions mid-month even when the
+        exam window was still open and the candidate had time remaining.
+
+        The max_pause_minutes guard is still applied as an additional
+        prerequisite (the session must have been paused at least that long)
+        to avoid auto-submitting sessions that were paused very recently.
 
         Rows are locked with FOR UPDATE SKIP LOCKED so concurrent sweepers
         cannot process the same row twice.
         """
-        stmt = select(StudentExam).where(
-            StudentExam.status == AssignmentStatus.IN_PROGRESS,
-            StudentExam.submitted_at.is_(None),
-            StudentExam.paused_at.is_not(None),
-            StudentExam.paused_at <= now - timedelta(minutes=max_pause_minutes),
-        ).order_by(StudentExam.paused_at).limit(limit).with_for_update(skip_locked=True)
+        stmt = (
+            select(StudentExam)
+            .join(ExamSchedule, StudentExam.exam_schedule_id == ExamSchedule.id)
+            .where(
+                StudentExam.status == AssignmentStatus.IN_PROGRESS,
+                StudentExam.submitted_at.is_(None),
+                StudentExam.paused_at.is_not(None),
+                StudentExam.paused_at <= now - timedelta(minutes=max_pause_minutes),
+                or_(
+                    # Condition 1: schedule window has closed
+                    ExamSchedule.end_time <= now,
+                    # Condition 2: frozen individual timer has elapsed
+                    # (expires_at - paused_at <= 0  =>  expires_at <= paused_at)
+                    and_(
+                        StudentExam.expires_at.is_not(None),
+                        StudentExam.paused_at.is_not(None),
+                        StudentExam.expires_at <= StudentExam.paused_at,
+                    ),
+                ),
+            )
+            .order_by(StudentExam.paused_at)
+            .limit(limit)
+            .with_for_update(skip_locked=True)
+        )
         return self.session.scalars(stmt).all()
 
     def get_all_for_schedule(self, exam_schedule_id: UUID, skip: int = 0, limit: int = 20) -> Sequence[StudentExam]:

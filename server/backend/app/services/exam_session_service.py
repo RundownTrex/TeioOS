@@ -437,9 +437,22 @@ class ExamSessionService:
 
     def auto_submit_overdue_paused_sessions(self, now: datetime | None = None) -> int:
         """
-        Safety net sweep: auto-submits sessions that have been paused longer
-        than the configured maximum pause duration, so an abandoned exam still
-        produces a result instead of remaining paused indefinitely.
+        Safety net sweep: auto-submits paused sessions that can no longer be
+        meaningfully resumed. A session qualifies when ALL of the following hold:
+
+        - It has been paused for at least ``exam_max_pause_minutes`` (ensures
+          very recently paused sessions are never prematurely swept).
+        - AND at least one of:
+            a. The exam schedule's availability window (end_time) has closed —
+               the candidate can no longer re-enter regardless of remaining time.
+            b. The candidate's individual frozen timer has elapsed — all exam
+               duration has been consumed (expires_at <= paused_at).
+
+        This policy deliberately does NOT auto-submit sessions whose exam window
+        is still open and whose individual timer has time remaining, even if
+        they have been paused for a long time. Those sessions can still be
+        legitimately resumed by the candidate.
+
         Returns the number of sessions auto-submitted.
         """
         current_time = now or datetime.now(timezone.utc)

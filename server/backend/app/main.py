@@ -48,8 +48,9 @@ async def _run_auto_submit_sweeper() -> None:
        stopped being active (fallback when the pause signal was not delivered).
     2. auto_submit_expired_sessions auto-submits active sessions whose timer
        elapsed (paused sessions are exempt — their timer is frozen).
-    3. auto_submit_overdue_paused_sessions auto-submits sessions abandoned for
-       longer than the maximum pause duration as a safety net.
+    3. auto_submit_overdue_paused_sessions auto-submits sessions that have been
+       paused long enough AND whose schedule window has closed or whose
+       individual timer has genuinely run out — never submits sessions mid-window.
     """
     while True:
         db = SessionLocal()

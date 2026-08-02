@@ -16,10 +16,19 @@ class SubjectService:
         self.subject_repo = subject_repo
         self.department_repo = department_repo
 
-    def get_subjects(self, page: int, page_size: int) -> PaginatedData[Subject]:
+    def get_subjects(
+        self,
+        page: int,
+        page_size: int,
+        q: str | None = None,
+        department_id: UUID | None = None,
+    ) -> PaginatedData[Subject]:
+        search = q.strip() if q else None
+        if department_id is not None:
+            self._validate_department(department_id)
         skip = (page - 1) * page_size
-        items = self.subject_repo.get_all(skip, page_size)
-        total = self.subject_repo.get_count()
+        items = self.subject_repo.get_all(skip, page_size, search, department_id)
+        total = self.subject_repo.get_count(search, department_id)
         return PaginatedData(items=items, total=total, page=page, page_size=page_size)
 
     def get_subject(self, subject_id: UUID) -> Subject:
@@ -27,12 +36,6 @@ class SubjectService:
         if not subject:
             raise NotFoundException(resource_name="Subject")
         return subject
-
-    def get_subjects_by_department(self, department_id: UUID, page: int, page_size: int) -> PaginatedData[Subject]:
-        skip = (page - 1) * page_size
-        items = self.subject_repo.get_by_department(department_id, skip, page_size)
-        total = self.subject_repo.get_count_by_department(department_id)
-        return PaginatedData(items=items, total=total, page=page, page_size=page_size)
 
     def _validate_department(self, department_id: UUID) -> None:
         department = self.department_repo.get_by_id(department_id)

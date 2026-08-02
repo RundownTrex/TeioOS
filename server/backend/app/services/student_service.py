@@ -21,10 +21,22 @@ class StudentService:
         self.student_repo = student_repo
         self.class_repo = class_repo
 
-    def get_students(self, page: int, page_size: int) -> PaginatedData[Student]:
+    def get_students(
+        self,
+        page: int,
+        page_size: int,
+        q: str | None = None,
+        class_id: UUID | None = None,
+        is_active: bool | None = None,
+    ) -> PaginatedData[Student]:
+        search = q.strip() if q else None
+        if class_id is not None:
+            class_obj = self.class_repo.get_by_id(class_id)
+            if not class_obj:
+                raise NotFoundException(resource_name="Class")
         skip = (page - 1) * page_size
-        items = self.student_repo.get_all(skip, page_size)
-        total = self.student_repo.get_count()
+        items = self.student_repo.get_all(skip, page_size, search, class_id, is_active)
+        total = self.student_repo.get_count(search, class_id, is_active)
         return PaginatedData(items=items, total=total, page=page, page_size=page_size)
 
     def get_student(self, student_id: UUID) -> Student:
@@ -53,7 +65,8 @@ class StudentService:
             date_of_birth=data.date_of_birth,
             class_id=data.class_id,
             password_hash=get_password_hash(str(data.date_of_birth)),
-            is_active=True
+            is_active=True,
+            accessibility_profile=data.accessibility_profile,
         )
         try:
             self.student_repo.create(student)
@@ -86,6 +99,8 @@ class StudentService:
             student.class_id = data.class_id
         if data.is_active is not None:
             student.is_active = data.is_active
+        if data.accessibility_profile is not None:
+            student.accessibility_profile = data.accessibility_profile
 
         try:
             self.db.commit()

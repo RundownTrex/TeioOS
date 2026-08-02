@@ -241,7 +241,15 @@ class ExamSessionService:
                 if current_time > schedule.end_time:
                     raise ExamUnavailableException("The exam availability window has closed")
 
-                exam_duration = timedelta(minutes=schedule.exam.duration_minutes)
+                # PENDING assignment may carry a per-student time override
+                # (individual_duration_minutes); otherwise the exam duration
+                # applies. Fresh sessions (assignment is None) always use the
+                # exam duration because no admin override exists yet.
+                exam_duration = timedelta(
+                    minutes=assignment.individual_duration_minutes
+                    if assignment and assignment.individual_duration_minutes
+                    else schedule.exam.duration_minutes
+                )
 
                 if assignment is None:
                     assignment = StudentExam(

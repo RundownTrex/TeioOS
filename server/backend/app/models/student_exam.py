@@ -60,6 +60,9 @@ class StudentExam(BaseModel):
     resume_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     is_auto_submitted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    # Per-student exam time override in minutes. NULL = use exam.duration_minutes.
+    individual_duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
     # Foreign Keys
     student_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("students.id", ondelete="CASCADE"),

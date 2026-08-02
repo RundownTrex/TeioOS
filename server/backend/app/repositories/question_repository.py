@@ -1,6 +1,6 @@
 from typing import Sequence
 from uuid import UUID
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.question import Question
@@ -30,6 +30,10 @@ class QuestionRepository(BaseRepository[Question]):
     def get_count(self, exam_id: UUID | None = None) -> int:
         if not exam_id:
             return super().get_count()
-        from sqlalchemy import func
         stmt = select(func.count()).select_from(Question).where(Question.exam_id == exam_id)
+        return self.session.execute(stmt).scalar_one()
+
+    def get_max_display_order(self, exam_id: UUID) -> int | None:
+        """Highest display_order among an exam's questions (None when empty)."""
+        stmt = select(func.max(Question.display_order)).where(Question.exam_id == exam_id)
         return self.session.execute(stmt).scalar_one()

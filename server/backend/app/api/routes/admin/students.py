@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
@@ -16,9 +16,14 @@ def get_students(
     pagination: PaginationDep,
     student_service: StudentServiceDep,
     _=Depends(require_admin),
+    q: str | None = Query(None, max_length=255, description="Search students by name or roll number"),
+    class_id: UUID | None = Query(None, description="Filter students by class ID"),
+    is_active: bool | None = Query(None, description="Filter students by active status"),
 ):
-    """Retrieve all students with pagination."""
-    paginated_data = student_service.get_students(pagination.page, pagination.page_size)
+    """Retrieve all students with pagination and optional search/filters."""
+    paginated_data = student_service.get_students(
+        pagination.page, pagination.page_size, q, class_id, is_active
+    )
     return APIResponse(
         success=True,
         message="Students retrieved successfully",

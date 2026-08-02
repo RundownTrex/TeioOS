@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
@@ -16,9 +16,11 @@ def get_classes(
     pagination: PaginationDep,
     class_service: ClassServiceDep,
     _=Depends(require_admin),
+    q: str | None = Query(None, max_length=255, description="Search classes by name"),
+    department_id: UUID | None = Query(None, description="Filter classes by department ID"),
 ):
-    """Retrieve all classes with pagination."""
-    paginated_data = class_service.get_classes(pagination.page, pagination.page_size)
+    """Retrieve all classes with pagination, optional name search and department filter."""
+    paginated_data = class_service.get_classes(pagination.page, pagination.page_size, q, department_id)
     return APIResponse(
         success=True,
         message="Classes retrieved successfully",

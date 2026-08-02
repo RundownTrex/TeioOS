@@ -16,6 +16,11 @@ from app.repositories.result_repository import ResultRepository
 from app.repositories.dashboard_repository import DashboardRepository
 from app.repositories.subject_repository import SubjectRepository
 from app.repositories.student_answer_repository import StudentAnswerRepository
+from app.repositories.analytics_repository import AnalyticsRepository
+
+def get_analytics_repository(db: SessionDep) -> AnalyticsRepository:
+    return AnalyticsRepository(db)
+
 
 def get_student_answer_repository(db: SessionDep) -> StudentAnswerRepository:
     return StudentAnswerRepository(db)
@@ -82,3 +87,4 @@ ResultRepoDep = Annotated[ResultRepository, Depends(get_result_repository)]
 DashboardRepoDep = Annotated[DashboardRepository, Depends(get_dashboard_repository)]
 SubjectRepoDep = Annotated[SubjectRepository, Depends(get_subject_repository)]
 StudentAnswerRepoDep = Annotated[StudentAnswerRepository, Depends(get_student_answer_repository)]
+AnalyticsRepoDep = Annotated[AnalyticsRepository, Depends(get_analytics_repository)]

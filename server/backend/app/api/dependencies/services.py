@@ -16,6 +16,7 @@ from app.api.dependencies.repositories import (
     DashboardRepoDep,
     SubjectRepoDep,
     StudentAnswerRepoDep,
+    AnalyticsRepoDep,
 )
 from app.services.auth_service import AuthService
 from app.services.student_auth_service import StudentAuthService
@@ -35,6 +36,7 @@ from app.services.exam_session_service import ExamSessionService
 from app.services.exam_delivery_service import ExamDeliveryService
 from app.services.result_calculation_service import ResultCalculationService
 from app.services.evaluation_service import EvaluationService
+from app.services.analytics_service import AnalyticsService
 
 
 def get_auth_service(db: SessionDep, user_repo: UserRepoDep) -> AuthService:
@@ -56,8 +58,14 @@ def get_student_service(db: SessionDep, student_repo: StudentRepoDep, class_repo
     return StudentService(db, student_repo, class_repo)
 
 
-def get_exam_service(db: SessionDep, exam_repo: ExamRepoDep, user_repo: UserRepoDep, subject_repo: SubjectRepoDep) -> ExamService:
-    return ExamService(db, exam_repo, user_repo, subject_repo)
+def get_exam_service(
+    db: SessionDep,
+    exam_repo: ExamRepoDep,
+    user_repo: UserRepoDep,
+    subject_repo: SubjectRepoDep,
+    schedule_repo: ExamScheduleRepoDep,
+) -> ExamService:
+    return ExamService(db, exam_repo, user_repo, subject_repo, schedule_repo)
 
 
 def get_exam_schedule_service(db: SessionDep, schedule_repo: ExamScheduleRepoDep, exam_repo: ExamRepoDep) -> ExamScheduleService:
@@ -88,9 +96,10 @@ def get_student_exam_service(
     db: SessionDep, 
     student_exam_repo: StudentExamRepoDep, 
     student_repo: StudentRepoDep,
-    schedule_repo: ExamScheduleRepoDep
+    schedule_repo: ExamScheduleRepoDep,
+    class_repo: ClassRepoDep,
 ) -> StudentExamService:
-    return StudentExamService(db, student_exam_repo, student_repo, schedule_repo)
+    return StudentExamService(db, student_exam_repo, student_repo, schedule_repo, class_repo)
 
 
 def get_result_service(result_repo: ResultRepoDep) -> ResultService:
@@ -129,6 +138,10 @@ def get_exam_delivery_service(
     return ExamDeliveryService(db, student_exam_repo, schedule_repo, question_repo, answer_repo)
 
 
+def get_analytics_service(analytics_repo: AnalyticsRepoDep) -> AnalyticsService:
+    return AnalyticsService(analytics_repo)
+
+
 def get_evaluation_service(
     db: SessionDep,
     answer_repo: StudentAnswerRepoDep,
@@ -157,4 +170,5 @@ DashboardServiceDep = Annotated[DashboardService, Depends(get_dashboard_service)
 ExamSessionServiceDep = Annotated[ExamSessionService, Depends(get_exam_session_service)]
 ExamDeliveryServiceDep = Annotated[ExamDeliveryService, Depends(get_exam_delivery_service)]
 EvaluationServiceDep = Annotated[EvaluationService, Depends(get_evaluation_service)]
+AnalyticsServiceDep = Annotated[AnalyticsService, Depends(get_analytics_service)]
 

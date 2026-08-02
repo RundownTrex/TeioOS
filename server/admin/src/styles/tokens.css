@@ -1,0 +1,303 @@
+/* ==========================================================================
+   TeioOS Design System Tokens (CSS)
+   Single Source of Truth for Colors, Typography, Spacing, Focus, & Layout
+   Shared by the Student Examination Client and the Administration Dashboard.
+   ========================================================================== */
+
+:root {
+  /* --------------------------------------------------------------------------
+     1. Color Tokens (Default Academic Light Mode - WCAG 2.1 AA Compliant)
+     -------------------------------------------------------------------------- */
+  --color-bg-canvas: #f8faf9;
+  --color-bg-surface: #ffffff;
+  --color-bg-subtle: #f1f5f9;
+
+  --color-text-main: #0f172a;
+  --color-text-muted: #475569;
+  --color-text-inverse: #ffffff;
+
+  --color-border-main: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  --color-navy-primary: #1e3a8a;
+  --color-navy-hover: #1e40af;
+  --color-navy-active: #172554;
+
+  /* Status & Question Palette Colors */
+  --color-status-answered: #15803d;
+  --color-status-answered-bg: #f0fdf4;
+  --color-status-unanswered: #b45309;
+  --color-status-unanswered-bg: #fffbeb;
+  --color-status-review: #6d28d9;
+  --color-status-review-bg: #f5f3ff;
+  --color-status-unvisited: #64748b;
+  --color-status-unvisited-bg: #f8fafc;
+
+  /* Semantic Status Colors (Admin Dashboard) */
+  --color-status-success: #15803d;
+  --color-status-success-bg: #f0fdf4;
+  --color-status-success-border: #bbf7d0;
+  --color-status-warning: #b45309;
+  --color-status-warning-bg: #fffbeb;
+  --color-status-warning-border: #fde68a;
+  --color-status-danger: #b91c1c;
+  --color-status-danger-bg: #fef2f2;
+  --color-status-danger-border: #fecaca;
+  --color-status-info: #1d4ed8;
+  --color-status-info-bg: #eff6ff;
+  --color-status-info-border: #bfdbfe;
+  --color-status-neutral: #475569;
+  --color-status-neutral-bg: #f1f5f9;
+  --color-status-neutral-border: #e2e8f0;
+
+  /* Destructive Action Colors */
+  --color-btn-danger: #b91c1c;
+  --color-btn-danger-hover: #991b1b;
+  --color-btn-danger-active: #7f1d1d;
+
+  /* Overlay & Tint Colors (pre-computed alpha; Tailwind cannot apply
+     opacity modifiers to plain CSS-variable colors) */
+  --color-overlay: rgba(15, 23, 42, 0.5);
+  --color-navy-tint: rgba(30, 58, 138, 0.1);
+
+  /* Focus Ring Token (Light Mode: 3px solid #1E3A8A with 2px white gap) */
+  --focus-ring-color: #1e3a8a;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --focus-ring-shadow: 0 0 0 4px rgba(30, 58, 138, 0.25);
+
+  /* --------------------------------------------------------------------------
+     2. Typography Tokens
+     -------------------------------------------------------------------------- */
+  --font-family-sans: Inter, Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.56;
+
+  /* --------------------------------------------------------------------------
+     3. Spacing Scale
+     -------------------------------------------------------------------------- */
+  --spacing-0: 0px;
+  --spacing-1: 0.25rem;  /* 4px */
+  --spacing-2: 0.5rem;   /* 8px */
+  --spacing-3: 0.75rem;  /* 12px */
+  --spacing-4: 1rem;     /* 16px */
+  --spacing-5: 1.25rem;  /* 20px */
+  --spacing-6: 1.5rem;   /* 24px */
+  --spacing-8: 2rem;     /* 32px */
+  --spacing-10: 2.5rem;  /* 40px */
+  --spacing-12: 3rem;    /* 48px */
+  --spacing-16: 4rem;    /* 64px */
+
+  /* --------------------------------------------------------------------------
+     4. Border Radius Tokens
+     -------------------------------------------------------------------------- */
+  --radius-none: 0px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-full: 9999px;
+
+  /* --------------------------------------------------------------------------
+     5. Elevation & Shadow Tokens
+     -------------------------------------------------------------------------- */
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* --------------------------------------------------------------------------
+     6. Animation & Transition Tokens
+     -------------------------------------------------------------------------- */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-linear: linear;
+
+  /* --------------------------------------------------------------------------
+     7. Layout & Dimension Tokens
+     -------------------------------------------------------------------------- */
+  --dim-login-width: 440px;
+  --dim-dashboard-width: 800px;
+  --dim-reading-width: 720px;
+  --dim-workbench-width: 1440px;
+  --dim-sidebar-width: 280px;
+  --dim-header-height: 60px;
+  --dim-footer-height: 40px;
+
+  /* Table & Toolbar Dimensions */
+  --dim-table-header: 44px;
+  --dim-table-row: 48px;
+  --dim-toolbar: 56px;
+  --dim-pagination: 48px;
+
+  /* Dialog Dimensions */
+  --dim-dialog-sm: 400px;
+  --dim-dialog-md: 520px;
+  --dim-dialog-lg: 640px;
+
+  /* --------------------------------------------------------------------------
+     8. Z-Index Scale Tokens
+     -------------------------------------------------------------------------- */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-header: 20;
+  --z-sidebar: 30;
+  --z-dropdown: 35;
+  --z-backdrop: 40;
+  --z-modal: 50;
+  --z-skip-link: 60;
+  --z-announcer: 70;
+}
+
+/* ==========================================================================
+   High Contrast Mode Theme Tokens (WCAG AAA Compliant)
+   ========================================================================== */
+html[data-theme="high-contrast"] {
+  --color-bg-canvas: #000000;
+  --color-bg-surface: #121212;
+  --color-bg-subtle: #1e1e1e;
+
+  --color-text-main: #ffffff;
+  --color-text-muted: #e5e5e5;
+  --color-text-inverse: #000000;
+
+  --color-border-main: #ffffff;
+  --color-border-strong: #ffffff;
+
+  --color-navy-primary: #ffff00;
+  --color-navy-hover: #ffff66;
+  --color-navy-active: #cccc00;
+
+  --color-status-answered: #00ff00;
+  --color-status-answered-bg: #003300;
+  --color-status-unanswered: #ff9900;
+  --color-status-unanswered-bg: #331f00;
+  --color-status-review: #ff00ff;
+  --color-status-review-bg: #330033;
+  --color-status-unvisited: #ffffff;
+  --color-status-unvisited-bg: #121212;
+
+  --color-status-success: #00ff00;
+  --color-status-success-bg: #003300;
+  --color-status-success-border: #00ff00;
+  --color-status-warning: #ff9900;
+  --color-status-warning-bg: #331f00;
+  --color-status-warning-border: #ff9900;
+  --color-status-danger: #ff4444;
+  --color-status-danger-bg: #330000;
+  --color-status-danger-border: #ff4444;
+  --color-status-info: #00ccff;
+  --color-status-info-bg: #002233;
+  --color-status-info-border: #00ccff;
+  --color-status-neutral: #ffffff;
+  --color-status-neutral-bg: #121212;
+  --color-status-neutral-border: #ffffff;
+
+  --color-btn-danger: #b91c1c;
+  --color-btn-danger-hover: #991b1b;
+  --color-btn-danger-active: #7f1d1d;
+
+  --color-overlay: rgba(0, 0, 0, 0.8);
+  --color-navy-tint: rgba(255, 255, 0, 0.18);
+
+  --focus-ring-color: #ffff00;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 3px;
+  --focus-ring-shadow: none;
+}
+
+/* ==========================================================================
+   Dark Theme Tokens
+   ========================================================================== */
+html[data-theme="dark"] {
+  --color-bg-canvas: #0f172a;
+  --color-bg-surface: #1e293b;
+  --color-bg-subtle: #334155;
+
+  --color-text-main: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #0f172a;
+
+  --color-border-main: #334155;
+  --color-border-strong: #475569;
+
+  --color-navy-primary: #38bdf8;
+  --color-navy-hover: #7dd3fc;
+  --color-navy-active: #0284c7;
+
+  --color-status-answered: #4ade80;
+  --color-status-answered-bg: #064e3b;
+  --color-status-unanswered: #fbbf24;
+  --color-status-unanswered-bg: #78350f;
+  --color-status-review: #c084fc;
+  --color-status-review-bg: #581c87;
+  --color-status-unvisited: #94a3b8;
+  --color-status-unvisited-bg: #1e293b;
+
+  --color-status-success: #4ade80;
+  --color-status-success-bg: #14532d;
+  --color-status-success-border: #15803d;
+  --color-status-warning: #fbbf24;
+  --color-status-warning-bg: #451a03;
+  --color-status-warning-border: #92400e;
+  --color-status-danger: #f87171;
+  --color-status-danger-bg: #450a0a;
+  --color-status-danger-border: #991b1b;
+  --color-status-info: #60a5fa;
+  --color-status-info-bg: #172554;
+  --color-status-info-border: #1e40af;
+  --color-status-neutral: #94a3b8;
+  --color-status-neutral-bg: #1e293b;
+  --color-status-neutral-border: #334155;
+
+  --color-btn-danger: #f87171;
+  --color-btn-danger-hover: #fca5a5;
+  --color-btn-danger-active: #ef4444;
+
+  --color-overlay: rgba(2, 6, 23, 0.65);
+  --color-navy-tint: rgba(56, 189, 248, 0.12);
+
+  --focus-ring-color: #38bdf8;
+  --focus-ring-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+}
+
+/* ==========================================================================
+   Reduced Motion Accessibility Overrides
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html[data-reduced-motion="true"] *,
+html[data-reduced-motion="true"] ::before,
+html[data-reduced-motion="true"] ::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}

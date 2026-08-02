@@ -20,10 +20,19 @@ class ClassService:
         self.class_repo = class_repo
         self.department_repo = department_repo
 
-    def get_classes(self, page: int, page_size: int) -> PaginatedData[Class]:
+    def get_classes(
+        self,
+        page: int,
+        page_size: int,
+        q: str | None = None,
+        department_id: UUID | None = None,
+    ) -> PaginatedData[Class]:
+        search = q.strip() if q else None
+        if department_id is not None:
+            self._validate_department(department_id)
         skip = (page - 1) * page_size
-        items = self.class_repo.get_all(skip, page_size)
-        total = self.class_repo.get_count()
+        items = self.class_repo.get_all(skip, page_size, search, department_id)
+        total = self.class_repo.get_count(search, department_id)
         return PaginatedData(items=items, total=total, page=page, page_size=page_size)
 
     def get_class(self, class_id: UUID) -> Class:

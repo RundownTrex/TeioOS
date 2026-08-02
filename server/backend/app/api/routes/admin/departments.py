@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
@@ -16,9 +16,10 @@ def get_departments(
     pagination: PaginationDep,
     department_service: DepartmentServiceDep,
     _=Depends(require_admin),
+    q: str | None = Query(None, max_length=255, description="Search departments by name"),
 ):
-    """Retrieve all departments with pagination."""
-    paginated_data = department_service.get_departments(pagination.page, pagination.page_size)
+    """Retrieve all departments with pagination and optional name search."""
+    paginated_data = department_service.get_departments(pagination.page, pagination.page_size, q)
     return APIResponse(
         success=True,
         message="Departments retrieved successfully",

@@ -30,11 +30,25 @@ class ExamScheduleRepository(BaseRepository[ExamSchedule]):
         return self.session.execute(stmt).scalars().first()
 
     def get_all(self, skip: int = 0, limit: int = 20, exam_id: UUID | None = None) -> Sequence[ExamSchedule]:
-        stmt = select(ExamSchedule).order_by(ExamSchedule.start_time.desc())
+        """Paginated schedules, newest start first, with an aggregated
+        assigned-student count."""
+        assigned_count_expr = (
+            select(func.count(StudentExam.id))
+            .where(StudentExam.exam_schedule_id == ExamSchedule.id)
+            .correlate(ExamSchedule)
+            .scalar_subquery()
+        )
+        stmt = select(ExamSchedule, assigned_count_expr.label("assigned_count"))
         if exam_id:
             stmt = stmt.where(ExamSchedule.exam_id == exam_id)
-        stmt = stmt.offset(skip).limit(limit)
-        return self.session.execute(stmt).scalars().all()
+        stmt = stmt.order_by(ExamSchedule.start_time.desc(), ExamSchedule.id).offset(skip).limit(limit)
+
+        rows = self.session.execute(stmt).all()
+        schedules = []
+        for schedule, assigned_count in rows:
+            schedule.assigned_count = assigned_count
+            schedules.append(schedule)
+        return schedules
 
     def get_count(self, exam_id: UUID | None = None) -> int:
         if not exam_id:

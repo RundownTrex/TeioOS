@@ -1,0 +1,86 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Global Body & Document Defaults */
+  body {
+    background-color: var(--color-bg-canvas);
+    color: var(--color-text-main);
+    font-family: var(--font-family-sans);
+    line-height: var(--line-height-normal);
+  }
+
+  /* Global Focus Ring Management (WCAG 2.1 AA Compliant) */
+  *:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color) !important;
+    outline-offset: var(--focus-ring-offset) !important;
+    box-shadow: var(--focus-ring-shadow) !important;
+  }
+
+  /* Accessible Screen Reader Only Utility Class */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .not-sr-only {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Print stylesheet — report pages (Student Results, Exam Summary,
+ * Evaluation Summary). Hides application chrome and flattens the canvas so
+ * reports print cleanly to paper or PDF via the browser's print dialog.
+ * ------------------------------------------------------------------------- */
+@media print {
+  header,
+  aside,
+  footer {
+    display: none !important;
+  }
+
+  body {
+    background-color: #FFFFFF !important;
+  }
+
+  main {
+    overflow: visible !important;
+  }
+
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg {
+    box-shadow: none !important;
+  }
+
+  /* Report header + tables keep their on-screen layout, with stronger
+     borders so column structure survives low-resolution printing. */
+  .print-report-table table,
+  .print-report-table td,
+  .print-report-table th {
+    border-color: var(--color-border-strong) !important;
+    break-inside: avoid;
+  }
+
+  .print-no-break {
+    break-inside: avoid;
+  }
+}

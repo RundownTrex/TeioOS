@@ -3,8 +3,9 @@ from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
-from app.api.dependencies.services import ExamServiceDep
+from app.api.dependencies.services import ExamServiceDep, QuestionServiceDep
 from app.schemas.exam import ExamCreate, ExamUpdate, ExamResponse
+from app.schemas.question import QuestionReorder
 from app.schemas.pagination import PaginatedData
 from app.schemas.response import APIResponse
 
@@ -15,10 +16,11 @@ router = APIRouter()
 def get_exams(
     pagination: PaginationDep,
     exam_service: ExamServiceDep,
+    subject_id: UUID | None = None,
     _=Depends(require_admin),
 ):
-    """Retrieve all exams with pagination."""
-    paginated_data = exam_service.get_exams(pagination.page, pagination.page_size)
+    """Retrieve all exams with pagination, optionally filtered by subject."""
+    paginated_data = exam_service.get_exams(pagination.page, pagination.page_size, subject_id)
     return APIResponse(
         success=True,
         message="Exams retrieved successfully",
@@ -45,10 +47,10 @@ def get_exam(
 def create_exam(
     data: ExamCreate,
     exam_service: ExamServiceDep,
-    _=Depends(require_admin),
+    token=Depends(require_admin),
 ):
-    """Create a new exam."""
-    exam = exam_service.create_exam(data)
+    """Create a new exam. The creator is stamped from the authenticated admin."""
+    exam = exam_service.create_exam(data, creator_id=UUID(token.sub))
     return APIResponse(
         success=True,
         message="Exam created successfully",
@@ -78,9 +80,25 @@ def delete_exam(
     exam_service: ExamServiceDep,
     _=Depends(require_admin),
 ):
-    """Delete an exam by ID."""
+    """Delete an exam by ID. Refused while the exam has schedules."""
     exam_service.delete_exam(exam_id)
     return APIResponse(
         success=True,
         message="Exam deleted successfully",
+    )
+
+
+@router.put("/{exam_id}/questions/reorder", response_model=APIResponse[dict])
+def reorder_questions(
+    exam_id: UUID,
+    data: QuestionReorder,
+    question_service: QuestionServiceDep,
+    _=Depends(require_admin),
+):
+    """Reassign display_order for an exam's questions following ordered_ids."""
+    count = question_service.reorder_questions(exam_id, data.ordered_ids)
+    return APIResponse(
+        success=True,
+        message="Questions reordered successfully",
+        data={"count": count},
     )

@@ -19,6 +19,9 @@ class Student(BaseModel):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    accessibility_profile: Mapped[str] = mapped_column(
+        String(50), default="standard", server_default="standard", nullable=False
+    )
 
     # Foreign Key
     class_id: Mapped[uuid.UUID] = mapped_column(

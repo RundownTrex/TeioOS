@@ -4,7 +4,13 @@ from fastapi import APIRouter, Depends, status
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
 from app.api.dependencies.services import StudentExamServiceDep
-from app.schemas.student_exam import StudentAssignmentCreate, StudentAssignmentResponse
+from app.schemas.student_exam import (
+    StudentAssignmentCreate,
+    StudentAssignmentResponse,
+    StudentAssignmentUpdate,
+    ClassAssignmentCreate,
+    ClassAssignmentResponse,
+)
 from app.schemas.pagination import PaginatedData
 from app.schemas.response import APIResponse
 
@@ -41,6 +47,39 @@ def assign_student(
         success=True,
         message="Student assigned successfully",
         data=assignment,
+    )
+
+
+@router.put("/{student_id}", response_model=APIResponse[StudentAssignmentResponse])
+def update_assignment(
+    schedule_id: UUID,
+    student_id: UUID,
+    data: StudentAssignmentUpdate,
+    assignment_service: StudentExamServiceDep,
+    _=Depends(require_admin),
+):
+    """Update an existing assignment (per-student exam time override)."""
+    assignment = assignment_service.update_assignment(schedule_id, student_id, data)
+    return APIResponse(
+        success=True,
+        message="Assignment updated successfully",
+        data=assignment,
+    )
+
+
+@router.post("/classes", response_model=APIResponse[ClassAssignmentResponse], status_code=status.HTTP_201_CREATED)
+def assign_class(
+    schedule_id: UUID,
+    data: ClassAssignmentCreate,
+    assignment_service: StudentExamServiceDep,
+    _=Depends(require_admin),
+):
+    """Assign all active students of a class to an exam schedule."""
+    result = assignment_service.assign_class(schedule_id, data.class_id)
+    return APIResponse(
+        success=True,
+        message="Class assigned successfully",
+        data=result,
     )
 
 

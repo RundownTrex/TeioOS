@@ -1,5 +1,5 @@
 from typing import Sequence
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.department import Department
@@ -20,6 +20,15 @@ class DepartmentRepository(BaseRepository[Department]):
         stmt = select(Department).where(Department.name == name)
         return self.session.execute(stmt).scalars().first()
 
-    def get_all(self, skip: int = 0, limit: int = 20) -> Sequence[Department]:
-        stmt = select(Department).order_by(Department.name).offset(skip).limit(limit)
+    def get_all(self, skip: int = 0, limit: int = 20, q: str | None = None) -> Sequence[Department]:
+        stmt = select(Department).order_by(Department.name)
+        if q:
+            stmt = stmt.where(Department.name.ilike(f"%{q}%"))
+        stmt = stmt.offset(skip).limit(limit)
         return self.session.execute(stmt).scalars().all()
+
+    def get_count(self, q: str | None = None) -> int:
+        stmt = select(func.count()).select_from(Department)
+        if q:
+            stmt = stmt.where(Department.name.ilike(f"%{q}%"))
+        return self.session.execute(stmt).scalar_one()

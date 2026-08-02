@@ -59,13 +59,19 @@ class QuestionService:
         self._validate_exam(data.exam_id)
         question_type = data.question_type or QuestionType.MCQ
         self._validate_question_type_and_options(question_type, data.options, data.max_characters)
-        
+
+        if data.display_order is not None:
+            display_order = data.display_order
+        else:
+            max_order = self.question_repo.get_max_display_order(data.exam_id)
+            display_order = (max_order or 0) + 1
+
         question = Question(
             question_text=data.question_text,
             question_type=question_type,
             marks=data.marks,
             negative_marks=data.negative_marks,
-            display_order=data.display_order,
+            display_order=display_order,
             max_characters=data.max_characters if question_type == QuestionType.DESCRIPTIVE else None,
             exam_id=data.exam_id
         )
@@ -143,6 +149,31 @@ class QuestionService:
         try:
             self.question_repo.delete(question)
             self.db.commit()
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise
+
+    def reorder_questions(self, exam_id: UUID, ordered_ids: list[UUID]) -> int:
+        """Assigns display_order 1..N following ordered_ids (a permutation)."""
+        self._validate_exam(exam_id)
+
+        if not ordered_ids:
+            raise BusinessRuleException("ordered_ids must not be empty")
+        if len(set(ordered_ids)) != len(ordered_ids):
+            raise BusinessRuleException("ordered_ids must not contain duplicates")
+
+        questions = self.question_repo.get_all(skip=0, limit=10_000, exam_id=exam_id)
+        questions_by_id = {str(q.id): q for q in questions}
+
+        if set(str(qid) for qid in ordered_ids) != set(questions_by_id.keys()):
+            raise BusinessRuleException("ordered_ids must contain exactly the exam's questions")
+
+        for index, question_id in enumerate(ordered_ids):
+            questions_by_id[str(question_id)].display_order = index + 1
+
+        try:
+            self.db.commit()
+            return len(ordered_ids)
         except SQLAlchemyError:
             self.db.rollback()
             raise

@@ -1,6 +1,6 @@
 import uuid
 from typing import List, TYPE_CHECKING
-from sqlalchemy import Integer, ForeignKey
+from sqlalchemy import Integer, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import BaseModel
 
@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 
 class Exam(BaseModel):
     __tablename__ = "exams"
+
+    # Optional human-readable title; falls back to the subject name in the UI.
+    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     total_marks: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -57,3 +60,17 @@ class Exam(BaseModel):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+
+    @property
+    def question_count(self) -> int:
+        """Number of questions in this exam (lazy via the relationship).
+
+        List/detail queries overwrite this with an aggregated COUNT through
+        the setter to avoid per-exam lazy loads.
+        """
+        cached = getattr(self, "_question_count", None)
+        return cached if cached is not None else len(self.questions)
+
+    @question_count.setter
+    def question_count(self, value: int) -> None:
+        self._question_count = value

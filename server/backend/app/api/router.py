@@ -15,6 +15,7 @@ from app.api.routes.admin.options import router as admin_options_router
 from app.api.routes.admin.results import router as admin_results_router
 from app.api.routes.admin.student_answers import router as admin_student_answers_router
 from app.api.routes.admin.dashboard import router as admin_dashboard_router
+from app.api.routes.admin.analytics import router as admin_analytics_router
 from app.api.routes.admin.subjects import router as admin_subjects_router
 from app.api.routes.student.auth import router as student_auth_router
 from app.api.routes.student.exams import router as student_exams_router
@@ -38,6 +39,7 @@ apirouter.include_router(admin_options_router, prefix="/admin/options", tags=["A
 apirouter.include_router(admin_student_answers_router, prefix="/admin/student-answers", tags=["Admin Student Answers Evaluation"])
 apirouter.include_router(admin_results_router, prefix="/admin/results", tags=["Admin Results"])
 apirouter.include_router(admin_dashboard_router, prefix="/admin/dashboard", tags=["Admin Dashboard"])
+apirouter.include_router(admin_analytics_router, prefix="/admin/analytics", tags=["Admin Analytics"])
 apirouter.include_router(student_auth_router, prefix="/student/auth", tags=["Student Auth"])
 apirouter.include_router(student_exams_router, prefix="/student/exams", tags=["Student Exams"])
 apirouter.include_router(student_answers_router, prefix="/student/answers", tags=["Student Answers"])

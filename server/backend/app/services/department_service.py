@@ -13,10 +13,11 @@ class DepartmentService:
         self.db = db
         self.department_repo = department_repo
 
-    def get_departments(self, page: int, page_size: int) -> PaginatedData[Department]:
+    def get_departments(self, page: int, page_size: int, q: str | None = None) -> PaginatedData[Department]:
+        search = q.strip() if q else None
         skip = (page - 1) * page_size
-        items = self.department_repo.get_all(skip, page_size)
-        total = self.department_repo.get_count()
+        items = self.department_repo.get_all(skip, page_size, search)
+        total = self.department_repo.get_count(search)
         return PaginatedData(items=items, total=total, page=page, page_size=page_size)
 
     def get_department(self, department_id: UUID) -> Department:

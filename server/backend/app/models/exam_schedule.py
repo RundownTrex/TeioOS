@@ -55,3 +55,15 @@ class ExamSchedule(BaseModel):
         back_populates="exam_schedule",
         overlaps="assigned_students,assigned_schedules",
     )
+
+    @property
+    def assigned_count(self) -> int:
+        """Number of students assigned to this schedule (lazy via the
+        relationship). List queries overwrite this with an aggregated COUNT
+        through the setter to avoid per-schedule lazy loads."""
+        cached = getattr(self, "_assigned_count", None)
+        return cached if cached is not None else len(self.student_exams)
+
+    @assigned_count.setter
+    def assigned_count(self, value: int) -> None:
+        self._assigned_count = value

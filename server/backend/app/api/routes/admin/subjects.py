@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
@@ -16,9 +16,11 @@ def get_subjects(
     pagination: PaginationDep,
     subject_service: SubjectServiceDep,
     _=Depends(require_admin),
+    q: str | None = Query(None, max_length=255, description="Search subjects by name or subject code"),
+    department_id: UUID | None = Query(None, description="Filter subjects by department ID"),
 ):
-    """Retrieve all subjects with pagination."""
-    paginated_data = subject_service.get_subjects(pagination.page, pagination.page_size)
+    """Retrieve all subjects with pagination, optional name/code search and department filter."""
+    paginated_data = subject_service.get_subjects(pagination.page, pagination.page_size, q, department_id)
     return APIResponse(
         success=True,
         message="Subjects retrieved successfully",

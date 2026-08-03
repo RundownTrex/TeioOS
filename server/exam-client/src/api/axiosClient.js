@@ -43,10 +43,18 @@ axiosClient.interceptors.response.use(
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     }
 
+    const body = error.response?.data;
+    const firstDetail =
+      Array.isArray(body?.errors) && body.errors.length > 0
+        ? body.errors[0]
+        : typeof body?.detail === 'string'
+          ? body.detail
+          : null;
+
     const formattedError = {
-      message: error.response?.data?.detail || error.response?.data?.message || error.message || 'An unexpected error occurred',
+      message: firstDetail || body?.message || error.message || 'An unexpected error occurred',
       status: status || 500,
-      details: error.response?.data?.detail || null,
+      details: body?.errors || body?.detail || null,
       code:
         status === 409
           ? 'SESSION_SUBMITTED'

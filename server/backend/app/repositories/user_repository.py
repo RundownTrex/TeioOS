@@ -1,8 +1,8 @@
 from typing import Sequence
-from sqlalchemy import select
+from sqlalchemy import select, func, or_
 from sqlalchemy.orm import Session
 
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.repositories.base_repository import BaseRepository
 
 
@@ -23,6 +23,30 @@ class UserRepository(BaseRepository[User]):
         stmt = select(User).where(User.username == username)
         return self.session.execute(stmt).scalars().first()
 
-    def get_all(self, skip: int = 0, limit: int = 20) -> Sequence[User]:
-        stmt = select(User).order_by(User.username).offset(skip).limit(limit)
+    def _apply_filters(self, stmt, search: str | None = None, role: UserRole | None = None):
+        if role:
+            stmt = stmt.where(User.role == role)
+        if search:
+            pattern = f"%{search}%"
+            stmt = stmt.where(
+                or_(
+                    User.name.ilike(pattern),
+                    User.username.ilike(pattern),
+                    User.email.ilike(pattern),
+                )
+            )
+        return stmt
+
+    def get_all(
+        self, skip: int = 0, limit: int = 20, search: str | None = None, role: UserRole | None = None
+    ) -> Sequence[User]:
+        stmt = select(User)
+        stmt = self._apply_filters(stmt, search=search, role=role)
+        stmt = stmt.order_by(User.name, User.username).offset(skip).limit(limit)
         return self.session.execute(stmt).scalars().all()
+
+    def get_count(self, search: str | None = None, role: UserRole | None = None) -> int:
+        stmt = select(func.count()).select_from(User)
+        stmt = self._apply_filters(stmt, search=search, role=role)
+        return self.session.execute(stmt).scalar_one()
+

@@ -1,9 +1,10 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
 from app.api.dependencies.services import UserServiceDep
+from app.models.user import UserRole
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.schemas.pagination import PaginatedData
 from app.schemas.response import APIResponse
@@ -15,10 +16,14 @@ router = APIRouter()
 def get_users(
     pagination: PaginationDep,
     user_service: UserServiceDep,
+    search: str | None = Query(None, description="Search by name, username, or email"),
+    role: UserRole | None = Query(None, description="Filter by user role"),
     _=Depends(require_admin),
 ):
-    """Retrieve all users with pagination."""
-    paginated_data = user_service.get_users(pagination.page, pagination.page_size)
+    """Retrieve all users with pagination, search, and role filtering."""
+    paginated_data = user_service.get_users(
+        pagination.page, pagination.page_size, search=search, role=role
+    )
     return APIResponse(
         success=True,
         message="Users retrieved successfully",

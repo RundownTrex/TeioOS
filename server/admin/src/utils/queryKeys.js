@@ -60,6 +60,15 @@ export const queryKeys = {
     detail: (id) => ['students', 'detail', id],
   },
 
+  administrators: {
+    all: ['administrators'],
+    list: {
+      all: ['administrators', 'list'],
+      by: (params) => ['administrators', 'list', params],
+    },
+    detail: (id) => ['administrators', 'detail', id],
+  },
+
   exams: {
     all: ['exams'],
     list: {

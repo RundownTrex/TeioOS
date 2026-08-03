@@ -1,6 +1,6 @@
 import enum
 from typing import List, TYPE_CHECKING
-from sqlalchemy import String, Enum as SAEnum
+from sqlalchemy import String, Boolean, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import BaseModel
 
@@ -20,6 +20,7 @@ class User(BaseModel):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     role: Mapped[UserRole] = mapped_column(SAEnum(UserRole), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
 
     # Relationships
     created_exams: Mapped[List["Exam"]] = relationship(

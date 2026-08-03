@@ -69,8 +69,11 @@ axiosClient.interceptors.response.use(
           ? [body.message]
           : null;
 
+    const firstDetail =
+      Array.isArray(body?.errors) && body.errors.length > 0 ? body.errors[0] : null;
+
     const formattedError = {
-      message: body?.message || error.message || 'An unexpected error occurred',
+      message: firstDetail || body?.message || error.message || 'An unexpected error occurred',
       status: status || 0,
       details,
       code: undefined,

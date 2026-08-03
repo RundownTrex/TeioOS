@@ -34,6 +34,7 @@ class UserBase(BaseModel):
     name: str = Field(..., max_length=255, description="Full name of the user")
     email: EmailStr = Field(..., description="Valid email address")
     role: UserRole = Field(..., description="Role of the user (e.g., admin, teacher)")
+    is_active: bool = Field(True, description="Account active status")
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, description="Plaintext password")
@@ -43,6 +44,7 @@ class UserUpdate(BaseModel):
     name: str | None = Field(None, max_length=255, description="Full name of the user")
     email: EmailStr | None = Field(None, description="Valid email address")
     role: UserRole | None = Field(None, description="Role of the user (e.g., admin, teacher)")
+    is_active: bool | None = Field(None, description="Account active status")
     password: str | None = Field(None, min_length=8, description="Plaintext password")
 
 class UserResponse(UserBase):
@@ -53,5 +55,6 @@ class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    is_active: bool
     created_at: datetime
     updated_at: datetime

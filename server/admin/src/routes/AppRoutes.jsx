@@ -20,6 +20,9 @@ const SubjectFormPage = lazy(() => import('../features/subjects/pages/SubjectFor
 const StudentsListPage = lazy(() => import('../features/students/pages/StudentsListPage'));
 const StudentFormPage = lazy(() => import('../features/students/pages/StudentFormPage'));
 const StudentDetailPage = lazy(() => import('../features/students/pages/StudentDetailPage'));
+const AdministratorsListPage = lazy(() => import('../features/administrators/pages/AdministratorsListPage'));
+const AdministratorFormPage = lazy(() => import('../features/administrators/pages/AdministratorFormPage'));
+const AdministratorDetailPage = lazy(() => import('../features/administrators/pages/AdministratorDetailPage'));
 const ExamsListPage = lazy(() => import('../features/exams/pages/ExamsListPage'));
 const ExamFormPage = lazy(() => import('../features/exams/pages/ExamFormPage'));
 const ExamDetailPage = lazy(() => import('../features/exams/pages/ExamDetailPage'));
@@ -129,14 +132,15 @@ export const AppRoutes = () => {
                 <Route path={PATHS.STUDENT_EDIT_PATTERN} element={<StudentFormPage />} />
 
                 {/* Administrators */}
-                <Route path={PATHS.ADMINISTRATORS} element={placeholder('Administrators')} />
+                <Route path={PATHS.ADMINISTRATORS} element={<AdministratorsListPage />} />
+                <Route path={PATHS.ADMINISTRATORS_NEW} element={<AdministratorFormPage />} />
                 <Route
-                  path={PATHS.ADMINISTRATORS_NEW}
-                  element={placeholder('New Administrator')}
+                  path={PATHS.ADMINISTRATOR_DETAIL_PATTERN}
+                  element={<AdministratorDetailPage />}
                 />
                 <Route
                   path={PATHS.ADMINISTRATOR_EDIT_PATTERN}
-                  element={placeholder('Edit Administrator')}
+                  element={<AdministratorFormPage />}
                 />
 
                 {/* Exams */}

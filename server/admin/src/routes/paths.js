@@ -42,7 +42,9 @@ export const PATHS = {
 
   ADMINISTRATORS: '/admin/administrators',
   ADMINISTRATORS_NEW: '/admin/administrators/new',
+  ADMINISTRATOR_DETAIL_PATTERN: '/admin/administrators/:id',
   ADMINISTRATOR_EDIT_PATTERN: '/admin/administrators/:id/edit',
+  administratorDetail: (id) => `/admin/administrators/${id}`,
   administratorEdit: (id) => `/admin/administrators/${id}/edit`,
 
   // Examinations

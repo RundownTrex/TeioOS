@@ -166,8 +166,8 @@ def add_exception_handlers(app: FastAPI) -> None:
         logger.warning(f"BusinessRuleException at {request.url.path}: {exc.detail}")
         response_model = APIResponse(
             success=False,
-            message="Business rule violation",
-            errors=[exc.detail]
+            message=exc.detail or "Business rule violation",
+            errors=[exc.detail] if exc.detail else ["Business rule violation"]
         )
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,

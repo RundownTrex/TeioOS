@@ -739,6 +739,7 @@ export const ActiveExamPage = () => {
           answersMap={answersMap}
           flaggedSet={flaggedSet}
           visitedSet={visitedSet}
+          questions={questions}
           onSelectQuestion={(idx) => setCurrentIndex(idx)}
           onSubmitExam={() => setIsSubmitModalOpen(true)}
           isSubmitting={isSubmittingPaper}

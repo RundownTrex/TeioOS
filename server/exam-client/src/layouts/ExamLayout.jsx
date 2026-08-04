@@ -21,7 +21,7 @@ export const ExamLayout = ({
   const titleText = sectionTitle ? `${paperTitle} │ ${sectionTitle}` : paperTitle;
 
   return (
-    <div className="min-h-screen flex flex-col bg-canvas text-text-main select-none">
+    <div className="min-h-screen h-screen flex flex-col bg-canvas text-text-main select-none overflow-hidden">
       {/* Kiosk Examination Top Header */}
       <Header
         title={titleText}
@@ -30,23 +30,23 @@ export const ExamLayout = ({
         onOpenAccessibility={onOpenAccessibility}
       />
 
-      {/* Main Container */}
-      <div className="flex-1 flex flex-col md:flex-row w-full max-w-workbench mx-auto overflow-hidden">
-        {/* Primary Content Workbench Area */}
+      {/* Main Container — fills all remaining vertical space */}
+      <div className="flex-1 flex flex-row w-full overflow-hidden min-h-0">
+        {/* Primary Content Workbench Area — takes all available width */}
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 p-4 sm:p-6 overflow-y-auto focus-visible:outline-none"
+          className="flex-1 p-5 lg:p-6 xl:p-8 overflow-y-auto focus-visible:outline-none min-w-0"
         >
           {content}
         </main>
 
-        {/* Render Sidebar ONLY when sidebarContent is provided */}
+        {/* Question Palette Sidebar — rem-based width scales with font size */}
         {sidebarContent && (
           <aside
             id="skip-to-palette"
             aria-label="Question palette sidebar navigation"
-            className="w-full md:w-sidebar shrink-0 border-t md:border-t-0 md:border-l border-border-main bg-surface p-4 flex flex-col justify-between"
+            className="w-[18rem] shrink-0 max-w-[50vw] border-l border-border-main bg-surface p-4 flex flex-col overflow-hidden"
           >
             {sidebarContent}
           </aside>

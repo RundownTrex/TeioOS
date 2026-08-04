@@ -23,15 +23,12 @@ export const SubmittedPage = () => {
 
   useDocumentTitle('Paper Submitted');
 
-  // Generate deterministic receipt details from schedule ID and timestamp
+  // Generate deterministic details from student profile and timestamp
   const submissionData = useMemo(() => {
     const now = new Date();
     const rollNumber = userProfile?.roll_number || 'STU-2026-8941';
-    const shortId = String(scheduleId || 'CS401').replace(/[^A-Z0-9]/gi, '').slice(0, 8).toUpperCase();
-    const receiptCode = `TX-${rollNumber.replace(/[^A-Z0-9]/gi, '').slice(-4)}-${now.getFullYear()}-${shortId}`;
 
     return {
-      receiptCode,
       candidateName: userProfile?.name || userProfile?.full_name || 'Candidate',
       rollNumber,
       submissionTime: now.toLocaleTimeString('en-US', {
@@ -45,7 +42,7 @@ export const SubmittedPage = () => {
         dateStyle: 'medium',
       }),
     };
-  }, [scheduleId, userProfile]);
+  }, [userProfile]);
 
   // Clear active exam session tokens on mount (terminal state reached)
   useEffect(() => {
@@ -54,13 +51,13 @@ export const SubmittedPage = () => {
 
   return (
     <ExamLayout paperTitle="EXAMINATION COMPLETE" sectionTitle="Paper Submitted">
-      <div className="max-w-[580px] mx-auto space-y-6 select-none my-4 sm:my-8">
+      <div className="max-w-[600px] mx-auto space-y-6 select-none my-4 sm:my-8">
         {/* Primary Success Confirmation Card */}
         <Card className="border-border-main bg-surface shadow-sm overflow-hidden">
           {/* Success Banner */}
-          <CardHeader className="text-center py-8 bg-green-50 border-b border-green-200">
-            <div className="inline-flex p-4 bg-green-100 text-green-600 rounded-full shadow-inner mb-4">
-              <CheckCircle2 className="w-12 h-12" aria-hidden="true" />
+          <CardHeader className="text-center py-8 bg-subtle/40 border-b border-border-main">
+            <div className="inline-flex p-3.5 bg-status-success-bg text-status-success rounded-full shadow-sm mb-3">
+              <CheckCircle2 className="w-10 h-10" aria-hidden="true" />
             </div>
             <h2 className="text-xl font-extrabold text-text-main tracking-tight uppercase">
               EXAMINATION SUBMITTED SUCCESSFULLY
@@ -71,15 +68,10 @@ export const SubmittedPage = () => {
           </CardHeader>
 
           <CardBody className="space-y-6 p-6">
-            {/* Submission Receipt Details Card */}
-            <section aria-labelledby="receipt-heading" className="space-y-3">
-              <h3 id="receipt-heading" className="sr-only">Submission Receipt Details</h3>
+            {/* Submission Details Card */}
+            <section aria-labelledby="submission-details-heading" className="space-y-3">
+              <h3 id="submission-details-heading" className="sr-only">Submission Details</h3>
               <div className="p-4 border border-border-main bg-subtle/50 rounded-lg space-y-2.5 text-xs font-mono">
-                <div className="flex justify-between items-center">
-                  <span className="text-text-muted font-semibold">Receipt Code:</span>
-                  <span className="font-bold text-navy-primary tracking-wider">{submissionData.receiptCode}</span>
-                </div>
-                <hr className="border-border-main" />
                 <div className="flex justify-between items-center">
                   <span className="text-text-muted font-semibold">Candidate:</span>
                   <span className="font-bold text-text-main">
@@ -94,7 +86,7 @@ export const SubmittedPage = () => {
                   <span className="text-text-muted font-semibold">Date:</span>
                   <span className="font-bold text-text-main">{submissionData.submissionDate}</span>
                 </div>
-                <div className="flex justify-between items-center pt-1 border-t border-border-main">
+                <div className="flex justify-between items-center pt-2 border-t border-border-main">
                   <span className="text-text-muted font-semibold">Session Status:</span>
                   <Badge variant="success" size="sm">
                     COMPLETED & LOCKED
@@ -105,10 +97,10 @@ export const SubmittedPage = () => {
 
             {/* Real-World Examination Room Guidance */}
             <section aria-labelledby="room-guidance-heading" className="space-y-3">
-              <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 text-blue-950 text-xs rounded-lg font-medium leading-relaxed">
+              <div className="flex items-start gap-3 p-4 bg-navy-tint/40 border border-navy-primary/20 text-text-main text-xs rounded-lg font-medium leading-relaxed">
                 <ShieldCheck className="w-5 h-5 shrink-0 text-navy-primary mt-0.5" aria-hidden="true" />
-                <div className="space-y-1.5">
-                  <h3 id="room-guidance-heading" className="text-xs font-bold uppercase tracking-wider">
+                <div className="space-y-1">
+                  <h3 id="room-guidance-heading" className="text-xs font-bold uppercase tracking-wider text-text-main">
                     REAL-WORLD EXAMINATION ROOM PROCEDURE:
                   </h3>
                   <ul className="list-disc pl-4 space-y-1 text-text-muted">
@@ -120,37 +112,42 @@ export const SubmittedPage = () => {
             </section>
 
             {/* Post-Submission Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border-main">
               <Button
                 variant="outline"
-                size="md"
-                onClick={() => navigate('/dashboard')}
-                leftIcon={<Home className="w-4 h-4" />}
-                ariaLabel="Return to Student Dashboard"
-              >
-                Dashboard
-              </Button>
-              <Button
-                variant="secondary"
                 size="md"
                 onClick={() => {
                   logout();
                   navigate('/login', { replace: true });
                 }}
                 leftIcon={<LogOut className="w-4 h-4" />}
+                className="w-full sm:w-auto"
                 ariaLabel="Log Out Candidate Session"
               >
-                Log Out Candidate
+                Sign Out
               </Button>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => navigate(`/exam/${scheduleId}/results`)}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-                ariaLabel="View Performance Report"
-              >
-                Performance Report
-              </Button>
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => navigate('/dashboard')}
+                  leftIcon={<Home className="w-4 h-4" />}
+                  className="w-full sm:w-auto"
+                  ariaLabel="Return to Student Dashboard"
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => navigate(`/exam/${scheduleId}/results`)}
+                  rightIcon={<ArrowRight className="w-4 h-4" />}
+                  className="w-full sm:w-auto"
+                  ariaLabel="View Performance Report"
+                >
+                  Performance Report
+                </Button>
+              </div>
             </div>
           </CardBody>
         </Card>

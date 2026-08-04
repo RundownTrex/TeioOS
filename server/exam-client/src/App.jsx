@@ -103,10 +103,12 @@ export function App() {
                           {/* Resume Active Session Route */}
                           <Route path="/exam/:scheduleId/resume" element={<ResumeExamPage />} />
 
+                          {/* Terminal Submitted Route */}
+                          <Route path="/exam/:scheduleId/submitted" element={<SubmittedPage />} />
+
                           {/* Active Exam Kiosk Protected Routes */}
                           <Route element={<ActiveExamRoute />}>
                             <Route path="/exam/:scheduleId/active" element={<ActiveExamPage />} />
-                            <Route path="/exam/:scheduleId/submitted" element={<SubmittedPage />} />
                           </Route>
                         </Route>
 

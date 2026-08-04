@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card } from '../../../components/ui/Card';
@@ -85,11 +85,13 @@ export const DepartmentsListPage = () => {
             {
               key: 'edit',
               label: 'Edit',
+              icon: <Pencil className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => navigate(PATHS.departmentEdit(row.id)),
             },
             {
               key: 'delete',
               label: 'Delete',
+              icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
               danger: true,
               onSelect: () => {
                 setDeleteError(null);

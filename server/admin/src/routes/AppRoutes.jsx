@@ -109,96 +109,102 @@ export const AppRoutes = () => {
 
         {/* Protected Admin Area */}
         <Route element={<ProtectedRoute />}>
-          <Route element={<RoleGuard roles={[USER_ROLES.ADMIN]} />}>
-            <Route element={<AppShell variant="admin" />}>
-                {/* Overview */}
-                <Route path={PATHS.DASHBOARD} element={<DashboardPage />} />
+          <Route element={<AppShell variant="admin" />}>
+            {/* General Staff Routes: Admin & Teacher */}
+            <Route element={<RoleGuard roles={[USER_ROLES.ADMIN, USER_ROLES.TEACHER]} />}>
+              {/* Overview */}
+              <Route path={PATHS.DASHBOARD} element={<DashboardPage />} />
 
-                {/* Departments */}
-                <Route path={PATHS.DEPARTMENTS} element={<DepartmentsListPage />} />
-                <Route path={PATHS.DEPARTMENTS_NEW} element={<DepartmentFormPage />} />
-                <Route
-                  path={PATHS.DEPARTMENT_EDIT_PATTERN}
-                  element={<DepartmentFormPage />}
-                />
+              {/* Departments */}
+              <Route path={PATHS.DEPARTMENTS} element={<DepartmentsListPage />} />
+              <Route path={PATHS.DEPARTMENTS_NEW} element={<DepartmentFormPage />} />
+              <Route
+                path={PATHS.DEPARTMENT_EDIT_PATTERN}
+                element={<DepartmentFormPage />}
+              />
 
-                {/* Classes */}
-                <Route path={PATHS.CLASSES} element={<ClassesListPage />} />
-                <Route path={PATHS.CLASSES_NEW} element={<ClassFormPage />} />
-                <Route path={PATHS.CLASS_EDIT_PATTERN} element={<ClassFormPage />} />
+              {/* Classes */}
+              <Route path={PATHS.CLASSES} element={<ClassesListPage />} />
+              <Route path={PATHS.CLASSES_NEW} element={<ClassFormPage />} />
+              <Route path={PATHS.CLASS_EDIT_PATTERN} element={<ClassFormPage />} />
 
-                {/* Subjects */}
-                <Route path={PATHS.SUBJECTS} element={<SubjectsListPage />} />
-                <Route path={PATHS.SUBJECTS_NEW} element={<SubjectFormPage />} />
-                <Route path={PATHS.SUBJECT_EDIT_PATTERN} element={<SubjectFormPage />} />
+              {/* Subjects */}
+              <Route path={PATHS.SUBJECTS} element={<SubjectsListPage />} />
+              <Route path={PATHS.SUBJECTS_NEW} element={<SubjectFormPage />} />
+              <Route path={PATHS.SUBJECT_EDIT_PATTERN} element={<SubjectFormPage />} />
 
-                {/* Students */}
-                <Route path={PATHS.STUDENTS} element={<StudentsListPage />} />
-                <Route path={PATHS.STUDENTS_NEW} element={<StudentFormPage />} />
-                <Route path={PATHS.STUDENT_DETAIL_PATTERN} element={<StudentDetailPage />} />
-                <Route path={PATHS.STUDENT_EDIT_PATTERN} element={<StudentFormPage />} />
+              {/* Students */}
+              <Route path={PATHS.STUDENTS} element={<StudentsListPage />} />
+              <Route path={PATHS.STUDENTS_NEW} element={<StudentFormPage />} />
+              <Route path={PATHS.STUDENT_DETAIL_PATTERN} element={<StudentDetailPage />} />
+              <Route path={PATHS.STUDENT_EDIT_PATTERN} element={<StudentFormPage />} />
 
-                {/* Administrators */}
-                <Route path={PATHS.ADMINISTRATORS} element={<AdministratorsListPage />} />
-                <Route path={PATHS.ADMINISTRATORS_NEW} element={<AdministratorFormPage />} />
-                <Route
-                  path={PATHS.ADMINISTRATOR_DETAIL_PATTERN}
-                  element={<AdministratorDetailPage />}
-                />
-                <Route
-                  path={PATHS.ADMINISTRATOR_EDIT_PATTERN}
-                  element={<AdministratorFormPage />}
-                />
+              {/* Exams */}
+              <Route path={PATHS.EXAMS} element={<ExamsListPage />} />
+              <Route path={PATHS.EXAMS_NEW} element={<ExamFormPage />} />
+              <Route path={PATHS.EXAM_DETAIL_PATTERN} element={<ExamDetailPage />} />
+              <Route path={PATHS.EXAM_EDIT_PATTERN} element={<ExamFormPage />} />
+              <Route path={PATHS.QUESTION_NEW_PATTERN} element={<QuestionFormPage />} />
+              <Route
+                path={PATHS.QUESTION_EDIT_PATTERN}
+                element={<QuestionFormPage />}
+              />
 
-                {/* Exams */}
-                <Route path={PATHS.EXAMS} element={<ExamsListPage />} />
-                <Route path={PATHS.EXAMS_NEW} element={<ExamFormPage />} />
-                <Route path={PATHS.EXAM_DETAIL_PATTERN} element={<ExamDetailPage />} />
-                <Route path={PATHS.EXAM_EDIT_PATTERN} element={<ExamFormPage />} />
-                <Route path={PATHS.QUESTION_NEW_PATTERN} element={<QuestionFormPage />} />
-                <Route
-                  path={PATHS.QUESTION_EDIT_PATTERN}
-                  element={<QuestionFormPage />}
-                />
+              {/* Exam Schedules */}
+              <Route path={PATHS.SCHEDULES} element={<SchedulesListPage />} />
+              <Route path={PATHS.SCHEDULES_NEW} element={<ScheduleFormPage />} />
+              <Route path={PATHS.SCHEDULE_EDIT_PATTERN} element={<ScheduleFormPage />} />
+              <Route
+                path={PATHS.SCHEDULE_ASSIGN_PATTERN}
+                element={<ScheduleAssignmentsPage />}
+              />
 
-                {/* Exam Schedules */}
-                <Route path={PATHS.SCHEDULES} element={<SchedulesListPage />} />
-                <Route path={PATHS.SCHEDULES_NEW} element={<ScheduleFormPage />} />
-                <Route path={PATHS.SCHEDULE_EDIT_PATTERN} element={<ScheduleFormPage />} />
-                <Route
-                  path={PATHS.SCHEDULE_ASSIGN_PATTERN}
-                  element={<ScheduleAssignmentsPage />}
-                />
+              {/* Evaluation */}
+              <Route path={PATHS.EVALUATION} element={<EvaluationListPage />} />
+              <Route
+                path={PATHS.EVALUATION_WORKBENCH_PATTERN}
+                element={<EvaluationWorkbenchPage />}
+              />
 
-                {/* Evaluation */}
-                <Route path={PATHS.EVALUATION} element={<EvaluationListPage />} />
-                <Route
-                  path={PATHS.EVALUATION_WORKBENCH_PATTERN}
-                  element={<EvaluationWorkbenchPage />}
-                />
+              {/* Results */}
+              <Route path={PATHS.RESULTS} element={<ResultsListPage />} />
+              <Route path={PATHS.RESULT_DETAIL_PATTERN} element={placeholder('Result Detail')} />
 
-                {/* Results */}
-                <Route path={PATHS.RESULTS} element={<ResultsListPage />} />
-                <Route path={PATHS.RESULT_DETAIL_PATTERN} element={placeholder('Result Detail')} />
+              {/* Analytics & Reports */}
+              <Route path={PATHS.ANALYTICS} element={<AnalyticsOverviewPage />} />
+              <Route path={PATHS.ANALYTICS_STUDENTS} element={<StudentMonitoringPage />} />
+              <Route path={PATHS.ANALYTICS_EXAMS} element={<ExamMonitoringPage />} />
+              <Route path={PATHS.REPORTS} element={<ReportsIndexPage />} />
+              <Route path={PATHS.REPORT_STUDENT} element={<StudentResultsReportPage />} />
+              <Route path={PATHS.REPORT_EXAM} element={<ExamSummaryReportPage />} />
+              <Route path={PATHS.REPORT_EVALUATION} element={<EvaluationSummaryReportPage />} />
 
-                {/* Analytics & Reports */}
-                <Route path={PATHS.ANALYTICS} element={<AnalyticsOverviewPage />} />
-                <Route path={PATHS.ANALYTICS_STUDENTS} element={<StudentMonitoringPage />} />
-                <Route path={PATHS.ANALYTICS_EXAMS} element={<ExamMonitoringPage />} />
-                <Route path={PATHS.REPORTS} element={<ReportsIndexPage />} />
-                <Route path={PATHS.REPORT_STUDENT} element={<StudentResultsReportPage />} />
-                <Route path={PATHS.REPORT_EXAM} element={<ExamSummaryReportPage />} />
-                <Route path={PATHS.REPORT_EVALUATION} element={<EvaluationSummaryReportPage />} />
+              {/* Accessibility Profiles */}
+              <Route
+                path={PATHS.ACCESSIBILITY_PROFILES}
+                element={placeholder('Accessibility Profiles')}
+              />
+            </Route>
 
-                {/* System (future-ready) */}
-                <Route
-                  path={PATHS.ACCESSIBILITY_PROFILES}
-                  element={placeholder('Accessibility Profiles')}
-                />
-                <Route path={PATHS.SETTINGS} element={<SettingsPage />} />
-              </Route>
+            {/* Admin-only Routes */}
+            <Route element={<RoleGuard roles={[USER_ROLES.ADMIN]} />}>
+              {/* Administrators */}
+              <Route path={PATHS.ADMINISTRATORS} element={<AdministratorsListPage />} />
+              <Route path={PATHS.ADMINISTRATORS_NEW} element={<AdministratorFormPage />} />
+              <Route
+                path={PATHS.ADMINISTRATOR_DETAIL_PATTERN}
+                element={<AdministratorDetailPage />}
+              />
+              <Route
+                path={PATHS.ADMINISTRATOR_EDIT_PATTERN}
+                element={<AdministratorFormPage />}
+              />
+
+              {/* Settings */}
+              <Route path={PATHS.SETTINGS} element={<SettingsPage />} />
             </Route>
           </Route>
+        </Route>
       </Routes>
     </Suspense>
   );

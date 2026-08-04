@@ -29,9 +29,9 @@ export const DashboardPage = () => {
 
   const student = {
     name: userProfile?.name || userProfile?.full_name || 'Candidate',
-    rollNumber: userProfile?.roll_number || '—',
-    department: userProfile?.department_name || '—',
-    accessibilityProfile: 'Standard Light Mode (TTS Enabled)',
+    rollNumber: userProfile?.roll_number || '',
+    department: userProfile?.department_name || '',
+    className: userProfile?.class_name || '',
   };
 
   const isTerminalSession = (exam) => {
@@ -97,16 +97,27 @@ export const DashboardPage = () => {
           </h3>
         </CardHeader>
         <CardBody className="py-4">
-          <div className="text-sm font-medium text-text-main space-y-1.5 leading-relaxed">
+          <div className="text-sm font-medium text-text-main leading-relaxed">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span><strong>Name:</strong> {student.name}</span>
-              <span className="text-border-strong hidden sm:inline">│</span>
-              <span><strong>Roll:</strong> {student.rollNumber}</span>
-              <span className="text-border-strong hidden sm:inline">│</span>
-              <span><strong>Dept:</strong> {student.department}</span>
-            </div>
-            <div className="text-xs text-text-muted">
-              <strong>Accessibility Profile:</strong> {student.accessibilityProfile}
+              {student.rollNumber && (
+                <>
+                  <span className="text-border-strong hidden sm:inline">│</span>
+                  <span><strong>Roll Number:</strong> {student.rollNumber}</span>
+                </>
+              )}
+              {student.department && (
+                <>
+                  <span className="text-border-strong hidden sm:inline">│</span>
+                  <span><strong>Department:</strong> {student.department}</span>
+                </>
+              )}
+              {student.className && (
+                <>
+                  <span className="text-border-strong hidden sm:inline">│</span>
+                  <span><strong>Class:</strong> {student.className}</span>
+                </>
+              )}
             </div>
           </div>
         </CardBody>
@@ -250,14 +261,9 @@ export const DashboardPage = () => {
                     </tr>
                   ))
                 ) : (
-                  <tr className="hover:bg-subtle/40">
-                    <th scope="row" className="px-4 py-3 font-mono font-bold text-navy-primary text-left">MA-301</th>
-                    <td className="px-4 py-3 font-medium">Applied Mathematics III</td>
-                    <td className="px-4 py-3 text-text-muted">2026-07-20</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="purple" size="sm">
-                        Submitted (Evaluation Pending)
-                      </Badge>
+                  <tr>
+                    <td colSpan={4} className="px-4 py-6 text-center text-text-muted font-medium">
+                      No completed examination papers found.
                     </td>
                   </tr>
                 )}

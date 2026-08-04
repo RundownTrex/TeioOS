@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { BarChart3, Send, Eye, CheckCircle2, AlertCircle, Award, BookOpen, User } from 'lucide-react';
+import { BarChart3, Send, Eye, CheckCircle2, AlertCircle, Award, BookOpen, User, Trash2 } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card } from '../../../components/ui/Card';
@@ -213,17 +213,20 @@ export const ResultsListPage = () => {
             {
               key: 'view-details',
               label: 'View Result Details',
+              icon: <Eye className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => setSelectedResult(row),
             },
             {
               key: 'publish',
               label: 'Publish Result',
+              icon: <Send className="w-4 h-4" aria-hidden="true" />,
               disabled: Boolean(row.published_at) || row.evaluation_status !== 'COMPLETED',
               onSelect: () => publishMutation.mutate(row.student_exam_id),
             },
             {
               key: 'delete',
               label: 'Delete Result',
+              icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
               danger: true,
               onSelect: () => setPendingDelete(row),
             },

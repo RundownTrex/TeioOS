@@ -14,6 +14,7 @@ from app.api.dependencies.services import (
 from app.api.dependencies.auth import (
     get_current_user,
     require_admin,
+    require_admin_only,
     require_student,
     get_token_payload,
     get_active_exam_student,

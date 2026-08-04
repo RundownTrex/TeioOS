@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Key, UserX, UserCheck } from 'lucide-react';
+import { Plus, Key, UserX, UserCheck, Eye, Pencil, Trash2 } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card } from '../../../components/ui/Card';
@@ -206,11 +206,13 @@ export const AdministratorsListPage = () => {
             {
               key: 'view',
               label: 'View Details',
+              icon: <Eye className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => navigate(PATHS.administratorDetail(row.id)),
             },
             {
               key: 'edit',
               label: 'Edit',
+              icon: <Pencil className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => navigate(PATHS.administratorEdit(row.id)),
             },
             {
@@ -232,6 +234,7 @@ export const AdministratorsListPage = () => {
             {
               key: 'delete',
               label: 'Delete',
+              icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
               danger: true,
               onSelect: () => {
                 setDeleteError(null);

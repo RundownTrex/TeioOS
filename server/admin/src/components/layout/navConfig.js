@@ -17,6 +17,7 @@ import {
   Printer,
 } from 'lucide-react';
 import { PATHS } from '../../routes/paths';
+import { USER_ROLES } from '../../utils/constants';
 
 /**
  * Sidebar navigation groups. Items flagged `isPlanned` render as
@@ -41,7 +42,7 @@ export const NAV_GROUPS = [
     label: 'People',
     items: [
       { label: 'Students', path: PATHS.STUDENTS, icon: Users },
-      { label: 'Administrators', path: PATHS.ADMINISTRATORS, icon: ShieldCheck },
+      { label: 'Administrators', path: PATHS.ADMINISTRATORS, icon: ShieldCheck, roles: [USER_ROLES.ADMIN] },
     ],
   },
   {
@@ -71,7 +72,7 @@ export const NAV_GROUPS = [
     label: 'System',
     items: [
       { label: 'Accessibility Profiles', path: PATHS.ACCESSIBILITY_PROFILES, icon: Accessibility, isPlanned: true },
-      { label: 'Settings', path: PATHS.SETTINGS, icon: Settings },
+      { label: 'Settings', path: PATHS.SETTINGS, icon: Settings, roles: [USER_ROLES.ADMIN] },
     ],
   },
 ];

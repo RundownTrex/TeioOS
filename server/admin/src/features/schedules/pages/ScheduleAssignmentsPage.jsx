@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, UserPlus, Users, Building, Upload, Trash2, Clock, CheckCircle, Search } from 'lucide-react';
+import { ChevronLeft, UserPlus, Users, Building, Upload, Trash2, Clock, CheckCircle, Search, UserX } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card, CardHeader, CardBody } from '../../../components/ui/Card';
@@ -279,6 +279,7 @@ export const ScheduleAssignmentsPage = () => {
             {
               key: 'override-time',
               label: 'Set Duration Override',
+              icon: <Clock className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => {
                 setOverrideStudent(row);
                 setOverrideDurationInput(
@@ -289,6 +290,7 @@ export const ScheduleAssignmentsPage = () => {
             {
               key: 'remove',
               label: 'Remove Assignment',
+              icon: <UserX className="w-4 h-4" aria-hidden="true" />,
               danger: true,
               onSelect: () => {
                 setRemoveError(null);

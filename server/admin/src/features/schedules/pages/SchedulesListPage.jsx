@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Clock, Users, Calendar, AlertCircle } from 'lucide-react';
+import { Plus, Clock, Users, Calendar, AlertCircle, Pencil, Play, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card } from '../../../components/ui/Card';
@@ -196,34 +196,40 @@ export const SchedulesListPage = () => {
             {
               key: 'assign',
               label: 'Assign Candidates',
+              icon: <Users className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => navigate(PATHS.scheduleAssign(row.id)),
             },
             {
               key: 'edit',
               label: 'Edit Schedule',
+              icon: <Pencil className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => navigate(PATHS.scheduleEdit(row.id)),
             },
             {
               key: 'set-active',
               label: 'Set Status to Active',
+              icon: <Play className="w-4 h-4" aria-hidden="true" />,
               disabled: row.status === 'active',
               onSelect: () => statusMutation.mutate({ id: row.id, status: 'active' }),
             },
             {
               key: 'set-completed',
               label: 'Set Status to Completed',
+              icon: <CheckCircle2 className="w-4 h-4" aria-hidden="true" />,
               disabled: row.status === 'completed',
               onSelect: () => statusMutation.mutate({ id: row.id, status: 'completed' }),
             },
             {
               key: 'set-cancelled',
               label: 'Cancel Schedule',
+              icon: <XCircle className="w-4 h-4" aria-hidden="true" />,
               disabled: row.status === 'cancelled',
               onSelect: () => statusMutation.mutate({ id: row.id, status: 'cancelled' }),
             },
             {
               key: 'delete',
               label: 'Delete Schedule',
+              icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
               danger: true,
               onSelect: () => {
                 setDeleteError(null);

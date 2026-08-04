@@ -17,8 +17,8 @@ class AuthService:
         """
         user = self.user_repo.get_by_username(username)
 
-        # We only allow admins to login through this service
-        if not user or user.role.value != "admin":
+        # Allow active users in the users table (admin, teacher/professor) to log in
+        if not user or not user.is_active:
             raise AuthenticationException("Incorrect username or password")
 
         if not verify_password(password, user.password_hash):

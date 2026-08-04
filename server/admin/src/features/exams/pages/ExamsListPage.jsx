@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Eye, Send, EyeOff } from 'lucide-react';
+import { Plus, Eye, Send, EyeOff, FileText, Pencil, Trash2 } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card, CardHeader, CardBody } from '../../../components/ui/Card';
@@ -174,11 +174,13 @@ export const ExamsListPage = () => {
             {
               key: 'view',
               label: 'View Questions & Content',
+              icon: <FileText className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => navigate(PATHS.examDetail(row.id)),
             },
             {
               key: 'edit',
               label: 'Edit Exam',
+              icon: <Pencil className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => navigate(PATHS.examEdit(row.id)),
             },
             {
@@ -204,6 +206,7 @@ export const ExamsListPage = () => {
             {
               key: 'delete',
               label: 'Delete',
+              icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
               danger: true,
               onSelect: () => {
                 setDeleteError(null);

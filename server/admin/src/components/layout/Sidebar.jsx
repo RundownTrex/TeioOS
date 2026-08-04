@@ -1,6 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { USER_ROLES } from '../../utils/constants';
 import { NAV_GROUPS } from './navConfig';
 
 /**
@@ -8,6 +10,14 @@ import { NAV_GROUPS } from './navConfig';
  * Controlled: Props: isOpen (mobile), onClose, className.
  */
 export const Sidebar = ({ isOpen = false, onClose, className = '' }) => {
+  const { user } = useAuth();
+  const userRole = user?.role || USER_ROLES.ADMIN;
+
+  const visibleGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.roles || item.roles.includes(userRole)),
+  })).filter((group) => group.items.length > 0);
+
   return (
     <>
       {isOpen && (
@@ -44,7 +54,7 @@ export const Sidebar = ({ isOpen = false, onClose, className = '' }) => {
 
         <nav aria-label="Primary" className="flex-1 overflow-y-auto px-3 py-4">
           <ul className="space-y-6">
-            {NAV_GROUPS.map((group) => (
+            {visibleGroups.map((group) => (
               <li key={group.label}>
                 <p className="px-2 mb-2 text-[11px] font-bold uppercase tracking-widest text-text-muted">
                   {group.label}

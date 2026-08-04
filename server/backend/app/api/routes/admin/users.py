@@ -1,7 +1,7 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 
-from app.api.dependencies.auth import require_admin
+from app.api.dependencies.auth import require_admin_only
 from app.api.dependencies.pagination import PaginationDep
 from app.api.dependencies.services import UserServiceDep
 from app.models.user import UserRole
@@ -18,7 +18,7 @@ def get_users(
     user_service: UserServiceDep,
     search: str | None = Query(None, description="Search by name, username, or email"),
     role: UserRole | None = Query(None, description="Filter by user role"),
-    _=Depends(require_admin),
+    _=Depends(require_admin_only),
 ):
     """Retrieve all users with pagination, search, and role filtering."""
     paginated_data = user_service.get_users(
@@ -35,7 +35,7 @@ def get_users(
 def get_user(
     user_id: UUID,
     user_service: UserServiceDep,
-    _=Depends(require_admin),
+    _=Depends(require_admin_only),
 ):
     """Retrieve a specific user by ID."""
     user = user_service.get_user(user_id)
@@ -50,7 +50,7 @@ def get_user(
 def create_user(
     data: UserCreate,
     user_service: UserServiceDep,
-    _=Depends(require_admin),
+    _=Depends(require_admin_only),
 ):
     """Create a new user (admin/teacher)."""
     user = user_service.create_user(data)
@@ -66,7 +66,7 @@ def update_user(
     user_id: UUID,
     data: UserUpdate,
     user_service: UserServiceDep,
-    _=Depends(require_admin),
+    _=Depends(require_admin_only),
 ):
     """Update an existing user."""
     user = user_service.update_user(user_id, data)
@@ -81,7 +81,7 @@ def update_user(
 def delete_user(
     user_id: UUID,
     user_service: UserServiceDep,
-    _=Depends(require_admin),
+    _=Depends(require_admin_only),
 ):
     """Delete a user by ID."""
     user_service.delete_user(user_id)

@@ -52,7 +52,8 @@ class RoleChecker:
         return token_payload
 
 # Instantiated reusable dependencies
-require_admin = RoleChecker(["admin"])
+require_admin = RoleChecker(["admin", "teacher"])
+require_admin_only = RoleChecker(["admin"])
 require_student = RoleChecker(["student"])
 
 

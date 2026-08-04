@@ -44,7 +44,7 @@ export const UserMenu = ({ className = '' }) => {
     navigate(PATHS.LOGIN, { replace: true });
   };
 
-  const roleLabel = user.role === USER_ROLES.ADMIN ? 'Admin' : user.role || 'User';
+  const roleLabel = user.role === USER_ROLES.ADMIN ? 'Admin' : user.role === 'teacher' ? 'Teacher' : user.role || 'User';
 
   return (
     <div ref={menuRef} className={`relative inline-block ${className}`}>
@@ -79,7 +79,7 @@ export const UserMenu = ({ className = '' }) => {
             <div className="flex flex-col min-w-0">
               <p className="text-sm font-semibold text-text-main truncate">{user.name}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <Badge variant={user.role === USER_ROLES.ADMIN ? 'purple' : 'neutral'} size="sm">
+                <Badge variant={user.role === USER_ROLES.ADMIN ? 'purple' : user.role === 'teacher' ? 'info' : 'neutral'} size="sm">
                   {roleLabel}
                 </Badge>
                 {user.email && (

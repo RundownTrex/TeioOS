@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GripVertical, Plus, Pencil, Trash2, Eye, Send, EyeOff, Search } from 'lucide-react';
+import { GripVertical, Plus, Pencil, Trash2, Eye, Send, EyeOff, Search, ArrowUp, ArrowDown } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card, CardHeader, CardBody } from '../../../components/ui/Card';
@@ -290,28 +290,33 @@ export const ExamDetailPage = () => {
             {
               key: 'preview',
               label: 'Preview Question',
+              icon: <Eye className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => setPreviewQuestion(question),
             },
             {
               key: 'edit',
               label: 'Edit Question',
+              icon: <Pencil className="w-4 h-4" aria-hidden="true" />,
               onSelect: () => navigate(PATHS.questionEdit(id, question.id)),
             },
             {
               key: 'move-up',
               label: 'Move up',
+              icon: <ArrowUp className="w-4 h-4" aria-hidden="true" />,
               disabled: index === 0,
               onSelect: () => move(question.id, 'up'),
             },
             {
               key: 'move-down',
               label: 'Move down',
+              icon: <ArrowDown className="w-4 h-4" aria-hidden="true" />,
               disabled: index === listLength - 1,
               onSelect: () => move(question.id, 'down'),
             },
             {
               key: 'delete',
               label: 'Delete',
+              icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
               danger: true,
               onSelect: () => {
                 setDeleteError(null);

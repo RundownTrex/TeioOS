@@ -2,10 +2,10 @@ import React from 'react';
 import { useShortcuts } from '../../hooks/useShortcuts';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { RotateCcw, Command } from 'lucide-react';
+import { Command } from 'lucide-react';
 
 export const ShortcutHelpModal = () => {
-  const { isHelpOpen, closeHelp, shortcuts, resetShortcuts } = useShortcuts();
+  const { isHelpOpen, closeHelp, shortcuts } = useShortcuts();
 
   // Format shortcut object into accessible visual badge text (e.g., Alt + N)
   const formatCombo = (config) => {
@@ -35,15 +35,7 @@ export const ShortcutHelpModal = () => {
   });
 
   const footerActions = (
-    <div className="flex items-center justify-between w-full gap-3">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={resetShortcuts}
-        leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
-      >
-        Reset Defaults
-      </Button>
+    <div className="flex items-center justify-end w-full">
       <Button variant="primary" size="md" onClick={closeHelp}>
         Close Help (Esc)
       </Button>

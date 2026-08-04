@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
@@ -16,11 +16,15 @@ router = APIRouter()
 def get_exams(
     pagination: PaginationDep,
     exam_service: ExamServiceDep,
-    subject_id: UUID | None = None,
+    subject_id: UUID | None = Query(None, description="Filter exams by subject ID"),
+    search: str | None = Query(None, description="Search exams by title"),
+    status: str | None = Query(None, description="Filter exams by status (draft/published)"),
     _=Depends(require_admin),
 ):
-    """Retrieve all exams with pagination, optionally filtered by subject."""
-    paginated_data = exam_service.get_exams(pagination.page, pagination.page_size, subject_id)
+    """Retrieve all exams with pagination, search, and optional filters."""
+    paginated_data = exam_service.get_exams(
+        pagination.page, pagination.page_size, subject_id=subject_id, search=search, status=status
+    )
     return APIResponse(
         success=True,
         message="Exams retrieved successfully",

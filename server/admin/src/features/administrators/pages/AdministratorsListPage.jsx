@@ -22,6 +22,7 @@ import { useQueryParams } from '../../../hooks/useQueryParams';
 import { useToast } from '../../../hooks/useToast';
 import { queryKeys } from '../../../utils/queryKeys';
 import { formatDate } from '../../../utils/formatters';
+import { QUERY_DEFAULTS } from '../../../utils/constants';
 import { PATHS } from '../../../routes/paths';
 
 /**
@@ -63,6 +64,8 @@ export const AdministratorsListPage = () => {
         role: filters.role,
         signal,
       }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_LIST_MS,
+    placeholderData: (prev) => prev,
   });
 
   // Delete Mutation

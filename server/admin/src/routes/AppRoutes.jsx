@@ -27,6 +27,12 @@ const ExamsListPage = lazy(() => import('../features/exams/pages/ExamsListPage')
 const ExamFormPage = lazy(() => import('../features/exams/pages/ExamFormPage'));
 const ExamDetailPage = lazy(() => import('../features/exams/pages/ExamDetailPage'));
 const QuestionFormPage = lazy(() => import('../features/exams/pages/QuestionFormPage'));
+const SchedulesListPage = lazy(() => import('../features/schedules/pages/SchedulesListPage'));
+const ScheduleFormPage = lazy(() => import('../features/schedules/pages/ScheduleFormPage'));
+const ScheduleAssignmentsPage = lazy(() => import('../features/schedules/pages/ScheduleAssignmentsPage'));
+const EvaluationListPage = lazy(() => import('../features/evaluation/pages/EvaluationListPage'));
+const EvaluationWorkbenchPage = lazy(() => import('../features/evaluation/pages/EvaluationWorkbenchPage'));
+const ResultsListPage = lazy(() => import('../features/results/pages/ResultsListPage'));
 const AnalyticsOverviewPage = lazy(() => import('../features/analytics/pages/AnalyticsOverviewPage'));
 const StudentMonitoringPage = lazy(() => import('../features/analytics/pages/StudentMonitoringPage'));
 const ExamMonitoringPage = lazy(() => import('../features/analytics/pages/ExamMonitoringPage'));
@@ -34,6 +40,7 @@ const ReportsIndexPage = lazy(() => import('../features/reports/pages/ReportsInd
 const StudentResultsReportPage = lazy(() => import('../features/reports/pages/StudentResultsReportPage'));
 const ExamSummaryReportPage = lazy(() => import('../features/reports/pages/ExamSummaryReportPage'));
 const EvaluationSummaryReportPage = lazy(() => import('../features/reports/pages/EvaluationSummaryReportPage'));
+const SettingsPage = lazy(() => import('../features/settings/pages/SettingsPage'));
 
 /**
  * Feature routes render FeaturePlaceholder until their screens are
@@ -155,23 +162,23 @@ export const AppRoutes = () => {
                 />
 
                 {/* Exam Schedules */}
-                <Route path={PATHS.SCHEDULES} element={placeholder('Exam Schedules')} />
-                <Route path={PATHS.SCHEDULES_NEW} element={placeholder('New Schedule')} />
-                <Route path={PATHS.SCHEDULE_EDIT_PATTERN} element={placeholder('Edit Schedule')} />
+                <Route path={PATHS.SCHEDULES} element={<SchedulesListPage />} />
+                <Route path={PATHS.SCHEDULES_NEW} element={<ScheduleFormPage />} />
+                <Route path={PATHS.SCHEDULE_EDIT_PATTERN} element={<ScheduleFormPage />} />
                 <Route
                   path={PATHS.SCHEDULE_ASSIGN_PATTERN}
-                  element={placeholder('Assign Students')}
+                  element={<ScheduleAssignmentsPage />}
                 />
 
                 {/* Evaluation */}
-                <Route path={PATHS.EVALUATION} element={placeholder('Evaluation Queue')} />
+                <Route path={PATHS.EVALUATION} element={<EvaluationListPage />} />
                 <Route
                   path={PATHS.EVALUATION_WORKBENCH_PATTERN}
-                  element={placeholder('Evaluation Workbench')}
+                  element={<EvaluationWorkbenchPage />}
                 />
 
                 {/* Results */}
-                <Route path={PATHS.RESULTS} element={placeholder('Results')} />
+                <Route path={PATHS.RESULTS} element={<ResultsListPage />} />
                 <Route path={PATHS.RESULT_DETAIL_PATTERN} element={placeholder('Result Detail')} />
 
                 {/* Analytics & Reports */}
@@ -188,7 +195,7 @@ export const AppRoutes = () => {
                   path={PATHS.ACCESSIBILITY_PROFILES}
                   element={placeholder('Accessibility Profiles')}
                 />
-                <Route path={PATHS.SETTINGS} element={placeholder('Settings')} />
+                <Route path={PATHS.SETTINGS} element={<SettingsPage />} />
               </Route>
             </Route>
           </Route>

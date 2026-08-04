@@ -1,6 +1,6 @@
 import uuid
 from typing import List, TYPE_CHECKING
-from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy import Integer, String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import BaseModel
 
@@ -19,6 +19,8 @@ class Exam(BaseModel):
 
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     total_marks: Mapped[int] = mapped_column(Integer, nullable=False)
+    instructions: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="draft", server_default="draft", nullable=False)
 
     # Foreign Key
     # RESTRICT: an Exam cannot be orphaned by deleting its creator.

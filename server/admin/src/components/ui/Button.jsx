@@ -17,7 +17,7 @@ export const Button = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-normal ease-in-out active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none disabled:active:scale-100 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2';
+    'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-normal ease-in-out active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none disabled:active:scale-100 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 whitespace-nowrap';
 
   const variants = {
     primary:
@@ -53,14 +53,14 @@ export const Button = ({
     >
       {isLoading ? (
         <>
-          <Spinner size="sm" className="mr-1.5" label="Processing..." />
-          <span>{children}</span>
+          <Spinner size="sm" className="shrink-0" label="Processing..." />
+          <span className="inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap">{children}</span>
         </>
       ) : (
         <>
-          {leftIcon && <span className="inline-flex shrink-0" aria-hidden="true">{leftIcon}</span>}
-          <span>{children}</span>
-          {rightIcon && <span className="inline-flex shrink-0" aria-hidden="true">{rightIcon}</span>}
+          {leftIcon && <span className="inline-flex items-center justify-center shrink-0" aria-hidden="true">{leftIcon}</span>}
+          <span className="inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap">{children}</span>
+          {rightIcon && <span className="inline-flex items-center justify-center shrink-0" aria-hidden="true">{rightIcon}</span>}
         </>
       )}
     </button>

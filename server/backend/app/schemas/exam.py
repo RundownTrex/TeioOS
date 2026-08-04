@@ -6,6 +6,8 @@ class ExamBase(BaseModel):
     title: str | None = Field(None, max_length=255, description="Optional exam title; falls back to the subject name in the UI")
     duration_minutes: int = Field(..., gt=0, description="Duration in minutes")
     total_marks: int = Field(..., gt=0, description="Total marks for the exam")
+    instructions: str | None = Field(None, description="Optional examination guidelines and instructions")
+    status: str = Field("draft", description="Exam status: draft or published")
 
 class ExamCreate(ExamBase):
     # Optional: the route stamps the authenticated administrator via the JWT.
@@ -16,6 +18,8 @@ class ExamUpdate(BaseModel):
     title: str | None = Field(None, max_length=255, description="Optional exam title")
     duration_minutes: int | None = Field(None, gt=0, description="Duration in minutes")
     total_marks: int | None = Field(None, gt=0, description="Total marks for the exam")
+    instructions: str | None = Field(None, description="Optional examination guidelines and instructions")
+    status: str | None = Field(None, description="Exam status: draft or published")
     created_by: UUID | None = Field(None, description="UUID of the admin/teacher creating this exam")
     subject_id: UUID | None = Field(None, description="UUID of the subject this exam belongs to")
 

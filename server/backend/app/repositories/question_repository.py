@@ -20,17 +20,42 @@ class QuestionRepository(BaseRepository[Question]):
         stmt = select(Question).options(joinedload(Question.options)).where(Question.id == question_id)
         return self.session.execute(stmt).scalars().first()
 
-    def get_all(self, skip: int = 0, limit: int = 20, exam_id: UUID | None = None) -> Sequence[Question]:
-        stmt = select(Question).options(joinedload(Question.options)).order_by(Question.display_order)
+    def _apply_filters(
+        self,
+        stmt,
+        exam_id: UUID | None = None,
+        search: str | None = None,
+        question_type: str | None = None,
+    ):
         if exam_id:
             stmt = stmt.where(Question.exam_id == exam_id)
+        if question_type:
+            stmt = stmt.where(Question.question_type == question_type)
+        if search:
+            stmt = stmt.where(Question.question_text.ilike(f"%{search}%"))
+        return stmt
+
+    def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 20,
+        exam_id: UUID | None = None,
+        search: str | None = None,
+        question_type: str | None = None,
+    ) -> Sequence[Question]:
+        stmt = select(Question).options(joinedload(Question.options)).order_by(Question.display_order)
+        stmt = self._apply_filters(stmt, exam_id=exam_id, search=search, question_type=question_type)
         stmt = stmt.offset(skip).limit(limit)
         return self.session.execute(stmt).unique().scalars().all()
 
-    def get_count(self, exam_id: UUID | None = None) -> int:
-        if not exam_id:
-            return super().get_count()
-        stmt = select(func.count()).select_from(Question).where(Question.exam_id == exam_id)
+    def get_count(
+        self,
+        exam_id: UUID | None = None,
+        search: str | None = None,
+        question_type: str | None = None,
+    ) -> int:
+        stmt = select(func.count()).select_from(Question)
+        stmt = self._apply_filters(stmt, exam_id=exam_id, search=search, question_type=question_type)
         return self.session.execute(stmt).scalar_one()
 
     def get_max_display_order(self, exam_id: UUID) -> int | None:

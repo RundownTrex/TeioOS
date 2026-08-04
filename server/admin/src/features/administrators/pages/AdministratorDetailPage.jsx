@@ -19,6 +19,7 @@ import { administratorsApi } from '../api/administratorsApi';
 import { useToast } from '../../../hooks/useToast';
 import { queryKeys } from '../../../utils/queryKeys';
 import { formatDateTime } from '../../../utils/formatters';
+import { QUERY_DEFAULTS } from '../../../utils/constants';
 import { PATHS } from '../../../routes/paths';
 
 const BACK_LINK =
@@ -53,6 +54,7 @@ export const AdministratorDetailPage = () => {
     queryKey: queryKeys.administrators.detail(id),
     queryFn: ({ signal }) => administratorsApi.detail(id, { signal }),
     enabled: Boolean(id),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_DETAIL_MS,
   });
 
   const deleteMutation = useMutation({
@@ -173,7 +175,7 @@ export const AdministratorDetailPage = () => {
           <dl className="m-0">
             <DetailRow label="Full Name">{user.name}</DetailRow>
             <DetailRow label="Username">
-              <code className="text-xs font-mono bg-surface-subtle px-1.5 py-0.5 rounded border border-border-main">
+              <code className="text-xs font-mono bg-subtle px-1.5 py-0.5 rounded border border-border-main">
                 {user.username}
               </code>
             </DetailRow>

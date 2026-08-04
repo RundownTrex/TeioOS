@@ -21,6 +21,8 @@ class Result(BaseModel):
 
     # Pre-calculated marks to avoid runtime recalculations
     obtained_marks: Mapped[float] = mapped_column(Float, nullable=False)
+    mcq_score: Mapped[float] = mapped_column(Float, default=0.0, server_default="0.0", nullable=False)
+    descriptive_score: Mapped[float] = mapped_column(Float, default=0.0, server_default="0.0", nullable=False)
     percentage: Mapped[float] = mapped_column(Float, nullable=False)
     grade: Mapped[str | None] = mapped_column(String(50), nullable=True)
     evaluation_status: Mapped[EvaluationStatus] = mapped_column(

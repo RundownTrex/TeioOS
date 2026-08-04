@@ -1,6 +1,6 @@
 from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
@@ -20,18 +20,24 @@ def get_results(
     student_id: UUID | None = None,
     exam_id: UUID | None = None,
     class_id: UUID | None = None,
+    q: str | None = Query(None, description="Search results by student name or roll number"),
+    evaluation_status: str | None = Query(None, description="Filter by evaluation status"),
+    is_published: bool | None = Query(None, description="Filter by published status"),
     _=Depends(require_admin),
 ):
     """
     Retrieve read-only results.
-    Can be filtered by student_id, exam_id, or class_id.
+    Can be filtered by student_id, exam_id, class_id, search, evaluation_status, and published status.
     """
     paginated_data = result_service.get_results(
         pagination.page, 
         pagination.page_size, 
         student_id=student_id, 
         exam_id=exam_id, 
-        class_id=class_id
+        class_id=class_id,
+        q=q,
+        evaluation_status=evaluation_status,
+        is_published=is_published,
     )
     return APIResponse(
         success=True,
@@ -82,5 +88,20 @@ def publish_result(
         success=True,
         message="Result published successfully",
         data=result,
+    )
+
+
+@router.delete("/{result_id}", response_model=APIResponse[None])
+def delete_result(
+    result_id: UUID,
+    result_service: ResultServiceDep,
+    _=Depends(require_admin),
+):
+    """Delete a result record."""
+    result_service.delete_result(result_id)
+    return APIResponse(
+        success=True,
+        message="Result deleted successfully",
+        data=None,
     )
 

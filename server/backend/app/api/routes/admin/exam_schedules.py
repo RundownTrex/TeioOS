@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
@@ -15,11 +15,15 @@ router = APIRouter()
 def get_schedules(
     pagination: PaginationDep,
     schedule_service: ExamScheduleServiceDep,
-    exam_id: UUID | None = None,
+    exam_id: UUID | None = Query(None, description="Filter schedules by exam ID"),
+    search: str | None = Query(None, description="Search schedules by exam title"),
+    status: str | None = Query(None, description="Filter schedules by status"),
     _=Depends(require_admin),
 ):
-    """Retrieve all schedules, optionally filtered by exam_id, with pagination."""
-    paginated_data = schedule_service.get_schedules(pagination.page, pagination.page_size, exam_id)
+    """Retrieve all schedules with pagination, search, and status filtering."""
+    paginated_data = schedule_service.get_schedules(
+        pagination.page, pagination.page_size, exam_id=exam_id, search=search, status=status
+    )
     return APIResponse(
         success=True,
         message="Schedules retrieved successfully",

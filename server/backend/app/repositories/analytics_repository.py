@@ -25,6 +25,38 @@ class AnalyticsRepository:
 
     # --- Pending evaluations ---
 
+    def get_score_summary(self, pass_threshold: float = 40.0) -> dict:
+        """Calculates aggregated score statistics: average_score, pass_percentage, highest_score, lowest_score."""
+        total_results_stmt = select(func.count()).select_from(Result)
+        total_count = self.session.execute(total_results_stmt).scalar_one()
+
+        if total_count == 0:
+            return {
+                "average_score": 0.0,
+                "pass_percentage": 0.0,
+                "highest_score": 0.0,
+                "lowest_score": 0.0,
+            }
+
+        avg_stmt = select(func.avg(Result.percentage))
+        avg_val = self.session.execute(avg_stmt).scalar_one_or_none()
+
+        passed_stmt = select(func.count()).select_from(Result).where(Result.percentage >= pass_threshold)
+        passed_count = self.session.execute(passed_stmt).scalar_one()
+
+        max_stmt = select(func.max(Result.percentage))
+        max_val = self.session.execute(max_stmt).scalar_one_or_none()
+
+        min_stmt = select(func.min(Result.percentage))
+        min_val = self.session.execute(min_stmt).scalar_one_or_none()
+
+        return {
+            "average_score": round(float(avg_val), 2) if avg_val is not None else 0.0,
+            "pass_percentage": round((passed_count / total_count) * 100.0, 2),
+            "highest_score": round(float(max_val), 2) if max_val is not None else 0.0,
+            "lowest_score": round(float(min_val), 2) if min_val is not None else 0.0,
+        }
+
     def get_pending_evaluations_count(self) -> int:
         """Number of submitted exam sessions that have at least one
         descriptive answer still awaiting manual evaluation."""

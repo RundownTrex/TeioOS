@@ -1,9 +1,10 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies.auth import require_admin
 from app.api.dependencies.pagination import PaginationDep
 from app.api.dependencies.services import QuestionServiceDep
+from app.models.question import QuestionType
 from app.schemas.question import QuestionCreate, QuestionUpdate, QuestionResponse
 from app.schemas.pagination import PaginatedData
 from app.schemas.response import APIResponse
@@ -15,11 +16,15 @@ router = APIRouter()
 def get_questions(
     pagination: PaginationDep,
     question_service: QuestionServiceDep,
-    exam_id: UUID | None = None,
+    exam_id: UUID | None = Query(None, description="Filter questions by exam ID"),
+    search: str | None = Query(None, description="Search questions by question text"),
+    question_type: QuestionType | None = Query(None, description="Filter questions by type (MCQ/DESCRIPTIVE)"),
     _=Depends(require_admin),
 ):
-    """Retrieve all questions, optionally filtered by exam_id, with pagination."""
-    paginated_data = question_service.get_questions(pagination.page, pagination.page_size, exam_id)
+    """Retrieve all questions with pagination, optional exam_id filter, search, and type filter."""
+    paginated_data = question_service.get_questions(
+        pagination.page, pagination.page_size, exam_id=exam_id, search=search, question_type=question_type
+    )
     return APIResponse(
         success=True,
         message="Questions retrieved successfully",

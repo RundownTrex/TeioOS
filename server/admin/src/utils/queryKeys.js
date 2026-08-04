@@ -94,6 +94,10 @@ export const queryKeys = {
       by: (params) => ['schedules', 'list', params],
     },
     detail: (id) => ['schedules', 'detail', id],
+    assignments: {
+      all: (scheduleId) => ['schedules', 'detail', scheduleId, 'assignments'],
+      by: (scheduleId, params) => ['schedules', 'detail', scheduleId, 'assignments', params],
+    },
   },
 
   results: {
@@ -105,6 +109,17 @@ export const queryKeys = {
     detail: (id) => ['results', 'detail', id],
   },
 
+  evaluation: {
+    all: ['evaluation'],
+    pendingList: ['evaluation', 'pendingList'],
+    sessionAnswers: (studentExamId) => ['evaluation', 'sessionAnswers', studentExamId],
+  },
+
+  settings: {
+    all: ['settings'],
+    grouped: ['settings', 'grouped'],
+    category: (cat) => ['settings', 'category', cat],
+  },
 };
 
 export default queryKeys;

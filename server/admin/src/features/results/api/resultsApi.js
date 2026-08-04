@@ -8,14 +8,17 @@ export const resultsApi = {
    * or class_id, with server-side pagination.
    * GET /api/v1/admin/results/?page=&page_size=&student_id=&exam_id=&class_id=
    */
-  list: async ({ page, pageSize, studentId, examId, classId, signal } = {}) => {
+  list: async ({ page, pageSize, studentId, examId, classId, q, evaluationStatus, isPublished, signal } = {}) => {
     const response = await axiosClient.get(API_ENDPOINTS.RESULTS.LIST, {
       params: {
         page,
         page_size: pageSize,
-        student_id: studentId,
-        exam_id: examId,
-        class_id: classId,
+        student_id: studentId || undefined,
+        exam_id: examId || undefined,
+        class_id: classId || undefined,
+        q: q || undefined,
+        evaluation_status: evaluationStatus || undefined,
+        is_published: isPublished !== undefined && isPublished !== '' ? isPublished : undefined,
       },
       signal,
     });
@@ -49,6 +52,15 @@ export const resultsApi = {
    */
   publish: async (studentExamId) => {
     const response = await axiosClient.post(API_ENDPOINTS.RESULTS.PUBLISH(studentExamId));
+    return unwrap(response);
+  },
+
+  /**
+   * Delete a result by ID.
+   * DELETE /api/v1/admin/results/{result_id}
+   */
+  remove: async (id) => {
+    const response = await axiosClient.delete(API_ENDPOINTS.RESULTS.DETAIL(id));
     return unwrap(response);
   },
 };

@@ -1,60 +1,145 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Users, PlayCircle, Send, Timer, Clock } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Activity,
+  PlayCircle,
+  Clock,
+  Send,
+  AlertCircle,
+  RefreshCw,
+  Search,
+  Users,
+} from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
-import { Card, CardHeader } from '../../../components/ui/Card';
+import { Card, CardHeader, CardBody } from '../../../components/ui/Card';
 import { StatCard } from '../../../components/ui/StatCard';
 import { Table } from '../../../components/ui/Table';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
-import { EmptyState } from '../../../components/ui/EmptyState';
+import { Badge } from '../../../components/ui/Badge';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { Alert } from '../../../components/ui/Alert';
-import { LoadingSkeleton } from '../../../components/ui/LoadingSkeleton';
 
 import { analyticsApi } from '../api/analyticsApi';
+import { dashboardApi } from '../../dashboard/api/dashboardApi';
 import { schedulesApi } from '../../schedules/api/schedulesApi';
 import { useExamsReference, buildExamMap } from '../../exams/hooks/useExamsReference';
 import { useSubjectsReference, buildSubjectNameMap } from '../../subjects/hooks/useSubjectsReference';
 import { queryKeys } from '../../../utils/queryKeys';
-import { PAGINATION, QUERY_DEFAULTS } from '../../../utils/constants';
+import { PAGINATION } from '../../../utils/constants';
 import { formatDateTime } from '../../../utils/formatters';
 
-const formatRemaining = (expiresAt) => {
-  const diffMs = new Date(expiresAt).getTime() - Date.now();
-  if (diffMs <= 0) return 'Expired';
-  const minutes = Math.max(1, Math.ceil(diffMs / 60000));
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+const POLLING_INTERVAL_MS = 5000; // 5-second automatic refresh via React Query polling
+
+/**
+ * Live Remaining Time Cell
+ * Updates every second for a smooth countdown.
+ * Highlights urgent sessions (< 5 mins remaining) in red.
+ */
+const RemainingTimeCell = ({ expiresAt }) => {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!expiresAt) return <span className="text-text-muted">—</span>;
+
+  const diffMs = new Date(expiresAt).getTime() - now;
+  if (diffMs <= 0) {
+    return <Badge variant="danger">Expired</Badge>;
+  }
+
+  const totalSec = Math.floor(diffMs / 1000);
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+
+  const isUrgent = totalSec < 300; // less than 5 mins
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const formatted =
+    hours > 0
+      ? `${hours}h ${pad(minutes)}m ${pad(seconds)}s`
+      : `${minutes}m ${pad(seconds)}s`;
+
+  return (
+    <span
+      className={`font-mono text-sm tabular-nums font-semibold ${
+        isUrgent ? 'text-status-danger animate-pulse' : 'text-text-main'
+      }`}
+    >
+      {formatted}
+    </span>
+  );
 };
 
 /**
- * Student Monitoring (docs/frontend/admin-analytics-monitoring.md §4.4):
- * current sessions, submission status, attendance status. Session and
- * submission aggregates come from the real /admin/analytics/* endpoints;
- * attendance uses the real schedules API.
+ * Live Examination Monitoring Module
+ * Provides administrators with real-time overview of examination progress.
+ * Polled automatically via React Query without WebSockets.
+ *
+ * Displays:
+ * 1. Active Exams
+  * 2. Active Students (In Progress)
+ * 3. Students Yet To Start (Pending)
+ * 4. Submitted Students
+ * 5. Expired Sessions (Expired / Terminated)
+ *
+ * Live Active Candidate Table:
+ * - Student Name
+ * - Roll Number
+ * - Exam
+ * - Started At
+ * - Remaining Time
+ * - Status
  */
 export const StudentMonitoringPage = () => {
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Overview Query (Aggregates)
   const overviewQuery = useQuery({
     queryKey: queryKeys.analytics.studentOverview,
-    queryFn: () => analyticsApi.getStudentOverview(),
+    queryFn: ({ signal }) => analyticsApi.getStudentOverview({ signal }),
+    refetchInterval: POLLING_INTERVAL_MS,
+    refetchIntervalInBackground: true,
   });
 
+  // Current Active Sessions Query (Candidates in_progress)
   const sessionsQuery = useQuery({
     queryKey: queryKeys.analytics.currentSessions,
-    queryFn: () => analyticsApi.getCurrentSessions(),
-    refetchInterval: QUERY_DEFAULTS.STALE_TIME_LIVE_MS,
+    queryFn: ({ signal }) => analyticsApi.getCurrentSessions({ signal }),
+    refetchInterval: POLLING_INTERVAL_MS,
+    refetchIntervalInBackground: true,
+    placeholderData: (prev) => prev,
   });
 
+  // Dashboard Stats Query (Active Exams Count)
+  const statsQuery = useQuery({
+    queryKey: queryKeys.dashboard.stats,
+    queryFn: ({ signal }) => dashboardApi.getStats({ signal }),
+    refetchInterval: POLLING_INTERVAL_MS,
+    refetchIntervalInBackground: true,
+  });
+
+  // Submission Status Distribution Query
   const statusQuery = useQuery({
     queryKey: queryKeys.analytics.submissionStatus,
-    queryFn: () => analyticsApi.getSubmissionStatus(),
+    queryFn: ({ signal }) => analyticsApi.getSubmissionStatus({ signal }),
+    refetchInterval: POLLING_INTERVAL_MS,
+    refetchIntervalInBackground: true,
   });
 
+  // Schedules Reference Query
   const schedulesQuery = useQuery({
     queryKey: queryKeys.schedules.list.by({ page: 1, pageSize: PAGINATION.MAX_PAGE_SIZE }),
     queryFn: ({ signal }) =>
       schedulesApi.list({ page: 1, pageSize: PAGINATION.MAX_PAGE_SIZE, signal }),
+    refetchInterval: POLLING_INTERVAL_MS,
+    refetchIntervalInBackground: true,
   });
 
   const examsQuery = useExamsReference();
@@ -62,183 +147,226 @@ export const StudentMonitoringPage = () => {
   const examMap = buildExamMap(examsQuery.data);
   const subjectNames = buildSubjectNameMap(subjectsQuery.data);
 
-  const displayTitle = (examId) => {
-    const exam = examMap.get(examId);
-    return exam?.title || (exam && subjectNames.get(exam.subject_id)?.name) || 'Untitled exam';
+  const overview = overviewQuery.data;
+  const activeExamsCount =
+    statsQuery.data?.active_exams ??
+    (schedulesQuery.data?.items ?? []).filter((s) => s.status === 'active').length;
+
+  const handleRefreshAll = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.schedules.all });
   };
 
-  const overview = overviewQuery.data;
+  // Filter active sessions by student name, roll number, or exam title
+  const activeSessions = useMemo(() => {
+    const list = sessionsQuery.data ?? [];
+    if (!searchQuery.trim()) return list;
+    const term = searchQuery.toLowerCase().trim();
+    return list.filter(
+      (s) =>
+        s.studentName?.toLowerCase().includes(term) ||
+        s.rollNumber?.toLowerCase().includes(term) ||
+        s.examName?.toLowerCase().includes(term) ||
+        s.subjectName?.toLowerCase().includes(term)
+    );
+  }, [sessionsQuery.data, searchQuery]);
 
-  const sessionColumns = [
+  const candidateColumns = [
     {
-      key: 'studentName',
-      header: 'Student',
+      key: 'student',
+      header: 'Candidate Name',
       render: (row) => (
         <div>
-          <p className="text-sm font-medium text-text-main">{row.studentName}</p>
-          <p className="text-xs text-text-muted">{row.rollNumber}</p>
+          <p className="text-sm font-semibold text-text-main">{row.studentName}</p>
+          <p className="text-xs font-mono text-text-muted">{row.rollNumber}</p>
         </div>
       ),
     },
-    { key: 'examName', header: 'Exam' },
-    { key: 'subjectName', header: 'Subject' },
-    { key: 'startedAt', header: 'Started', render: (row) => formatDateTime(row.startedAt) },
-    { key: 'expiresAt', header: 'Expires', render: (row) => formatDateTime(row.expiresAt) },
     {
-      key: 'remaining',
-      header: 'Remaining',
-      align: 'right',
+      key: 'rollNumber',
+      header: 'Roll Number',
+      render: (row) => <span className="font-mono text-xs text-text-main">{row.rollNumber}</span>,
+    },
+    {
+      key: 'exam',
+      header: 'Examination',
       render: (row) => (
-        <span className="text-sm font-medium text-text-main tabular-nums">
-          {formatRemaining(row.expiresAt)}
-        </span>
+        <div>
+          <p className="text-sm font-medium text-text-main">{row.examName}</p>
+          {row.subjectName && row.subjectName !== row.examName && (
+            <p className="text-xs text-text-muted">{row.subjectName}</p>
+          )}
+        </div>
       ),
+    },
+    {
+      key: 'startedAt',
+      header: 'Started At',
+      render: (row) => formatDateTime(row.startedAt),
+    },
+    {
+      key: 'remainingTime',
+      header: 'Remaining Time',
+      align: 'right',
+      render: (row) => <RemainingTimeCell expiresAt={row.expiresAt} />,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      align: 'right',
+      render: () => <Badge variant="success" dot>In Progress</Badge>,
     },
   ];
 
   const statusColumns = [
     {
       key: 'status',
-      header: 'Status',
+      header: 'Session Lifecycle Status',
       render: (row) => <StatusBadge type="assignment" status={row.status} />,
     },
     {
       key: 'count',
-      header: 'Students',
+      header: 'Candidates Count',
       align: 'right',
-      render: (row) => <span className="tabular-nums">{row.count}</span>,
+      render: (row) => <span className="font-bold tabular-nums text-text-main">{row.count}</span>,
     },
   ];
 
-  const attendanceColumns = [
-    {
-      key: 'exam_id',
-      header: 'Exam',
-      render: (row) => displayTitle(row.exam_id),
-    },
-    {
-      key: 'start_time',
-      header: 'Window',
-      render: (row) => (
-        <span className="text-sm text-text-main tabular-nums">
-          {formatDateTime(row.start_time)}
-        </span>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (row) => <StatusBadge type="schedule" status={row.status} />,
-    },
-    {
-      key: 'assigned_count',
-      header: 'Assigned',
-      align: 'right',
-      render: (row) => <span className="tabular-nums">{row.assigned_count ?? 0}</span>,
-    },
-  ];
+  const isRefreshing =
+    sessionsQuery.isFetching || overviewQuery.isFetching || statsQuery.isFetching;
 
   return (
     <>
       <PageHeader
-        title="Student Monitoring"
-        description="Track attendance, live sessions, and submission progress."
+        title="Live Examination Monitoring"
+        description="Real-time overview of active examinations, candidate progress, and session timers."
+        actions={
+          <div className="flex items-center gap-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-success-bg border border-status-success-border text-xs font-medium text-status-success">
+              <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
+              <span>Live Auto-Refresh (5s)</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefreshAll}
+              isLoading={isRefreshing}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
+              Refresh Now
+            </Button>
+          </div>
+        }
       />
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5 print-no-break">
+      {/* Real-time Summary Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 print-no-break">
         <StatCard
-          label="Assigned"
-          value={overviewQuery.isLoading ? '—' : overview?.total_assigned}
-          icon={<Users className="w-5 h-5" aria-hidden="true" />}
+          label="Active Exams"
+          value={statsQuery.isLoading ? '—' : activeExamsCount}
+          icon={<Activity className="w-5 h-5 text-navy-primary" aria-hidden="true" />}
         />
         <StatCard
-          label="Started"
-          value={overviewQuery.isLoading ? '—' : overview?.started}
-          icon={<PlayCircle className="w-5 h-5" aria-hidden="true" />}
-        />
-        <StatCard
-          label="Submitted"
-          value={overviewQuery.isLoading ? '—' : overview?.submitted}
-          icon={<Send className="w-5 h-5" aria-hidden="true" />}
-        />
-        <StatCard
-          label="In Progress"
+          label="Active Students"
           value={overviewQuery.isLoading ? '—' : overview?.in_progress}
-          icon={<Timer className="w-5 h-5" aria-hidden="true" />}
+          icon={<PlayCircle className="w-5 h-5 text-status-success" aria-hidden="true" />}
         />
         <StatCard
-          label="Yet to Start"
+          label="Students Yet To Start"
           value={overviewQuery.isLoading ? '—' : overview?.not_started}
-          icon={<Clock className="w-5 h-5" aria-hidden="true" />}
+          icon={<Clock className="w-5 h-5 text-status-warning" aria-hidden="true" />}
+        />
+        <StatCard
+          label="Submitted Students"
+          value={overviewQuery.isLoading ? '—' : overview?.submitted}
+          icon={<Send className="w-5 h-5 text-status-info" aria-hidden="true" />}
+        />
+        <StatCard
+          label="Expired Sessions"
+          value={
+            overviewQuery.isLoading
+              ? '—'
+              : (overview?.expired || 0) + (overview?.terminated || 0)
+          }
+          icon={<AlertCircle className="w-5 h-5 text-status-danger" aria-hidden="true" />}
         />
       </div>
 
+      {/* Live Active Candidates Card */}
       <Card className="mt-6">
-        <CardHeader>Current sessions</CardHeader>
+        <CardHeader className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-border-main">
+          <div>
+            <h3 className="text-base font-semibold text-text-main">
+              Active Candidate Sessions ({activeSessions.length})
+            </h3>
+            <p className="text-xs text-text-muted">
+              Live monitoring of candidates currently writing examinations.
+            </p>
+          </div>
+          <div className="w-full sm:w-64">
+            <Input
+              id="live_search"
+              name="search"
+              placeholder="Search by student name or roll..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search active candidate sessions"
+            />
+          </div>
+        </CardHeader>
+
         {sessionsQuery.isError ? (
           <div className="p-5">
-            <Alert variant="error">Active sessions could not be loaded.</Alert>
+            <Alert variant="error">Active candidate sessions could not be retrieved from the server.</Alert>
           </div>
         ) : (
           <Table
-            columns={sessionColumns}
-            data={sessionsQuery.data ?? []}
+            columns={candidateColumns}
+            data={activeSessions}
             rowKey="id"
-            caption="Students currently taking an examination"
+            caption="Active candidate sessions table"
             loading={sessionsQuery.isLoading}
             empty={
-              <EmptyState
-                title="No active sessions"
-                description="No student is taking an examination right now."
-              />
+              <div className="p-8 text-center text-text-muted">
+                <Users className="w-8 h-8 mx-auto mb-2 text-text-muted opacity-50" aria-hidden="true" />
+                <p className="text-sm font-medium">No active candidate sessions right now</p>
+                <p className="text-xs text-text-muted mt-1">
+                  When students start an examination from the TeioOS client kiosk, their session will appear here in real time.
+                </p>
+              </div>
             }
           />
         )}
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-2 mt-6">
-        <Card>
-          <CardHeader>Submission status</CardHeader>
-          {statusQuery.isError ? (
-            <div className="p-5">
-              <Alert variant="error">Submission status could not be loaded.</Alert>
-            </div>
-          ) : (
-            <Table
-              columns={statusColumns}
-              data={statusQuery.data ?? []}
-              rowKey="status"
-              caption="Submission status distribution"
-              loading={statusQuery.isLoading}
-              empty={<EmptyState title="No data" description="No assignment data recorded." />}
-            />
-          )}
-        </Card>
-
-        <Card>
-          <CardHeader>Attendance status</CardHeader>
-          {schedulesQuery.isError ? (
-            <div className="p-5">
-              <Alert variant="error">Schedules could not be loaded.</Alert>
-            </div>
-          ) : schedulesQuery.isLoading ? (
-            <LoadingSkeleton rows={5} />
-          ) : (
-            <Table
-              columns={attendanceColumns}
-              data={schedulesQuery.data?.items ?? []}
-              rowKey="id"
-              caption="Assigned students per examination schedule"
-              empty={
-                <EmptyState
-                  title="No schedules"
-                  description="Create an exam schedule to see attendance."
-                />
-              }
-            />
-          )}
-        </Card>
-      </div>
+      {/* Submission Status Distribution Table */}
+      <Card className="mt-6">
+        <CardHeader className="px-5 py-4 border-b border-border-main">
+          <h3 className="text-base font-semibold text-text-main">Session Lifecycle Distribution</h3>
+          <p className="text-xs text-text-muted">
+            Overall breakdown of student assignment statuses across all examination schedules.
+          </p>
+        </CardHeader>
+        {statusQuery.isError ? (
+          <div className="p-5">
+            <Alert variant="error">Submission status distribution could not be loaded.</Alert>
+          </div>
+        ) : (
+          <Table
+            columns={statusColumns}
+            data={statusQuery.data ?? []}
+            rowKey="status"
+            caption="Submission status distribution table"
+            loading={statusQuery.isLoading}
+            empty={
+              <div className="p-6 text-center text-sm text-text-muted">
+                No session status data available.
+              </div>
+            }
+          />
+        )}
+      </Card>
     </>
   );
 };

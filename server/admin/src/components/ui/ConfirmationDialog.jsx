@@ -12,22 +12,30 @@ import { Button } from './Button';
  */
 export const ConfirmationDialog = ({
   open,
+  isOpen,
   title = 'Are you sure?',
   message,
-  confirmLabel = 'Confirm',
+  confirmLabel,
+  confirmText,
   cancelLabel = 'Cancel',
-  variant = 'primary',
+  variant,
+  isDanger = false,
   isLoading = false,
   onConfirm,
   onCancel,
+  onClose,
   size = 'sm',
   className = '',
   children,
 }) => {
   const messageId = useId();
+  const isDialogOpen = open !== undefined ? open : Boolean(isOpen);
+  const handleCancel = onCancel || onClose;
+  const finalConfirmLabel = confirmLabel || confirmText || 'Confirm';
+  const finalVariant = isDanger ? 'danger' : (variant || 'primary');
 
   const confirmButton =
-    variant === 'danger' ? (
+    finalVariant === 'danger' ? (
       <Button
         key="confirm"
         variant="danger"
@@ -36,7 +44,7 @@ export const ConfirmationDialog = ({
         isDisabled={isLoading}
         autoFocus
       >
-        {confirmLabel}
+        {finalConfirmLabel}
       </Button>
     ) : (
       <Button
@@ -46,26 +54,26 @@ export const ConfirmationDialog = ({
         isLoading={isLoading}
         isDisabled={isLoading}
       >
-        {confirmLabel}
+        {finalConfirmLabel}
       </Button>
     );
 
   const cancelButton = (
-    <Button key="cancel" variant="outline" onClick={onCancel} isDisabled={isLoading}>
+    <Button key="cancel" variant="outline" onClick={handleCancel} isDisabled={isLoading}>
       {cancelLabel}
     </Button>
   );
 
   return (
     <Modal
-      open={open}
-      onClose={onCancel}
+      open={isDialogOpen}
+      onClose={handleCancel}
       title={title}
       size={size}
       className={className}
       role="alertdialog"
       ariaDescribedBy={messageId}
-      footer={variant === 'danger' ? [confirmButton, cancelButton] : [cancelButton, confirmButton]}
+      footer={finalVariant === 'danger' ? [confirmButton, cancelButton] : [cancelButton, confirmButton]}
     >
       <p id={messageId} className="text-sm text-text-muted leading-relaxed">
         {message}

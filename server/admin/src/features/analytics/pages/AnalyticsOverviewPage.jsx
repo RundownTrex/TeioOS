@@ -1,7 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Users, FileText, Activity, CheckCircle2, ClipboardCheck } from 'lucide-react';
+import {
+  Users,
+  FileText,
+  Activity,
+  CheckCircle2,
+  ClipboardCheck,
+  TrendingUp,
+  Award,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  Send,
+  UserCheck,
+} from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card, CardHeader, CardBody, CardFooter } from '../../../components/ui/Card';
@@ -13,6 +26,7 @@ import { LoadingSkeleton } from '../../../components/ui/LoadingSkeleton';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Alert } from '../../../components/ui/Alert';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
+import { Tabs } from '../../../components/ui/Tabs';
 
 import { dashboardApi } from '../../dashboard/api/dashboardApi';
 import { analyticsApi } from '../api/analyticsApi';
@@ -21,7 +35,8 @@ import { useExamsReference, buildExamMap } from '../../exams/hooks/useExamsRefer
 import { useSubjectsReference, buildSubjectNameMap } from '../../subjects/hooks/useSubjectsReference';
 import { queryKeys } from '../../../utils/queryKeys';
 import { PATHS } from '../../../routes/paths';
-import { formatDateTime, formatPercent } from '../../../utils/formatters';
+import { formatDateTime, formatPercentage, formatNumber } from '../../../utils/formatters';
+import { QUERY_DEFAULTS } from '../../../utils/constants';
 
 const STATUS_CHART_META = [
   { key: 'submitted', label: 'Submitted', tone: 'success' },
@@ -33,41 +48,58 @@ const STATUS_CHART_META = [
 ];
 
 /**
- * Dashboard Analytics (docs/frontend/admin-analytics-monitoring.md §4.4):
- * statistics cards, charts (BarList), and summary tables. All aggregates
- * come from the real /admin/analytics/* endpoints.
+ * Reports and Analytics Module Page
+ * Displays:
+ * 1. Dashboard Statistics: Total Students, Total Exams, Active Exams, Completed Exams, Pending Evaluations
+ * 2. Analytics: Average Score, Pass Percentage, Highest Score, Lowest Score
+ * 3. Reusable Charts: Average Performance by Exam, Submission Status Distribution
+ * 4. Recent Activity: Recent Logins / Sessions, Recent Submissions, Recent Evaluations
  */
 export const AnalyticsOverviewPage = () => {
   const navigate = useNavigate();
+  const [activityTab, setActivityTab] = useState('sessions');
 
+  // Queries
   const statsQuery = useQuery({
     queryKey: queryKeys.dashboard.stats,
     queryFn: ({ signal }) => dashboardApi.getStats({ signal }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_LIVE_MS,
   });
 
   const overviewQuery = useQuery({
     queryKey: queryKeys.analytics.overview,
-    queryFn: () => analyticsApi.getOverview(),
+    queryFn: ({ signal }) => analyticsApi.getOverview({ signal }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_REFERENCE_MS,
   });
 
   const performanceQuery = useQuery({
     queryKey: queryKeys.analytics.examPerformance,
-    queryFn: () => analyticsApi.getExamPerformance(),
+    queryFn: ({ signal }) => analyticsApi.getExamPerformance({ signal }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_REFERENCE_MS,
   });
 
   const statusQuery = useQuery({
     queryKey: queryKeys.analytics.submissionStatus,
-    queryFn: () => analyticsApi.getSubmissionStatus(),
+    queryFn: ({ signal }) => analyticsApi.getSubmissionStatus({ signal }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_LIVE_MS,
+  });
+
+  const recentSessionsQuery = useQuery({
+    queryKey: queryKeys.analytics.currentSessions,
+    queryFn: ({ signal }) => analyticsApi.getCurrentSessions({ signal }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_LIVE_MS,
   });
 
   const recentResultsQuery = useQuery({
     queryKey: queryKeys.results.list.by({ page: 1, pageSize: 5 }),
     queryFn: ({ signal }) => resultsApi.list({ page: 1, pageSize: 5, signal }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_LIST_MS,
   });
 
   const pendingQuery = useQuery({
     queryKey: queryKeys.analytics.pendingEvaluations,
-    queryFn: () => analyticsApi.getPendingEvaluations(),
+    queryFn: ({ signal }) => analyticsApi.getPendingEvaluations({ limit: 5, signal }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_REFERENCE_MS,
   });
 
   const examsQuery = useExamsReference();
@@ -81,7 +113,7 @@ export const AnalyticsOverviewPage = () => {
   };
 
   const stats = statsQuery.data;
-  const pendingEvaluations = overviewQuery.data?.pending_evaluations ?? 0;
+  const overview = overviewQuery.data;
 
   const performanceItems =
     performanceQuery.data?.map((entry) => ({
@@ -95,16 +127,39 @@ export const AnalyticsOverviewPage = () => {
     (statusQuery.data ?? []).map((entry) => [entry.status, entry.count])
   );
 
+  // Recent Logins / Sessions Columns
+  const sessionColumns = [
+    {
+      key: 'studentName',
+      header: 'Student Candidate',
+      render: (row) => (
+        <div>
+          <p className="text-sm font-semibold text-text-main">{row.studentName}</p>
+          <p className="text-xs font-mono text-text-muted">{row.rollNumber}</p>
+        </div>
+      ),
+    },
+    { key: 'examName', header: 'Examination' },
+    { key: 'startedAt', header: 'Login / Session Started', render: (row) => formatDateTime(row.startedAt) },
+    {
+      key: 'status',
+      header: 'Status',
+      align: 'right',
+      render: () => <StatusBadge type="assignment" status="in_progress" />,
+    },
+  ];
+
+  // Recent Submissions Columns
   const recentResultsColumns = [
     {
       key: 'student',
-      header: 'Student',
+      header: 'Student Candidate',
       render: (row) => (
         <div>
-          <p className="text-sm font-medium text-text-main">
+          <p className="text-sm font-semibold text-text-main">
             {row.student_exam?.student?.name ?? '—'}
           </p>
-          <p className="text-xs text-text-muted">{row.student_exam?.student?.roll_number}</p>
+          <p className="text-xs font-mono text-text-muted">{row.student_exam?.student?.roll_number}</p>
         </div>
       ),
     },
@@ -117,7 +172,11 @@ export const AnalyticsOverviewPage = () => {
       key: 'percentage',
       header: 'Percentage',
       align: 'right',
-      render: (row) => formatPercent(row.percentage),
+      render: (row) => (
+        <span className="font-mono text-sm font-bold text-navy-primary">
+          {formatPercentage(row.percentage)}
+        </span>
+      ),
     },
     {
       key: 'grade',
@@ -126,77 +185,156 @@ export const AnalyticsOverviewPage = () => {
       render: (row) => row.grade ?? '—',
     },
     {
-      key: 'evaluation_status',
-      header: 'Evaluation',
-      render: (row) => <StatusBadge type="evaluation" status={row.evaluation_status} />,
+      key: 'published_at',
+      header: 'Submitted / Published',
+      render: (row) => formatDateTime(row.published_at || row.created_at),
+    },
+  ];
+
+  // Recent Evaluations Columns
+  const pendingColumns = [
+    {
+      key: 'studentName',
+      header: 'Student Candidate',
+      render: (row) => (
+        <div>
+          <p className="text-sm font-semibold text-text-main">{row.studentName}</p>
+          <p className="text-xs font-mono text-text-muted">{row.rollNumber}</p>
+        </div>
+      ),
+    },
+    { key: 'subjectName', header: 'Subject' },
+    {
+      key: 'pendingAnswers',
+      header: 'Pending Answers',
+      align: 'center',
+      render: (row) => (
+        <span className="font-semibold text-status-warning">
+          {row.pendingAnswers} pending
+        </span>
+      ),
     },
     {
-      key: 'published_at',
-      header: 'Published',
-      render: (row) => formatDateTime(row.published_at),
+      key: 'submittedAt',
+      header: 'Submitted Date',
+      render: (row) => formatDateTime(row.submittedAt),
     },
   ];
 
   return (
     <>
       <PageHeader
-        title="Dashboard Analytics"
-        description="A snapshot of examination activity across the institution."
+        title="Reports & Analytics"
+        description="Comprehensive evaluation statistics, performance metrics, and activity logs across all examinations."
       />
 
       {statsQuery.isError ? (
         <Alert variant="error" className="mb-6">
-          The dashboard statistics could not be loaded.
+          Dashboard statistics could not be loaded.
         </Alert>
       ) : null}
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5 print-no-break">
-        <StatCard
-          label="Total Students"
-          value={statsQuery.isLoading ? '—' : stats?.total_students}
-          icon={<Users className="w-5 h-5" aria-hidden="true" />}
-          onClick={() => navigate(PATHS.STUDENTS)}
-        />
-        <StatCard
-          label="Total Exams"
-          value={statsQuery.isLoading ? '—' : stats?.total_exams}
-          icon={<FileText className="w-5 h-5" aria-hidden="true" />}
-          onClick={() => navigate(PATHS.EXAMS)}
-        />
-        <StatCard
-          label="Active Exams"
-          value={statsQuery.isLoading ? '—' : stats?.active_exams}
-          icon={<Activity className="w-5 h-5" aria-hidden="true" />}
-          onClick={() => navigate(PATHS.ANALYTICS_EXAMS)}
-        />
-        <StatCard
-          label="Completed Exams"
-          value={statsQuery.isLoading ? '—' : stats?.completed_exams}
-          icon={<CheckCircle2 className="w-5 h-5" aria-hidden="true" />}
-          onClick={() => navigate(PATHS.ANALYTICS_EXAMS)}
-        />
-        <StatCard
-          label="Pending Evaluations"
-          value={overviewQuery.isLoading ? '—' : pendingEvaluations}
-          icon={<ClipboardCheck className="w-5 h-5" aria-hidden="true" />}
-          onClick={() => navigate(PATHS.EVALUATION)}
-        />
+      {/* 1. Dashboard Statistics Cards */}
+      <div>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-navy-primary mb-3">
+          Dashboard Overview Statistics
+        </h3>
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 print-no-break">
+          <StatCard
+            label="Total Students"
+            value={statsQuery.isLoading ? '—' : stats?.total_students}
+            icon={<Users className="w-5 h-5 text-navy-primary" aria-hidden="true" />}
+            onClick={() => navigate(PATHS.STUDENTS)}
+          />
+          <StatCard
+            label="Total Exams"
+            value={statsQuery.isLoading ? '—' : stats?.total_exams}
+            icon={<FileText className="w-5 h-5 text-navy-primary" aria-hidden="true" />}
+            onClick={() => navigate(PATHS.EXAMS)}
+          />
+          <StatCard
+            label="Active Exams"
+            value={statsQuery.isLoading ? '—' : stats?.active_exams}
+            icon={<Activity className="w-5 h-5 text-status-success" aria-hidden="true" />}
+            onClick={() => navigate(PATHS.ANALYTICS_EXAMS)}
+          />
+          <StatCard
+            label="Completed Exams"
+            value={statsQuery.isLoading ? '—' : stats?.completed_exams}
+            icon={<CheckCircle2 className="w-5 h-5 text-status-info" aria-hidden="true" />}
+            onClick={() => navigate(PATHS.ANALYTICS_EXAMS)}
+          />
+          <StatCard
+            label="Pending Evaluations"
+            value={overviewQuery.isLoading ? '—' : overview?.pending_evaluations ?? 0}
+            icon={<ClipboardCheck className="w-5 h-5 text-status-warning" aria-hidden="true" />}
+            onClick={() => navigate(PATHS.EVALUATION)}
+          />
+        </div>
       </div>
 
+      {/* 2. Analytics Performance Summary Cards */}
+      <div className="mt-6">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-navy-primary mb-3">
+          Performance Analytics
+        </h3>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 print-no-break">
+          <StatCard
+            label="Average Score"
+            value={
+              overviewQuery.isLoading
+                ? '—'
+                : formatPercentage(overview?.average_score ?? 0.0)
+            }
+            icon={<TrendingUp className="w-5 h-5 text-navy-primary" aria-hidden="true" />}
+          />
+          <StatCard
+            label="Pass Percentage"
+            value={
+              overviewQuery.isLoading
+                ? '—'
+                : formatPercentage(overview?.pass_percentage ?? 0.0)
+            }
+            icon={<Award className="w-5 h-5 text-status-success" aria-hidden="true" />}
+          />
+          <StatCard
+            label="Highest Score"
+            value={
+              overviewQuery.isLoading
+                ? '—'
+                : formatPercentage(overview?.highest_score ?? 0.0)
+            }
+            icon={<ArrowUpRight className="w-5 h-5 text-status-success" aria-hidden="true" />}
+          />
+          <StatCard
+            label="Lowest Score"
+            value={
+              overviewQuery.isLoading
+                ? '—'
+                : formatPercentage(overview?.lowest_score ?? 0.0)
+            }
+            icon={<ArrowDownRight className="w-5 h-5 text-status-danger" aria-hidden="true" />}
+          />
+        </div>
+      </div>
+
+      {/* 3. Reusable Charts Section */}
       <div className="grid gap-6 xl:grid-cols-2 mt-6 print-no-break">
         <Card>
-          <CardHeader>Average performance by exam</CardHeader>
-          <CardBody>
+          <CardHeader className="px-5 py-4 border-b border-border-main">
+            <h3 className="text-base font-semibold text-text-main">Average Performance by Examination</h3>
+          </CardHeader>
+          <CardBody className="p-5">
             {performanceQuery.isLoading ? (
               <LoadingSkeleton rows={5} />
             ) : (
               <BarList
                 items={performanceItems}
-                valueFormatter={(value) => formatPercent(value)}
+                valueFormatter={(value) => formatPercentage(value)}
               />
             )}
           </CardBody>
-          <CardFooter className="flex justify-end">
+          <CardFooter className="flex justify-end px-5 py-3 border-t border-border-main bg-subtle/30">
             <DownloadCsvButton
               filename="exam-performance.csv"
               columns={[
@@ -210,8 +348,10 @@ export const AnalyticsOverviewPage = () => {
         </Card>
 
         <Card>
-          <CardHeader>Submission status distribution</CardHeader>
-          <CardBody>
+          <CardHeader className="px-5 py-4 border-b border-border-main">
+            <h3 className="text-base font-semibold text-text-main">Submission Status Distribution</h3>
+          </CardHeader>
+          <CardBody className="p-5">
             {statusQuery.isLoading ? (
               <LoadingSkeleton rows={5} />
             ) : (
@@ -230,60 +370,76 @@ export const AnalyticsOverviewPage = () => {
         </Card>
       </div>
 
+      {/* 4. Recent Activity Section */}
       <Card className="mt-6">
-        <CardHeader>Recent results</CardHeader>
-        <Table
-          columns={recentResultsColumns}
-          data={recentResultsQuery.data?.items ?? []}
-          rowKey="id"
-          caption="Recently published exam results"
-          loading={recentResultsQuery.isLoading}
-          empty={
-            <EmptyState
-              title="No results yet"
-              description="Published results will appear here."
-            />
-          }
-        />
-      </Card>
-
-      <Card className="mt-6 print-no-break">
-        <CardHeader>Pending evaluations</CardHeader>
-        <CardBody>
-          {pendingQuery.isError ? (
-            <Alert variant="error">Pending evaluations could not be loaded.</Alert>
-          ) : (
-            <Table
-              columns={[
-                {
-                  key: 'studentName',
-                  header: 'Student',
-                  render: (row) => (
-                    <div>
-                      <p className="text-sm font-medium text-text-main">{row.studentName}</p>
-                      <p className="text-xs text-text-muted">{row.rollNumber}</p>
-                    </div>
-                  ),
-                },
-                { key: 'subjectName', header: 'Subject' },
-                { key: 'pendingAnswers', header: 'Pending Answers', align: 'right' },
-                {
-                  key: 'submittedAt',
-                  header: 'Submitted',
-                  render: (row) => formatDateTime(row.submittedAt),
-                },
-              ]}
-              data={pendingQuery.data ?? []}
-              rowKey="id"
-              caption="Descriptive answers awaiting manual evaluation"
-              empty={
-                <EmptyState
-                  title="No pending evaluations"
-                  description="All descriptive answers have been evaluated."
-                />
-              }
-            />
-          )}
+        <CardHeader className="px-5 py-4 border-b border-border-main">
+          <h3 className="text-base font-semibold text-text-main">Recent System Activity</h3>
+        </CardHeader>
+        <CardBody className="p-5">
+          <Tabs
+            value={activityTab}
+            onChange={setActivityTab}
+            ariaLabel="Recent System Activity Tabs"
+            tabs={[
+              {
+                id: 'sessions',
+                label: 'Recent Logins & Active Sessions',
+                content: (
+                  <Table
+                    columns={sessionColumns}
+                    data={recentSessionsQuery.data ?? []}
+                    rowKey="id"
+                    caption="Recent student logins and active exam sessions"
+                    loading={recentSessionsQuery.isLoading}
+                    empty={
+                      <EmptyState
+                        title="No active sessions"
+                        description="No active candidate logins recorded right now."
+                      />
+                    }
+                  />
+                ),
+              },
+              {
+                id: 'submissions',
+                label: 'Recent Submissions',
+                content: (
+                  <Table
+                    columns={recentResultsColumns}
+                    data={recentResultsQuery.data?.items ?? []}
+                    rowKey="id"
+                    caption="Recently submitted candidate exam results"
+                    loading={recentResultsQuery.isLoading}
+                    empty={
+                      <EmptyState
+                        title="No recent submissions"
+                        description="Submitted candidate results will appear here."
+                      />
+                    }
+                  />
+                ),
+              },
+              {
+                id: 'evaluations',
+                label: 'Recent Evaluations',
+                content: (
+                  <Table
+                    columns={pendingColumns}
+                    data={pendingQuery.data ?? []}
+                    rowKey="id"
+                    caption="Submissions with pending manual evaluations"
+                    loading={pendingQuery.isLoading}
+                    empty={
+                      <EmptyState
+                        title="No pending evaluations"
+                        description="All candidate submissions have been evaluated."
+                      />
+                    }
+                  />
+                ),
+              },
+            ]}
+          />
         </CardBody>
       </Card>
     </>

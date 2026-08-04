@@ -50,8 +50,17 @@ export const ReportsIndexPage = () => {
           return (
             <Card
               key={report.key}
+              role="button"
+              tabIndex={0}
+              aria-label={`Open ${report.title} report`}
               onClick={() => navigate(report.path)}
-              className="focus-visible:outline-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate(report.path);
+                }
+              }}
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary cursor-pointer hover:border-navy-primary/40 transition-colors"
             >
               <CardBody className="flex flex-col gap-3 min-h-[180px]">
                 <span className="text-text-muted" aria-hidden="true">

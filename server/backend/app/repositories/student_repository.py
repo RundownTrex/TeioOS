@@ -30,6 +30,21 @@ class StudentRepository(BaseRepository[Student]):
         ).order_by(Student.roll_number)
         return self.session.execute(stmt).scalars().all()
 
+    def get_active_by_department(self, department_id: UUID) -> Sequence[Student]:
+        """All active students belonging to any class in a department, ordered by roll number.
+        Used for bulk department assignment to exam schedules."""
+        from app.models.class_model import Class
+        stmt = (
+            select(Student)
+            .join(Class, Student.class_id == Class.id)
+            .where(
+                Class.department_id == department_id,
+                Student.is_active.is_(True),
+            )
+            .order_by(Student.roll_number)
+        )
+        return self.session.execute(stmt).scalars().all()
+
     def get_all(
         self,
         skip: int = 0,

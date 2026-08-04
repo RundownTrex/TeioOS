@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { Plus, Key, School, Accessibility } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card } from '../../../components/ui/Card';
@@ -12,15 +12,24 @@ import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Alert } from '../../../components/ui/Alert';
 import { ConfirmationDialog } from '../../../components/ui/ConfirmationDialog';
+import { Modal } from '../../../components/ui/Modal';
+import { Select } from '../../../components/ui/Select';
+import { Input } from '../../../components/ui/Input';
 import { Menu } from '../../../components/ui/Menu';
 
 import { studentsApi } from '../api/studentsApi';
-import { useClassesReference, buildClassNameMap } from '../../classes/hooks/useClassesReference';
+import { useClassesReference, buildClassNameMap, buildClassOptions } from '../../classes/hooks/useClassesReference';
 import { useDepartmentsReference, buildDepartmentNameMap } from '../../departments/hooks/useDepartmentsReference';
 import { useQueryParams } from '../../../hooks/useQueryParams';
 import { useToast } from '../../../hooks/useToast';
 import { queryKeys } from '../../../utils/queryKeys';
 import { formatDate } from '../../../utils/formatters';
+import {
+  ACCESSIBILITY_PROFILE_OPTIONS,
+  ACCESSIBILITY_PROFILE_DESCRIPTIONS,
+  ACCESSIBILITY_PROFILES,
+  QUERY_DEFAULTS,
+} from '../../../utils/constants';
 import { PATHS } from '../../../routes/paths';
 
 const STATUS_OPTIONS = [
@@ -28,9 +37,15 @@ const STATUS_OPTIONS = [
   { value: 'inactive', label: 'Inactive' },
 ];
 
+const PROFILE_LABELS = ACCESSIBILITY_PROFILE_OPTIONS.reduce(
+  (map, option) => ({ ...map, [option.value]: option.label }),
+  {}
+);
+
 /**
  * Students list page (docs/frontend/admin-students.md §5.1).
- * Search (name/roll), class and status filters; URL-synced pagination.
+ * Search (name/roll), class and status filters; URL-synced pagination;
+ * Quick actions for Reset Password, Assign Class, and Assign Accessibility Profile.
  */
 export const StudentsListPage = () => {
   const navigate = useNavigate();
@@ -39,8 +54,18 @@ export const StudentsListPage = () => {
   const { page, pageSize, filters, setPage, setPageSize, setFilter, clearFilters } =
     useQueryParams({ filterKeys: ['q', 'class_id', 'status'] });
 
+  // Dialog & Modal States
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+
+  const [assignClassStudent, setAssignClassStudent] = useState(null);
+  const [selectedClassId, setSelectedClassId] = useState('');
+
+  const [assignProfileStudent, setAssignProfileStudent] = useState(null);
+  const [selectedProfile, setSelectedProfile] = useState('');
+
+  const [resetPasswordStudent, setResetPasswordStudent] = useState(null);
+  const [newDob, setNewDob] = useState('');
 
   const classesQuery = useClassesReference();
   const departmentsQuery = useDepartmentsReference();
@@ -67,8 +92,11 @@ export const StudentsListPage = () => {
         isActive,
         signal,
       }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_LIST_MS,
+    placeholderData: (prev) => prev,
   });
 
+  // Delete Mutation
   const deleteMutation = useMutation({
     mutationFn: (id) => studentsApi.remove(id),
     onSuccess: () => {
@@ -89,6 +117,48 @@ export const StudentsListPage = () => {
     },
   });
 
+  // Assign Class Mutation
+  const assignClassMutation = useMutation({
+    mutationFn: ({ id, classId }) => studentsApi.assignClass(id, classId),
+    onSuccess: () => {
+      toast('Class re-assigned successfully', { type: 'success' });
+      setAssignClassStudent(null);
+      setSelectedClassId('');
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.list.all });
+    },
+    onError: (error) => {
+      toast(error?.message || 'Failed to assign class.', { type: 'error' });
+    },
+  });
+
+  // Assign Accessibility Profile Mutation
+  const assignProfileMutation = useMutation({
+    mutationFn: ({ id, profile }) => studentsApi.assignAccessibilityProfile(id, profile),
+    onSuccess: () => {
+      toast('Accessibility profile updated', { type: 'success' });
+      setAssignProfileStudent(null);
+      setSelectedProfile('');
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.list.all });
+    },
+    onError: (error) => {
+      toast(error?.message || 'Failed to update accessibility profile.', { type: 'error' });
+    },
+  });
+
+  // Reset Password Mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ id, dateOfBirth }) => studentsApi.resetPassword(id, dateOfBirth),
+    onSuccess: () => {
+      toast('Password reset successfully to candidate date of birth', { type: 'success' });
+      setResetPasswordStudent(null);
+      setNewDob('');
+      queryClient.invalidateQueries({ queryKey: queryKeys.students.list.all });
+    },
+    onError: (error) => {
+      toast(error?.message || 'Failed to reset password.', { type: 'error' });
+    },
+  });
+
   const data = listQuery.data;
 
   const columns = [
@@ -106,13 +176,22 @@ export const StudentsListPage = () => {
     },
     { key: 'date_of_birth', header: 'Date of Birth', render: (row) => formatDate(row.date_of_birth) },
     {
+      key: 'accessibility_profile',
+      header: 'Accommodation',
+      render: (row) => (
+        <Badge variant={row.accessibility_profile === ACCESSIBILITY_PROFILES.STANDARD ? 'neutral' : 'purple'}>
+          {PROFILE_LABELS[row.accessibility_profile] || row.accessibility_profile}
+        </Badge>
+      ),
+    },
+    {
       key: 'is_active',
       header: 'Status',
       render: (row) =>
         row.is_active ? (
-          <Badge variant="success">Active</Badge>
+          <Badge variant="success" dot>Active</Badge>
         ) : (
-          <Badge variant="neutral">Inactive</Badge>
+          <Badge variant="neutral" dot>Inactive</Badge>
         ),
     },
     {
@@ -126,13 +205,40 @@ export const StudentsListPage = () => {
           items={[
             {
               key: 'view',
-              label: 'View',
+              label: 'View Profile',
               onSelect: () => navigate(PATHS.studentDetail(row.id)),
             },
             {
               key: 'edit',
               label: 'Edit',
               onSelect: () => navigate(PATHS.studentEdit(row.id)),
+            },
+            {
+              key: 'assign-class',
+              label: 'Assign Class',
+              icon: <School className="w-4 h-4" aria-hidden="true" />,
+              onSelect: () => {
+                setAssignClassStudent(row);
+                setSelectedClassId(row.class_id || '');
+              },
+            },
+            {
+              key: 'assign-profile',
+              label: 'Assign Accessibility Profile',
+              icon: <Accessibility className="w-4 h-4" aria-hidden="true" />,
+              onSelect: () => {
+                setAssignProfileStudent(row);
+                setSelectedProfile(row.accessibility_profile || ACCESSIBILITY_PROFILES.STANDARD);
+              },
+            },
+            {
+              key: 'reset-password',
+              label: 'Reset Password',
+              icon: <Key className="w-4 h-4" aria-hidden="true" />,
+              onSelect: () => {
+                setResetPasswordStudent(row);
+                setNewDob(row.date_of_birth ? String(row.date_of_birth).slice(0, 10) : '');
+              },
             },
             {
               key: 'delete',
@@ -155,12 +261,22 @@ export const StudentsListPage = () => {
     <>
       <PageHeader
         title="Students"
-        description="Manage student accounts, class assignment and accessibility profiles."
+        description="Manage student accounts, class assignments, and accessibility accommodations."
         actions={
-          <Button variant="primary" onClick={() => navigate(PATHS.STUDENTS_NEW)}>
-            <Plus className="w-4 h-4" aria-hidden="true" />
-            New Student
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/*
+              ARCHITECTURE EXTENSION POINT: Future Bulk CSV Import Button
+              When CSV import is added in future milestones, render:
+              <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
+                <Upload className="w-4 h-4" aria-hidden="true" />
+                Import CSV
+              </Button>
+            */}
+            <Button variant="primary" onClick={() => navigate(PATHS.STUDENTS_NEW)}>
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              New Student
+            </Button>
+          </div>
         }
       />
 
@@ -227,6 +343,140 @@ export const StudentsListPage = () => {
         />
       </Card>
 
+      {/* Assign Class Modal */}
+      <Modal
+        open={Boolean(assignClassStudent)}
+        onClose={() => setAssignClassStudent(null)}
+        title={`Assign Class for ${assignClassStudent?.name ?? ''}`}
+        size="md"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setAssignClassStudent(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              isLoading={assignClassMutation.isPending}
+              isDisabled={!selectedClassId}
+              onClick={() =>
+                assignClassStudent &&
+                assignClassMutation.mutate({
+                  id: assignClassStudent.id,
+                  classId: selectedClassId,
+                })
+              }
+            >
+              Assign Class
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-text-muted">
+            Select the new academic class to assign to candidate{' '}
+            <strong className="text-text-main">{assignClassStudent?.name}</strong> ({assignClassStudent?.roll_number}).
+          </p>
+          <Select
+            id="assign-class-select"
+            label="Target Class"
+            value={selectedClassId}
+            onChange={(e) => setSelectedClassId(e.target.value)}
+            options={buildClassOptions(classesQuery.data, departmentNames)}
+            placeholder="Select a class"
+            isRequired
+          />
+        </div>
+      </Modal>
+
+      {/* Assign Accessibility Profile Modal */}
+      <Modal
+        open={Boolean(assignProfileStudent)}
+        onClose={() => setAssignProfileStudent(null)}
+        title={`Assign Accommodation Profile for ${assignProfileStudent?.name ?? ''}`}
+        size="md"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setAssignProfileStudent(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              isLoading={assignProfileMutation.isPending}
+              onClick={() =>
+                assignProfileStudent &&
+                assignProfileMutation.mutate({
+                  id: assignProfileStudent.id,
+                  profile: selectedProfile,
+                })
+              }
+            >
+              Update Accommodation
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-text-muted">
+            Select the accessibility profile for candidate{' '}
+            <strong className="text-text-main">{assignProfileStudent?.name}</strong>. Accommodations are automatically enforced by the TeioOS candidate exam client.
+          </p>
+          <Select
+            id="assign-profile-select"
+            label="Accessibility Profile"
+            value={selectedProfile}
+            onChange={(e) => setSelectedProfile(e.target.value)}
+            options={ACCESSIBILITY_PROFILE_OPTIONS}
+            helperText={ACCESSIBILITY_PROFILE_DESCRIPTIONS[selectedProfile]}
+            isRequired
+          />
+        </div>
+      </Modal>
+
+      {/* Reset Password Modal */}
+      <Modal
+        open={Boolean(resetPasswordStudent)}
+        onClose={() => setResetPasswordStudent(null)}
+        title={`Reset Password for ${resetPasswordStudent?.name ?? ''}`}
+        size="md"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setResetPasswordStudent(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              isLoading={resetPasswordMutation.isPending}
+              isDisabled={!newDob}
+              onClick={() =>
+                resetPasswordStudent &&
+                resetPasswordMutation.mutate({
+                  id: resetPasswordStudent.id,
+                  dateOfBirth: newDob,
+                })
+              }
+            >
+              Reset Password
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-text-muted">
+            In TeioOS, a candidate's password is set to their date of birth (<code className="font-mono text-xs">YYYY-MM-DD</code>). Confirm or update the date of birth below to reset the password.
+          </p>
+          <Input
+            id="reset-dob-input"
+            label="Date of Birth (Password)"
+            type="date"
+            value={newDob}
+            onChange={(e) => setNewDob(e.target.value)}
+            isRequired
+            helperText="The candidate will log in using this date of birth (YYYY-MM-DD)."
+          />
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={Boolean(pendingDelete)}
         title="Delete student?"

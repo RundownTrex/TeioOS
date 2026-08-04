@@ -26,10 +26,18 @@ class ExamService:
         self.subject_repo = subject_repo
         self.schedule_repo = schedule_repo
 
-    def get_exams(self, page: int, page_size: int, subject_id: UUID | None = None) -> PaginatedData[Exam]:
+    def get_exams(
+        self,
+        page: int,
+        page_size: int,
+        subject_id: UUID | None = None,
+        search: str | None = None,
+        status: str | None = None,
+    ) -> PaginatedData[Exam]:
         skip = (page - 1) * page_size
-        items = self.exam_repo.get_all(skip, page_size, subject_id)
-        total = self.exam_repo.get_count()
+        search_query = search.strip() if search else None
+        items = self.exam_repo.get_all(skip, page_size, subject_id=subject_id, search=search_query, status=status)
+        total = self.exam_repo.get_count(subject_id=subject_id, search=search_query, status=status)
         return PaginatedData(items=items, total=total, page=page, page_size=page_size)
 
     def get_exam(self, exam_id: UUID) -> Exam:
@@ -63,8 +71,10 @@ class ExamService:
             title=self._normalize_title(data.title),
             duration_minutes=data.duration_minutes,
             total_marks=data.total_marks,
+            instructions=data.instructions.strip() if data.instructions and data.instructions.strip() else None,
+            status=data.status or "draft",
             created_by=created_by,
-            subject_id=data.subject_id
+            subject_id=data.subject_id,
         )
         try:
             self.exam_repo.create(exam)
@@ -87,10 +97,14 @@ class ExamService:
 
         if data.title is not None:
             exam.title = self._normalize_title(data.title)
-        if data.duration_minutes:
+        if data.duration_minutes is not None:
             exam.duration_minutes = data.duration_minutes
-        if data.total_marks:
+        if data.total_marks is not None:
             exam.total_marks = data.total_marks
+        if data.instructions is not None:
+            exam.instructions = data.instructions.strip() if data.instructions and data.instructions.strip() else None
+        if data.status is not None:
+            exam.status = data.status
         if data.created_by:
             exam.created_by = data.created_by
         if data.subject_id:

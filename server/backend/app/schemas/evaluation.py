@@ -2,6 +2,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from uuid import UUID
 
+from app.schemas.question import QuestionResponse
+
 
 class DescriptiveEvaluationRequest(BaseModel):
     awarded_marks: float = Field(..., description="Marks awarded for this answer")
@@ -21,3 +23,4 @@ class StudentAnswerEvaluationResponse(BaseModel):
     evaluator_feedback: str | None = None
     evaluated_at: datetime | None = None
     evaluated_by: UUID | None = None
+    question: QuestionResponse | None = Field(None, description="Embedded question details")

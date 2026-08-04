@@ -47,8 +47,11 @@ export const formatDateTime = (value) => {
   return date ? dateTimeFormatter.format(date) : '—';
 };
 
-export const formatNumber = (value) => {
+export const formatNumber = (value, options) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return '—';
+  if (options && typeof options === 'object') {
+    return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, ...options }).format(Number(value));
+  }
   return numberFormatter.format(Number(value));
 };
 
@@ -58,6 +61,8 @@ export const formatPercent = (value) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return '—';
   return `${numberFormatter.format(Number(value))}%`;
 };
+
+export const formatPercentage = formatPercent;
 
 /**
  * Compact relative time ("just now", "5m ago", "2h ago", "3d ago").

@@ -4,12 +4,18 @@ import { unwrap } from '../../../utils/apiHelpers';
 
 export const schedulesApi = {
   /**
-   * Retrieve schedules, optionally filtered by exam_id, with server-side pagination.
-   * GET /api/v1/admin/exam-schedules/?page=&page_size=&exam_id=
+   * Retrieve schedules with server-side pagination, search, and status filters.
+   * GET /api/v1/admin/exam-schedules/?page=&page_size=&exam_id=&search=&status=
    */
-  list: async ({ page, pageSize, examId, signal } = {}) => {
+  list: async ({ page, pageSize, examId, q, status, signal } = {}) => {
     const response = await axiosClient.get(API_ENDPOINTS.EXAM_SCHEDULES.LIST, {
-      params: { page, page_size: pageSize, exam_id: examId },
+      params: {
+        page,
+        page_size: pageSize,
+        exam_id: examId || undefined,
+        search: q || undefined,
+        status: status || undefined,
+      },
       signal,
     });
     return unwrap(response);

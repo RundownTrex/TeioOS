@@ -80,6 +80,29 @@ export const API_ENDPOINTS = {
     SESSION_ANSWERS: (studentExamId) => `/admin/results/${studentExamId}/answers`,
     PUBLISH: (studentExamId) => `/admin/results/${studentExamId}/publish`,
   },
+
+  // Student Assignments (per schedule)
+  STUDENT_ASSIGNMENTS: {
+    LIST: (scheduleId) => `/admin/exam-schedules/${scheduleId}/students/`,
+    ASSIGN_STUDENT: (scheduleId) => `/admin/exam-schedules/${scheduleId}/students/`,
+    ASSIGN_CLASS: (scheduleId) => `/admin/exam-schedules/${scheduleId}/students/classes`,
+    ASSIGN_DEPARTMENT: (scheduleId) => `/admin/exam-schedules/${scheduleId}/students/departments`,
+    DETAIL: (scheduleId, studentId) => `/admin/exam-schedules/${scheduleId}/students/${studentId}`,
+  },
+
+  // Manual Evaluation
+  EVALUATION: {
+    PENDING_LIST: '/admin/analytics/pending-evaluations',
+    EVALUATE_ANSWER: (answerId) => `/admin/student-answers/${answerId}/evaluate`,
+  },
+
+  // System Settings
+  SETTINGS: {
+    LIST: '/admin/settings/',
+    CATEGORY: (category) => `/admin/settings/${category}`,
+    BULK_UPDATE: '/admin/settings/',
+    UPDATE: (key) => `/admin/settings/${encodeURIComponent(key)}`,
+  },
 };
 
 export default API_ENDPOINTS;

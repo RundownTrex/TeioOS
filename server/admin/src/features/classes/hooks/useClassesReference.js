@@ -25,6 +25,8 @@ export const buildClassNameMap = (data) => {
   return map;
 };
 
+export const buildClassMap = buildClassNameMap;
+
 /**
  * Builds [{ value, label }] options sorted by name (server orders classes
  * newest-first, which is wrong for a picker). Labels include the department
@@ -35,7 +37,7 @@ export const buildClassOptions = (data, departmentNameMap) =>
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((item) => {
-      const departmentName = departmentNameMap.get(item.department_id);
+      const departmentName = departmentNameMap?.get(item.department_id);
       return {
         value: item.id,
         label: departmentName ? `${item.name} · ${departmentName}` : item.name,

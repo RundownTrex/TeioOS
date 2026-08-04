@@ -34,7 +34,7 @@ const newOption = (displayOrder) => ({
 /**
  * Question create/edit form (docs/frontend/admin-exam-management.md §5.5).
  * Serves both MCQ (options editor) and descriptive (max characters) types
- * from one route pair; `questionId` in the URL switches to edit mode.
+ * with dynamic UI adaptation; `questionId` in the URL switches to edit mode.
  */
 export const QuestionFormPage = () => {
   const navigate = useNavigate();
@@ -286,6 +286,7 @@ export const QuestionFormPage = () => {
             </fieldset>
 
             <Textarea
+              id="question_text"
               name="question_text"
               label="Question"
               value={form.values.question_text ?? ''}
@@ -299,6 +300,7 @@ export const QuestionFormPage = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
+                id="marks"
                 name="marks"
                 label="Marks"
                 type="number"
@@ -312,6 +314,7 @@ export const QuestionFormPage = () => {
               />
               {isMCQ ? (
                 <Input
+                  id="negative_marks"
                   name="negative_marks"
                   label="Negative Marks"
                   type="number"
@@ -324,6 +327,7 @@ export const QuestionFormPage = () => {
                 />
               ) : (
                 <Input
+                  id="max_characters"
                   name="max_characters"
                   label="Max Characters"
                   type="number"
@@ -346,7 +350,7 @@ export const QuestionFormPage = () => {
                       Select the correct answer; at least two options are required.
                     </p>
                   </div>
-                  <Button variant="outline" onClick={addOption}>
+                  <Button variant="outline" type="button" onClick={addOption}>
                     <Plus className="w-4 h-4" aria-hidden="true" />
                     Add Option
                   </Button>
@@ -368,6 +372,7 @@ export const QuestionFormPage = () => {
                         </span>
                       </label>
                       <Input
+                        id={`option_text_${index}`}
                         name={`options[${index}].option_text`}
                         ariaLabel={`Option ${index + 1} text`}
                         value={option.option_text ?? ''}
@@ -379,6 +384,7 @@ export const QuestionFormPage = () => {
                         className="flex-1"
                       />
                       <Button
+                        type="button"
                         variant="ghost"
                         aria-label={`Remove option ${index + 1}`}
                         onClick={() => removeOption(index)}

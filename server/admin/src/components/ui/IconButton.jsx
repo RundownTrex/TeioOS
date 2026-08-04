@@ -49,7 +49,7 @@ export const IconButton = forwardRef(
         className={`inline-flex items-center justify-center rounded-lg transition-all duration-normal ease-in-out disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none shrink-0 ${variants[variant] || variants.ghost} ${sizes[size] || sizes.md} ${className}`}
         {...props}
       >
-        <span className="inline-flex shrink-0" aria-hidden="true">
+        <span className="inline-flex items-center justify-center shrink-0" aria-hidden="true">
           {icon}
         </span>
       </button>

@@ -5,8 +5,12 @@ from pydantic import BaseModel
 
 
 class AnalyticsOverviewResponse(BaseModel):
-    """Dashboard analytics — count of exam sessions awaiting manual evaluation."""
+    """Dashboard analytics — aggregated score statistics and pending evaluation count."""
     pending_evaluations: int
+    average_score: float = 0.0
+    pass_percentage: float = 0.0
+    highest_score: float = 0.0
+    lowest_score: float = 0.0
 
 
 class StudentOverviewResponse(BaseModel):

@@ -35,8 +35,13 @@ class AnalyticsService:
         self.analytics_repo = analytics_repo
 
     def get_overview(self) -> AnalyticsOverviewResponse:
+        scores = self.analytics_repo.get_score_summary()
         return AnalyticsOverviewResponse(
-            pending_evaluations=self.analytics_repo.get_pending_evaluations_count()
+            pending_evaluations=self.analytics_repo.get_pending_evaluations_count(),
+            average_score=scores["average_score"],
+            pass_percentage=scores["pass_percentage"],
+            highest_score=scores["highest_score"],
+            lowest_score=scores["lowest_score"],
         )
 
     def get_student_overview(self) -> StudentOverviewResponse:

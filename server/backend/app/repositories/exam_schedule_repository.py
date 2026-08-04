@@ -29,7 +29,29 @@ class ExamScheduleRepository(BaseRepository[ExamSchedule]):
         )
         return self.session.execute(stmt).scalars().first()
 
-    def get_all(self, skip: int = 0, limit: int = 20, exam_id: UUID | None = None) -> Sequence[ExamSchedule]:
+    def _apply_filters(
+        self,
+        stmt,
+        exam_id: UUID | None = None,
+        search: str | None = None,
+        status: str | None = None,
+    ):
+        if exam_id:
+            stmt = stmt.where(ExamSchedule.exam_id == exam_id)
+        if status:
+            stmt = stmt.where(ExamSchedule.status == status)
+        if search:
+            stmt = stmt.join(ExamSchedule.exam).where(Exam.title.ilike(f"%{search}%"))
+        return stmt
+
+    def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 20,
+        exam_id: UUID | None = None,
+        search: str | None = None,
+        status: str | None = None,
+    ) -> Sequence[ExamSchedule]:
         """Paginated schedules, newest start first, with an aggregated
         assigned-student count."""
         assigned_count_expr = (
@@ -39,8 +61,7 @@ class ExamScheduleRepository(BaseRepository[ExamSchedule]):
             .scalar_subquery()
         )
         stmt = select(ExamSchedule, assigned_count_expr.label("assigned_count"))
-        if exam_id:
-            stmt = stmt.where(ExamSchedule.exam_id == exam_id)
+        stmt = self._apply_filters(stmt, exam_id=exam_id, search=search, status=status)
         stmt = stmt.order_by(ExamSchedule.start_time.desc(), ExamSchedule.id).offset(skip).limit(limit)
 
         rows = self.session.execute(stmt).all()
@@ -50,11 +71,14 @@ class ExamScheduleRepository(BaseRepository[ExamSchedule]):
             schedules.append(schedule)
         return schedules
 
-    def get_count(self, exam_id: UUID | None = None) -> int:
-        if not exam_id:
-            return super().get_count()
-        from sqlalchemy import func
-        stmt = select(func.count()).select_from(ExamSchedule).where(ExamSchedule.exam_id == exam_id)
+    def get_count(
+        self,
+        exam_id: UUID | None = None,
+        search: str | None = None,
+        status: str | None = None,
+    ) -> int:
+        stmt = select(func.count()).select_from(ExamSchedule)
+        stmt = self._apply_filters(stmt, exam_id=exam_id, search=search, status=status)
         return self.session.execute(stmt).scalar_one()
 
     def get_overlapping_schedules(

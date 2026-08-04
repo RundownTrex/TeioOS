@@ -61,7 +61,7 @@ export const NAV_GROUPS = [
   {
     label: 'Analytics & Reports',
     items: [
-      { label: 'Overview', path: PATHS.ANALYTICS, icon: Activity },
+      { label: 'Overview', path: PATHS.ANALYTICS, icon: Activity, end: true },
       { label: 'Student Monitoring', path: PATHS.ANALYTICS_STUDENTS, icon: Radar },
       { label: 'Exam Monitoring', path: PATHS.ANALYTICS_EXAMS, icon: LineChart },
       { label: 'Reports', path: PATHS.REPORTS, icon: Printer },
@@ -71,7 +71,7 @@ export const NAV_GROUPS = [
     label: 'System',
     items: [
       { label: 'Accessibility Profiles', path: PATHS.ACCESSIBILITY_PROFILES, icon: Accessibility, isPlanned: true },
-      { label: 'Settings', path: PATHS.SETTINGS, icon: Settings, isPlanned: true },
+      { label: 'Settings', path: PATHS.SETTINGS, icon: Settings },
     ],
   },
 ];

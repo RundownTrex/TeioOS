@@ -36,7 +36,7 @@ export const Sidebar = ({ isOpen = false, onClose, className = '' }) => {
             type="button"
             onClick={onClose}
             aria-label="Close navigation menu"
-            className="p-2 rounded-lg text-text-muted hover:text-text-main hover:bg-subtle transition-colors lg:hidden"
+            className="inline-flex items-center justify-center p-2 rounded-lg text-text-muted hover:text-text-main hover:bg-subtle transition-colors lg:hidden"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
@@ -56,6 +56,7 @@ export const Sidebar = ({ isOpen = false, onClose, className = '' }) => {
                       <li key={item.path}>
                         <NavLink
                           to={item.path}
+                          end={item.end}
                           onClick={onClose}
                           className={({ isActive }) =>
                             `flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -86,7 +87,7 @@ export const Sidebar = ({ isOpen = false, onClose, className = '' }) => {
         </nav>
 
         <div className="px-5 py-3 border-t border-border-main shrink-0">
-          <p className="text-[11px] text-text-muted">TeioOS Exam Server · Admin Console</p>
+          <p className="text-[11px] text-text-muted text-center">TeioOS Exam Server · Admin Console</p>
         </div>
       </aside>
     </>

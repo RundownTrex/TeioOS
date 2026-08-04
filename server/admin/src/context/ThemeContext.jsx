@@ -8,13 +8,13 @@ const isValidTheme = (value) => THEME_CYCLE.includes(value);
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setThemeState] = useState(() => {
-    const stored = getItem(STORAGE_KEYS.THEME, sessionStorage);
+    const stored = getItem(STORAGE_KEYS.THEME, localStorage);
     return isValidTheme(stored) ? stored : THEMES.LIGHT;
   });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    setItem(STORAGE_KEYS.THEME, theme, sessionStorage);
+    setItem(STORAGE_KEYS.THEME, theme, localStorage);
   }, [theme]);
 
   const setTheme = useCallback((nextTheme) => {

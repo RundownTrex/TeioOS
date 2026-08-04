@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GripVertical, Plus, Pencil, Trash2 } from 'lucide-react';
+import { GripVertical, Plus, Pencil, Trash2, Eye, Send, EyeOff, Search } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
-import { Card } from '../../../components/ui/Card';
+import { Card, CardHeader, CardBody } from '../../../components/ui/Card';
 import { Tabs } from '../../../components/ui/Tabs';
 import { Badge } from '../../../components/ui/Badge';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { PageSkeleton } from '../../../components/ui/PageSkeleton';
 import { ErrorState } from '../../../components/ui/ErrorState';
 import { ConfirmationDialog } from '../../../components/ui/ConfirmationDialog';
+import { Modal } from '../../../components/ui/Modal';
 import { Menu } from '../../../components/ui/Menu';
 
 import { examsApi } from '../api/examsApi';
@@ -22,7 +24,7 @@ import { useSubjectsReference, buildSubjectNameMap } from '../../subjects/hooks/
 import { useToast } from '../../../hooks/useToast';
 import { queryKeys } from '../../../utils/queryKeys';
 import { formatMarks, formatNumber } from '../../../utils/formatters';
-import { PAGINATION } from '../../../utils/constants';
+import { PAGINATION, QUERY_DEFAULTS } from '../../../utils/constants';
 import { PATHS } from '../../../routes/paths';
 
 const TABS = {
@@ -57,8 +59,8 @@ const withSequentialOrders = (items) =>
 
 /**
  * Exam detail page (docs/frontend/admin-exam-management.md §5.4).
- * Header card, live marks summary, question management with keyboard
- * (Move up/down) and pointer (drag-and-drop) reordering.
+ * Question list management: search, MCQ/Descriptive filters, marks allocation,
+ * preview, keyboard & drag-and-drop reordering, edit, and delete.
  */
 export const ExamDetailPage = () => {
   const navigate = useNavigate();
@@ -67,9 +69,12 @@ export const ExamDetailPage = () => {
   const { toast } = useToast();
 
   const [tab, setTab] = useState(TABS.ALL);
+  const [questionSearch, setQuestionSearch] = useState('');
   const [draggedId, setDraggedId] = useState(null);
   const [overId, setOverId] = useState(null);
   const [previewQuestion, setPreviewQuestion] = useState(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
   const [pendingDeleteExam, setPendingDeleteExam] = useState(null);
@@ -81,12 +86,29 @@ export const ExamDetailPage = () => {
   const examQuery = useQuery({
     queryKey: queryKeys.exams.detail(id),
     queryFn: ({ signal }) => examsApi.detail(id, { signal }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_DETAIL_MS,
   });
 
   const questionsQuery = useQuery({
     queryKey: queryKeys.questions.list.by({ page: 1, pageSize: QUESTIONS_PAGE_SIZE, examId: id }),
     queryFn: ({ signal }) =>
       questionsApi.list({ page: 1, pageSize: QUESTIONS_PAGE_SIZE, examId: id, signal }),
+    staleTime: QUERY_DEFAULTS.STALE_TIME_LIST_MS,
+    placeholderData: (prev) => prev,
+  });
+
+  // Toggle Status Mutation
+  const toggleStatusMutation = useMutation({
+    mutationFn: (status) => examsApi.toggleStatus(id, status),
+    onSuccess: (_, status) => {
+      const statusText = status === 'published' ? 'published' : 'reverted to draft';
+      toast(`Exam status ${statusText}`, { type: 'success' });
+      queryClient.invalidateQueries({ queryKey: queryKeys.exams.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.exams.list.all });
+    },
+    onError: (error) => {
+      toast(error?.message || 'Failed to update exam status.', { type: 'error' });
+    },
   });
 
   const applyOrder = (nextItems) => {
@@ -165,7 +187,7 @@ export const ExamDetailPage = () => {
     },
     onError: (error) => {
       if (error?.status === 400) {
-        setDeleteExamError(error?.message || 'The exam cannot be deleted.');
+        setDeleteExamError(error?.message || 'The exam cannot be deleted because it has schedules.');
         return;
       }
       setPendingDeleteExam(null);
@@ -199,12 +221,17 @@ export const ExamDetailPage = () => {
   const descriptiveCount = items.length - mcqCount;
   const marksBalanced = Math.abs(allocated - exam.total_marks) < 0.005;
 
-  const visibleItems =
-    tab === TABS.ALL
-      ? items
-      : items.filter((question) =>
-          tab === TABS.MCQ ? question.question_type === 'MCQ' : question.question_type === 'DESCRIPTIVE'
-        );
+  let visibleItems = items;
+  if (tab === TABS.MCQ) {
+    visibleItems = visibleItems.filter((q) => q.question_type === 'MCQ');
+  } else if (tab === TABS.DESCRIPTIVE) {
+    visibleItems = visibleItems.filter((q) => q.question_type === 'DESCRIPTIVE');
+  }
+
+  if (questionSearch.trim()) {
+    const query = questionSearch.trim().toLowerCase();
+    visibleItems = visibleItems.filter((q) => q.question_text.toLowerCase().includes(query));
+  }
 
   const questionRow = (question, position, index, listLength) => {
     const isDragging = draggedId === question.id;
@@ -243,8 +270,8 @@ export const ExamDetailPage = () => {
         <Badge variant={question.question_type === 'MCQ' ? 'info' : 'purple'}>
           {question.question_type === 'MCQ' ? 'MCQ' : 'Descriptive'}
         </Badge>
-        <span className="w-16 shrink-0 text-right text-sm tabular-nums text-text-main">
-          {formatMarks(question.marks)}
+        <span className="w-16 shrink-0 text-right text-sm tabular-nums text-text-main font-medium">
+          {formatMarks(question.marks)} pts
         </span>
         <span className="w-16 shrink-0 text-right text-sm tabular-nums text-text-muted">
           {question.question_type === 'MCQ' && question.negative_marks > 0
@@ -262,12 +289,12 @@ export const ExamDetailPage = () => {
           items={[
             {
               key: 'preview',
-              label: 'Preview',
+              label: 'Preview Question',
               onSelect: () => setPreviewQuestion(question),
             },
             {
               key: 'edit',
-              label: 'Edit',
+              label: 'Edit Question',
               onSelect: () => navigate(PATHS.questionEdit(id, question.id)),
             },
             {
@@ -299,25 +326,39 @@ export const ExamDetailPage = () => {
 
   const tabContent = (
     <div>
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-          {visibleItems.length} question{visibleItems.length === 1 ? '' : 's'}
-          {tab !== TABS.ALL ? ` · ${tab === TABS.MCQ ? 'MCQ' : 'Descriptive'}` : ''}
-        </p>
-        <Button variant="primary" onClick={() => navigate(PATHS.questionNew(id))}>
-          <Plus className="w-4 h-4" aria-hidden="true" />
-          New Question
-        </Button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-border-main">
+        <div className="flex items-center gap-2 flex-1 max-w-xs">
+          <Input
+            id="question-search"
+            name="questionSearch"
+            placeholder="Search questions…"
+            value={questionSearch}
+            onChange={(e) => setQuestionSearch(e.target.value)}
+            className="w-full text-xs"
+          />
+        </div>
+        <div className="flex items-center justify-between sm:justify-end gap-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+            {visibleItems.length} question{visibleItems.length === 1 ? '' : 's'}
+          </p>
+          <Button variant="primary" onClick={() => navigate(PATHS.questionNew(id))}>
+            <Plus className="w-4 h-4" aria-hidden="true" />
+            New Question
+          </Button>
+        </div>
       </div>
-      <div className="flex items-center gap-3 px-4 pb-2 text-xs text-text-muted">
+
+      <div className="flex items-center gap-3 px-4 py-2 text-xs font-medium text-text-muted bg-subtle border-b border-border-main">
         <span className="w-4" aria-hidden="true" />
         <span className="w-7 text-center">#</span>
         <span className="flex-1">Question</span>
+        <span className="w-12 text-center">Type</span>
         <span className="w-16 text-right">Marks</span>
         <span className="w-16 text-right">Neg.</span>
-        <span className="w-16 text-right">Max</span>
+        <span className="w-16 text-right">Max Chars</span>
         <span className="w-8" aria-hidden="true" />
       </div>
+
       {items.length === 0 ? (
         <div className="p-4">
           <EmptyState
@@ -329,7 +370,7 @@ export const ExamDetailPage = () => {
         </div>
       ) : visibleItems.length === 0 ? (
         <p className="px-4 py-6 text-sm text-text-muted">
-          No {tab === TABS.MCQ ? 'MCQ' : 'descriptive'} questions in this exam.
+          No questions match your current search or tab filter.
         </p>
       ) : (
         <ul
@@ -363,26 +404,53 @@ export const ExamDetailPage = () => {
             : `${formatNumber(exam.duration_minutes)} minutes · ${formatNumber(exam.total_marks)} total marks`
         }
         actions={
-          <>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={() => setIsPreviewModalOpen(true)}>
+              <Eye className="w-4 h-4" aria-hidden="true" />
+              Preview Exam
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() =>
+                toggleStatusMutation.mutate(exam.status === 'published' ? 'draft' : 'published')
+              }
+              isLoading={toggleStatusMutation.isPending}
+            >
+              {exam.status === 'published' ? (
+                <>
+                  <EyeOff className="w-4 h-4" aria-hidden="true" />
+                  Revert to Draft
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" aria-hidden="true" />
+                  Publish Exam
+                </>
+              )}
+            </Button>
+
             <Button variant="outline" onClick={() => navigate(PATHS.examEdit(id))}>
               <Pencil className="w-4 h-4" aria-hidden="true" />
               Edit Exam
             </Button>
+
             <Button
               variant="danger"
               onClick={() => {
-                setDeleteError(null);
+                setDeleteExamError(null);
                 setPendingDeleteExam(exam);
               }}
             >
               <Trash2 className="w-4 h-4" aria-hidden="true" />
               Delete Exam
             </Button>
+
             <Button variant="primary" onClick={() => navigate(PATHS.questionNew(id))}>
               <Plus className="w-4 h-4" aria-hidden="true" />
               New Question
             </Button>
-          </>
+          </div>
         }
       />
 
@@ -418,23 +486,32 @@ export const ExamDetailPage = () => {
             </Alert>
           )}
         </Card>
+
         <Card>
-          <div className="space-y-1 px-5 py-4 text-sm">
-            <div className="flex justify-between">
+          <div className="space-y-2 px-5 py-4 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-text-muted">Status</span>
+              {exam.status === 'published' ? (
+                <Badge variant="success" dot>Published</Badge>
+              ) : (
+                <Badge variant="info" dot>Draft</Badge>
+              )}
+            </div>
+            <div className="flex justify-between items-center">
               <span className="text-text-muted">Subject</span>
               <span className="font-medium text-text-main">{subjectName ?? '—'}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-text-muted">Duration</span>
               <span className="font-medium text-text-main">
                 {formatNumber(exam.duration_minutes)} min
               </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-text-muted">Total marks</span>
               <span className="font-medium text-text-main">{formatNumber(exam.total_marks)}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-text-muted">Questions</span>
               <span className="font-medium text-text-main">
                 {formatNumber(exam.question_count ?? items.length)}
@@ -443,6 +520,17 @@ export const ExamDetailPage = () => {
           </div>
         </Card>
       </div>
+
+      {exam.instructions && (
+        <Card className="mb-5">
+          <CardHeader>Examination Instructions & Guidelines</CardHeader>
+          <CardBody>
+            <p className="text-sm text-text-main whitespace-pre-line leading-relaxed">
+              {exam.instructions}
+            </p>
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <Tabs
@@ -457,6 +545,94 @@ export const ExamDetailPage = () => {
         />
       </Card>
 
+      {/* Exam Preview Modal */}
+      <Modal
+        open={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+        title={`Exam Preview: ${examTitle}`}
+        size="lg"
+        footer={
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setIsPreviewModalOpen(false)}>
+              Close Preview
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-lg bg-subtle border border-border-main text-sm">
+            <div>
+              <span className="text-text-muted block text-xs">Subject</span>
+              <span className="font-semibold text-text-main">{subjectName ?? '—'}</span>
+            </div>
+            <div>
+              <span className="text-text-muted block text-xs">Duration</span>
+              <span className="font-semibold text-text-main">{exam.duration_minutes} minutes</span>
+            </div>
+            <div>
+              <span className="text-text-muted block text-xs">Total Marks</span>
+              <span className="font-semibold text-text-main">{exam.total_marks} pts</span>
+            </div>
+            <div>
+              <span className="text-text-muted block text-xs">Status</span>
+              {exam.status === 'published' ? (
+                <Badge variant="success" dot>Published</Badge>
+              ) : (
+                <Badge variant="info" dot>Draft</Badge>
+              )}
+            </div>
+          </div>
+
+          {exam.instructions ? (
+            <Card>
+              <CardHeader>Instructions</CardHeader>
+              <CardBody>
+                <p className="text-sm text-text-main whitespace-pre-line leading-relaxed">
+                  {exam.instructions}
+                </p>
+              </CardBody>
+            </Card>
+          ) : (
+            <p className="text-xs text-text-muted italic">No specific instructions set for this exam.</p>
+          )}
+
+          <Card>
+            <CardHeader>Questions ({items.length})</CardHeader>
+            <CardBody className="space-y-4 max-h-96 overflow-y-auto">
+              {items.length > 0 ? (
+                items.map((q, idx) => (
+                  <div key={q.id} className="p-3 border border-border-main rounded-md space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-xs text-navy-primary">
+                        Question {idx + 1} ({q.question_type})
+                      </span>
+                      <span className="text-xs font-semibold text-text-main">{q.marks} pts</span>
+                    </div>
+                    <p className="text-sm text-text-main whitespace-pre-line">{q.question_text}</p>
+                    {q.question_type === 'MCQ' && q.options?.length > 0 && (
+                      <div className="pl-4 space-y-1 text-xs text-text-muted">
+                        {q.options.map((opt) => (
+                          <div
+                            key={opt.id}
+                            className={`flex items-center gap-2 ${opt.is_correct ? 'font-semibold text-status-success' : ''}`}
+                          >
+                            <span>{opt.is_correct ? '✓' : '•'}</span>
+                            <span>{opt.option_text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-text-muted italic">No questions added to this exam yet.</p>
+              )}
+            </CardBody>
+          </Card>
+        </div>
+      </Modal>
+
+      {/* Delete Question Confirmation Dialog */}
       <ConfirmationDialog
         open={Boolean(pendingDelete)}
         title="Delete question?"
@@ -474,6 +650,7 @@ export const ExamDetailPage = () => {
         {deleteError && <Alert variant="error" className="mt-4">{deleteError}</Alert>}
       </ConfirmationDialog>
 
+      {/* Delete Exam Confirmation Dialog */}
       <ConfirmationDialog
         open={Boolean(pendingDeleteExam)}
         title="Delete exam?"

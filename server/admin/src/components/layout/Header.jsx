@@ -2,7 +2,6 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { Breadcrumb } from '../ui/Breadcrumb';
-import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 import { getNavLabel } from './navConfig';
 import { PATHS } from '../../routes/paths';
@@ -23,7 +22,7 @@ export const Header = ({ onMenuClick, className = '' }) => {
         type="button"
         onClick={onMenuClick}
         aria-label="Open navigation menu"
-        className="p-2 rounded-lg text-text-muted hover:text-text-main hover:bg-subtle transition-colors lg:hidden"
+        className="inline-flex items-center justify-center p-2 rounded-lg text-text-muted hover:text-text-main hover:bg-subtle transition-colors lg:hidden"
       >
         <Menu className="w-5 h-5" aria-hidden="true" />
       </button>
@@ -37,7 +36,6 @@ export const Header = ({ onMenuClick, className = '' }) => {
       />
 
       <div className="flex items-center gap-1.5">
-        <ThemeToggle />
         <UserMenu />
       </div>
     </header>

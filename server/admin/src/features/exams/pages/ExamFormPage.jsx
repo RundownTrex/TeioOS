@@ -6,6 +6,7 @@ import { ChevronLeft } from 'lucide-react';
 import { Card, CardBody, CardFooter } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Input } from '../../../components/ui/Input';
+import { Textarea } from '../../../components/ui/Textarea';
 import { Select } from '../../../components/ui/Select';
 import { Button } from '../../../components/ui/Button';
 import { Alert } from '../../../components/ui/Alert';
@@ -22,9 +23,14 @@ import { PATHS } from '../../../routes/paths';
 const BACK_LINK =
   'inline-flex items-center gap-1 text-sm text-text-muted hover:text-navy-primary transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary mb-4';
 
+const STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft (In preparation)' },
+  { value: 'published', label: 'Published (Ready for scheduling)' },
+];
+
 /**
  * Exam create/edit form (docs/frontend/admin-exam-management.md §5.3).
- * One component serves both routes; `id` in the URL switches to edit mode.
+ * Manages Title, Subject, Duration, Total Marks, Status (Draft/Published), and Instructions.
  */
 export const ExamFormPage = () => {
   const navigate = useNavigate();
@@ -47,6 +53,8 @@ export const ExamFormPage = () => {
       subject_id: '',
       duration_minutes: '',
       total_marks: '',
+      status: 'draft',
+      instructions: '',
     },
     validate: (values) => {
       const errors = {};
@@ -61,6 +69,9 @@ export const ExamFormPage = () => {
       if (!values.total_marks || Number.isNaN(totalMarks) || totalMarks <= 0) {
         errors.total_marks = 'Enter total marks greater than 0.';
       }
+      if (!values.status) {
+        errors.status = 'Status is required.';
+      }
       return errors;
     },
     onSubmit: async (values) => {
@@ -69,6 +80,8 @@ export const ExamFormPage = () => {
         subject_id: values.subject_id,
         duration_minutes: Number(values.duration_minutes),
         total_marks: Number(values.total_marks),
+        status: values.status,
+        instructions: values.instructions.trim() || null,
       };
       const saved = isEdit ? await examsApi.update(id, payload) : await examsApi.create(payload);
       toast(isEdit ? 'Exam updated' : 'Exam created', { type: 'success' });
@@ -84,6 +97,8 @@ export const ExamFormPage = () => {
         subject_id: detailQuery.data.subject_id,
         duration_minutes: String(detailQuery.data.duration_minutes),
         total_marks: String(detailQuery.data.total_marks),
+        status: detailQuery.data.status ?? 'draft',
+        instructions: detailQuery.data.instructions ?? '',
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -113,7 +128,7 @@ export const ExamFormPage = () => {
 
       <PageHeader
         title={isEdit ? 'Edit Exam' : 'New Exam'}
-        description="The subject name is shown when no title is provided."
+        description="Configure exam title, subject, duration, marks, draft/published status, and guidelines."
       />
 
       <Card>
@@ -122,6 +137,7 @@ export const ExamFormPage = () => {
             {form.submitError && <Alert variant="error">{form.submitError}</Alert>}
 
             <Input
+              id="title"
               name="title"
               label="Title"
               value={form.values.title ?? ''}
@@ -132,19 +148,34 @@ export const ExamFormPage = () => {
               autoFocus
             />
 
-            <Select
-              name="subject_id"
-              label="Subject"
-              value={form.values.subject_id ?? ''}
-              onChange={(event) => form.setValue('subject_id', event.target.value)}
-              options={buildSubjectOptions(subjectsQuery.data)}
-              placeholder="Select a subject"
-              error={form.errors.subject_id}
-              isRequired
-            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Select
+                id="subject_id"
+                name="subject_id"
+                label="Subject"
+                value={form.values.subject_id ?? ''}
+                onChange={(event) => form.setValue('subject_id', event.target.value)}
+                options={buildSubjectOptions(subjectsQuery.data)}
+                placeholder="Select a subject"
+                error={form.errors.subject_id}
+                isRequired
+              />
+
+              <Select
+                id="status"
+                name="status"
+                label="Exam Status"
+                value={form.values.status ?? 'draft'}
+                onChange={(event) => form.setValue('status', event.target.value)}
+                options={STATUS_OPTIONS}
+                error={form.errors.status}
+                isRequired
+              />
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
+                id="duration_minutes"
                 name="duration_minutes"
                 label="Duration (minutes)"
                 type="number"
@@ -153,10 +184,12 @@ export const ExamFormPage = () => {
                 value={form.values.duration_minutes ?? ''}
                 onChange={(event) => form.setValue('duration_minutes', event.target.value)}
                 error={form.errors.duration_minutes}
-                helperText="How long students have to complete the exam."
+                helperText="How long candidates have to complete the exam."
                 isRequired
               />
+
               <Input
+                id="total_marks"
                 name="total_marks"
                 label="Total Marks"
                 type="number"
@@ -169,6 +202,18 @@ export const ExamFormPage = () => {
                 isRequired
               />
             </div>
+
+            <Textarea
+              id="instructions"
+              name="instructions"
+              label="Examination Instructions"
+              value={form.values.instructions ?? ''}
+              onChange={(event) => form.setValue('instructions', event.target.value)}
+              error={form.errors.instructions}
+              placeholder="Enter guidelines, rules, or instructions for candidates taking this exam…"
+              helperText="Optional guidelines displayed to candidate at the beginning of the exam."
+              rows={4}
+            />
           </CardBody>
 
           <CardFooter className="flex justify-end gap-2">
@@ -181,7 +226,7 @@ export const ExamFormPage = () => {
               Cancel
             </Button>
             <Button type="submit" variant="primary" isLoading={form.isSubmitting}>
-              {isEdit ? 'Save Exam' : 'Create Exam'}
+              {isEdit ? 'Save Changes' : 'Create Exam'}
             </Button>
           </CardFooter>
         </form>

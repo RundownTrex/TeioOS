@@ -4,12 +4,18 @@ import { unwrap } from '../../../utils/apiHelpers';
 
 export const questionsApi = {
   /**
-   * Retrieve questions, optionally filtered by exam_id, with server-side pagination.
-   * GET /api/v1/admin/questions/?page=&page_size=&exam_id=
+   * Retrieve questions with server-side pagination, search, and type filtering.
+   * GET /api/v1/admin/questions/?page=&page_size=&exam_id=&search=&question_type=
    */
-  list: async ({ page, pageSize, examId, signal } = {}) => {
+  list: async ({ page, pageSize, examId, q, questionType, signal } = {}) => {
     const response = await axiosClient.get(API_ENDPOINTS.QUESTIONS.LIST, {
-      params: { page, page_size: pageSize, exam_id: examId },
+      params: {
+        page,
+        page_size: pageSize,
+        exam_id: examId || undefined,
+        search: q || undefined,
+        question_type: questionType || undefined,
+      },
       signal,
     });
     return unwrap(response);

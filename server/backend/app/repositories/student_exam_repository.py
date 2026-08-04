@@ -147,10 +147,52 @@ class StudentExamRepository(BaseRepository[StudentExam]):
         )
         return self.session.scalars(stmt).all()
 
-    def get_all_for_schedule(self, exam_schedule_id: UUID, skip: int = 0, limit: int = 20) -> Sequence[StudentExam]:
-        stmt = select(StudentExam).where(StudentExam.exam_schedule_id == exam_schedule_id).offset(skip).limit(limit)
+    def _apply_schedule_filters(
+        self,
+        stmt,
+        exam_schedule_id: UUID,
+        q: str | None = None,
+        class_id: UUID | None = None,
+        status: str | None = None,
+    ):
+        from app.models.student import Student
+        stmt = stmt.where(StudentExam.exam_schedule_id == exam_schedule_id)
+        if status:
+            stmt = stmt.where(StudentExam.status == status)
+        if q or class_id:
+            stmt = stmt.join(StudentExam.student)
+            if q:
+                stmt = stmt.where(
+                    or_(
+                        Student.name.ilike(f"%{q}%"),
+                        Student.roll_number.ilike(f"%{q}%"),
+                    )
+                )
+            if class_id:
+                stmt = stmt.where(Student.class_id == class_id)
+        return stmt
+
+    def get_all_for_schedule(
+        self,
+        exam_schedule_id: UUID,
+        skip: int = 0,
+        limit: int = 20,
+        q: str | None = None,
+        class_id: UUID | None = None,
+        status: str | None = None,
+    ) -> Sequence[StudentExam]:
+        stmt = select(StudentExam).options(joinedload(StudentExam.student))
+        stmt = self._apply_schedule_filters(stmt, exam_schedule_id, q=q, class_id=class_id, status=status)
+        stmt = stmt.order_by(StudentExam.created_at.desc(), StudentExam.id).offset(skip).limit(limit)
         return self.session.execute(stmt).scalars().all()
 
-    def get_count_for_schedule(self, exam_schedule_id: UUID) -> int:
-        stmt = select(func.count()).select_from(StudentExam).where(StudentExam.exam_schedule_id == exam_schedule_id)
+    def get_count_for_schedule(
+        self,
+        exam_schedule_id: UUID,
+        q: str | None = None,
+        class_id: UUID | None = None,
+        status: str | None = None,
+    ) -> int:
+        stmt = select(func.count()).select_from(StudentExam)
+        stmt = self._apply_schedule_filters(stmt, exam_schedule_id, q=q, class_id=class_id, status=status)
         return self.session.execute(stmt).scalar_one()

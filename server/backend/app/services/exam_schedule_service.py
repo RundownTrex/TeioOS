@@ -16,10 +16,20 @@ class ExamScheduleService:
         self.schedule_repo = schedule_repo
         self.exam_repo = exam_repo
 
-    def get_schedules(self, page: int, page_size: int, exam_id: UUID | None = None) -> PaginatedData[ExamSchedule]:
+    def get_schedules(
+        self,
+        page: int,
+        page_size: int,
+        exam_id: UUID | None = None,
+        search: str | None = None,
+        status: str | None = None,
+    ) -> PaginatedData[ExamSchedule]:
         skip = (page - 1) * page_size
-        items = self.schedule_repo.get_all(skip, page_size, exam_id)
-        total = self.schedule_repo.get_count(exam_id)
+        search_query = search.strip() if search else None
+        items = self.schedule_repo.get_all(
+            skip, page_size, exam_id=exam_id, search=search_query, status=status
+        )
+        total = self.schedule_repo.get_count(exam_id=exam_id, search=search_query, status=status)
         return PaginatedData(items=items, total=total, page=page, page_size=page_size)
 
     def get_schedule(self, schedule_id: UUID) -> ExamSchedule:

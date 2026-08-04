@@ -49,6 +49,33 @@ export const studentsApi = {
   },
 
   /**
+   * Re-assign a student's class.
+   * PUT /api/v1/admin/students/{student_id}
+   */
+  assignClass: async (id, classId) => {
+    const response = await axiosClient.put(API_ENDPOINTS.STUDENTS.DETAIL(id), { class_id: classId });
+    return unwrap(response);
+  },
+
+  /**
+   * Update a student's candidate accessibility profile.
+   * PUT /api/v1/admin/students/{student_id}
+   */
+  assignAccessibilityProfile: async (id, profile) => {
+    const response = await axiosClient.put(API_ENDPOINTS.STUDENTS.DETAIL(id), { accessibility_profile: profile });
+    return unwrap(response);
+  },
+
+  /**
+   * Reset a student's password (by updating date of birth which regenerates the password hash).
+   * PUT /api/v1/admin/students/{student_id}
+   */
+  resetPassword: async (id, dateOfBirth) => {
+    const response = await axiosClient.put(API_ENDPOINTS.STUDENTS.DETAIL(id), { date_of_birth: dateOfBirth });
+    return unwrap(response);
+  },
+
+  /**
    * Delete a student by ID.
    * DELETE /api/v1/admin/students/{student_id}
    */
@@ -56,6 +83,18 @@ export const studentsApi = {
     const response = await axiosClient.delete(API_ENDPOINTS.STUDENTS.DETAIL(id));
     return unwrap(response);
   },
+
+  /*
+   * ARCHITECTURE EXTENSION POINT: Future Bulk CSV Import & Template Download
+   *
+   * The backend service contract is designed for future CSV imports at:
+   *   - POST /api/v1/admin/students/import (multipart/form-data with roll_number, name, dob, class, profile)
+   *   - GET /api/v1/admin/students/import-template (text/csv download)
+   *
+   * When implementing CSV import in future milestones, attach methods here:
+   *   importCsv: async (formData) => unwrap(await axiosClient.post('/admin/students/import', formData)),
+   *   downloadTemplate: async () => await axiosClient.get('/admin/students/import-template', { responseType: 'blob' }),
+   */
 };
 
 export default studentsApi;

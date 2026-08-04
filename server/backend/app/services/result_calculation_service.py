@@ -48,6 +48,9 @@ class ResultCalculationService:
         descriptive_questions_count = 0
         evaluated_descriptive_count = 0
 
+        mcq_score = 0.0
+        descriptive_score = 0.0
+
         for q in questions:
             ans = student_answers_map.get(q.id)
 
@@ -55,18 +58,19 @@ class ResultCalculationService:
                 if ans and ans.selected_option_id:
                     correct_opt = next((o for o in q.options if o.is_correct), None)
                     if correct_opt and ans.selected_option_id == correct_opt.id:
-                        obtained_marks += q.marks
+                        mcq_score += q.marks
                     else:
-                        obtained_marks -= q.negative_marks
+                        mcq_score -= q.negative_marks
             elif q.question_type == QuestionType.DESCRIPTIVE:
                 descriptive_questions_count += 1
                 if ans and ans.awarded_marks is not None:
                     evaluated_descriptive_count += 1
-                    obtained_marks += ans.awarded_marks
+                    descriptive_score += ans.awarded_marks
 
-        if obtained_marks < 0:
-            obtained_marks = 0.0
+        if mcq_score < 0:
+            mcq_score = 0.0
 
+        obtained_marks = max(0.0, mcq_score + descriptive_score)
         percentage = (obtained_marks / total_marks * 100) if total_marks > 0 else 0.0
 
         if descriptive_questions_count == 0:
@@ -96,6 +100,8 @@ class ResultCalculationService:
 
         if existing_result:
             existing_result.obtained_marks = obtained_marks
+            existing_result.mcq_score = mcq_score
+            existing_result.descriptive_score = descriptive_score
             existing_result.percentage = percentage
             existing_result.grade = grade
             existing_result.evaluation_status = evaluation_status
@@ -104,6 +110,8 @@ class ResultCalculationService:
         result = Result(
             student_exam_id=assignment_id,
             obtained_marks=obtained_marks,
+            mcq_score=mcq_score,
+            descriptive_score=descriptive_score,
             percentage=percentage,
             grade=grade,
             evaluation_status=evaluation_status,

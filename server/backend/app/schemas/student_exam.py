@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from uuid import UUID
 from datetime import datetime
+from app.schemas.student import StudentResponse
 
 class StudentAssignmentCreate(BaseModel):
     student_id: UUID = Field(..., description="ID of the student to assign")
@@ -33,6 +34,7 @@ class StudentAssignmentResponse(BaseModel):
     resume_count: int = 0
     is_auto_submitted: bool = False
     individual_duration_minutes: int | None = None
+    student: StudentResponse | None = Field(None, description="Embedded student details")
     created_at: datetime
     updated_at: datetime
 
@@ -40,5 +42,12 @@ class ClassAssignmentCreate(BaseModel):
     class_id: UUID = Field(..., description="ID of the class whose active students should be assigned")
 
 class ClassAssignmentResponse(BaseModel):
+    assigned: int = Field(..., description="Number of students newly assigned")
+    skipped: int = Field(..., description="Number of students already assigned (skipped)")
+
+class DepartmentAssignmentCreate(BaseModel):
+    department_id: UUID = Field(..., description="ID of the department whose active students should be assigned")
+
+class DepartmentAssignmentResponse(BaseModel):
     assigned: int = Field(..., description="Number of students newly assigned")
     skipped: int = Field(..., description="Number of students already assigned (skipped)")

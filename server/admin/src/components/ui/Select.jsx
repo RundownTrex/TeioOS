@@ -36,12 +36,14 @@ export const Select = forwardRef(
       .filter(Boolean)
       .join(' ') || undefined;
 
+    const isSelectRequired = isRequired || Boolean(props.required);
+
     return (
       <div className={`w-full flex flex-col gap-1.5 ${className}`}>
         {label && (
           <label htmlFor={selectId} className="text-sm font-medium text-text-main">
             {label}
-            {isRequired && <span className="text-status-danger ml-1" aria-hidden="true">*</span>}
+            {isSelectRequired && <span className="text-status-danger ml-1" aria-hidden="true">*</span>}
           </label>
         )}
 
@@ -59,7 +61,7 @@ export const Select = forwardRef(
             value={value}
             onChange={onChange}
             disabled={isDisabled}
-            required={isRequired}
+            required={isSelectRequired}
             aria-label={ariaLabel}
             aria-invalid={Boolean(error)}
             aria-describedby={describedBy}
@@ -72,8 +74,8 @@ export const Select = forwardRef(
             }`}
             {...props}
           >
-            {placeholder !== undefined && (
-              <option value="" disabled hidden>
+            {placeholder !== undefined && !options.some((option) => String(option.value) === '') && (
+              <option value="" disabled={isSelectRequired}>
                 {placeholder}
               </option>
             )}

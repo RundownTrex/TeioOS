@@ -46,7 +46,7 @@ export const QuestionPreviewModal = ({ question, onClose }) => {
             <Badge variant="purple">Descriptive</Badge>
           )}
           <Badge variant="neutral">{formatNumber(question.marks)} mark{question.marks === 1 ? '' : 's'}</Badge>
-          {!isMCQ && question.negative_marks > 0 && (
+          {isMCQ && question.negative_marks > 0 && (
             <Badge variant="warning">−{formatNumber(question.negative_marks)} negative</Badge>
           )}
         </div>
@@ -73,13 +73,13 @@ export const QuestionPreviewModal = ({ question, onClose }) => {
                   aria-hidden="true"
                   className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border-strong"
                 >
-                  {option.is_correct && <span className="h-2 w-2 rounded-full bg-emerald-600" />}
+                  {option.is_correct && <span className="h-2 w-2 rounded-full bg-status-success" />}
                 </span>
                 <span className="text-sm text-text-main">
                   <span className="font-semibold">{optionPrefix(index)}.</span> {option.option_text}
                 </span>
                 {option.is_correct && (
-                  <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                  <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-status-success">
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                     Correct
                   </span>
@@ -97,7 +97,7 @@ export const QuestionPreviewModal = ({ question, onClose }) => {
               rows={4}
               disabled
               placeholder="Students type their answer here…"
-              className="w-full rounded-lg border border-border-main bg-surface-muted px-3 py-2 text-sm text-text-main placeholder:text-text-muted"
+              className="w-full rounded-lg border border-border-main bg-subtle px-3 py-2 text-sm text-text-main placeholder:text-text-muted"
             />
             {question.max_characters && (
               <p className="text-xs text-text-muted">

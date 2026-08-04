@@ -6,6 +6,8 @@ from app.models.result import EvaluationStatus
 
 class ResultBase(BaseModel):
     obtained_marks: float = Field(..., description="Total marks obtained by the student")
+    mcq_score: float = Field(0.0, description="Backend-computed score from MCQ questions")
+    descriptive_score: float = Field(0.0, description="Backend-computed score from Descriptive questions")
     percentage: float = Field(..., description="Percentage scored")
     grade: str | None = Field(None, description="Grade awarded")
     evaluation_status: EvaluationStatus = Field(EvaluationStatus.COMPLETED, description="Status of evaluation: PENDING, PARTIALLY_EVALUATED, or COMPLETED")

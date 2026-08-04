@@ -16,10 +16,21 @@ class QuestionService:
         self.question_repo = question_repo
         self.exam_repo = exam_repo
 
-    def get_questions(self, page: int, page_size: int, exam_id: UUID | None = None) -> PaginatedData[Question]:
+    def get_questions(
+        self,
+        page: int,
+        page_size: int,
+        exam_id: UUID | None = None,
+        search: str | None = None,
+        question_type: QuestionType | None = None,
+    ) -> PaginatedData[Question]:
         skip = (page - 1) * page_size
-        items = self.question_repo.get_all(skip, page_size, exam_id)
-        total = self.question_repo.get_count(exam_id)
+        search_query = search.strip() if search else None
+        q_type = question_type.value if question_type else None
+        items = self.question_repo.get_all(
+            skip, page_size, exam_id=exam_id, search=search_query, question_type=q_type
+        )
+        total = self.question_repo.get_count(exam_id=exam_id, search=search_query, question_type=q_type)
         return PaginatedData(items=items, total=total, page=page, page_size=page_size)
 
     def get_question(self, question_id: UUID) -> Question:

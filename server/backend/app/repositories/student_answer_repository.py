@@ -20,8 +20,14 @@ class StudentAnswerRepository(BaseRepository[StudentAnswer]):
         return self.session.scalars(stmt).first()
 
     def get_all_by_session(self, session_id: uuid.UUID) -> Sequence[StudentAnswer]:
-        stmt = select(StudentAnswer).where(StudentAnswer.student_exam_id == session_id)
-        return self.session.scalars(stmt).all()
+        from sqlalchemy.orm import joinedload
+        from app.models.question import Question
+        stmt = (
+            select(StudentAnswer)
+            .options(joinedload(StudentAnswer.question).joinedload(Question.options))
+            .where(StudentAnswer.student_exam_id == session_id)
+        )
+        return self.session.scalars(stmt).unique().all()
 
     def upsert_answer(
         self,

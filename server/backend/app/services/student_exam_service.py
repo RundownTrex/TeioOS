@@ -26,14 +26,27 @@ class StudentExamService:
         self.schedule_repo = schedule_repo
         self.class_repo = class_repo
 
-    def get_assigned_students(self, schedule_id: UUID, page: int, page_size: int) -> PaginatedData[StudentExam]:
+    def get_assigned_students(
+        self,
+        schedule_id: UUID,
+        page: int,
+        page_size: int,
+        q: str | None = None,
+        class_id: UUID | None = None,
+        status: str | None = None,
+    ) -> PaginatedData[StudentExam]:
         # Validate schedule exists
         if not self.schedule_repo.get_by_id(schedule_id):
             raise NotFoundException(resource_name="ExamSchedule")
-            
+
         skip = (page - 1) * page_size
-        items = self.student_exam_repo.get_all_for_schedule(schedule_id, skip, page_size)
-        total = self.student_exam_repo.get_count_for_schedule(schedule_id)
+        q_clean = q.strip() if q else None
+        items = self.student_exam_repo.get_all_for_schedule(
+            schedule_id, skip, page_size, q=q_clean, class_id=class_id, status=status
+        )
+        total = self.student_exam_repo.get_count_for_schedule(
+            schedule_id, q=q_clean, class_id=class_id, status=status
+        )
         return PaginatedData(items=items, total=total, page=page, page_size=page_size)
 
     def assign_student(self, schedule_id: UUID, data: StudentAssignmentCreate) -> StudentExam:
@@ -97,6 +110,38 @@ class StudentExamService:
             raise NotFoundException(resource_name="Class")
 
         students = self.student_repo.get_active_by_class(class_id)
+        assigned = 0
+        skipped = 0
+        for student in students:
+            if self.student_exam_repo.get_by_ids(student.id, schedule_id):
+                skipped += 1
+                continue
+            self.student_exam_repo.create(
+                StudentExam(student_id=student.id, exam_schedule_id=schedule_id)
+            )
+            assigned += 1
+
+        try:
+            self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            raise ConflictException(detail="Assignment already exists or invalid references.")
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise
+
+        return {"assigned": assigned, "skipped": skipped}
+
+    def assign_department(self, schedule_id: UUID, department_id: UUID) -> dict:
+        """Assign all active students belonging to any class in a department to the schedule in one call.
+
+        Existing assignments are skipped, never duplicated. Returns the number
+        of newly assigned and already-assigned students.
+        """
+        if not self.schedule_repo.get_by_id(schedule_id):
+            raise NotFoundException(resource_name="ExamSchedule")
+
+        students = self.student_repo.get_active_by_department(department_id)
         assigned = 0
         skipped = 0
         for student in students:

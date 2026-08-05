@@ -59,6 +59,7 @@ export const NavigationControls = ({
             isDisabled={isDisabled}
             leftIcon={<Bookmark className={`w-3.5 h-3.5 ${isFlagged ? 'fill-current text-purple-700' : ''}`} />}
             ariaLabel="Mark for Review (Keyboard shortcut Alt+M)"
+            aria-pressed={isFlagged ? 'true' : 'false'}
           >
             {isFlagged ? 'Marked' : 'Mark for Review'}
             <kbd className="hidden sm:inline-block ml-1 text-[10px] font-mono text-text-muted">Alt+M</kbd>

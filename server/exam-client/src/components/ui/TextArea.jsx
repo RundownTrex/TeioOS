@@ -94,12 +94,12 @@ export const TextArea = forwardRef(({
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy}
         aria-label={label || 'Descriptive answer input'}
-        className={`w-full px-4 py-3 text-base bg-surface text-text-main border rounded-xl font-sans leading-relaxed transition-all duration-normal ease-in-out focus:outline-none disabled:bg-subtle disabled:cursor-not-allowed ${
+        className={`w-full px-4 py-3 text-base bg-surface text-text-main border rounded-xl font-sans leading-relaxed transition-all duration-normal ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 disabled:bg-subtle disabled:cursor-not-allowed ${
           error
-            ? 'border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-600/20'
+            ? 'border-red-600 focus:border-red-600'
             : isAtLimit
             ? 'border-red-500 ring-1 ring-red-500'
-            : 'border-border-main hover:border-border-strong focus:border-navy-primary focus:ring-2 focus:ring-navy-primary/20'
+            : 'border-border-main hover:border-border-strong focus:border-navy-primary'
         }`}
         {...props}
       />

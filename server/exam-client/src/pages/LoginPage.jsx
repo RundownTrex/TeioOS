@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Alert } from '../components/ui/Alert';
 import { UserCheck, Lock, Shield } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useFocusOnMount } from '../hooks/useFocusOnMount';
 
 export const LoginPage = () => {
   const [rollNumber, setRollNumber] = useState('');
@@ -17,6 +18,7 @@ export const LoginPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useDocumentTitle('Student Sign In');
+  const pageHeadingRef = useFocusOnMount();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,9 +64,13 @@ export const LoginPage = () => {
         <div className="inline-flex p-3 bg-navy-primary text-text-inverse rounded-2xl shadow-xs mb-3">
           <Shield className="w-8 h-8" aria-hidden="true" />
         </div>
-        <h2 className="text-lg font-extrabold text-text-main tracking-tight uppercase">
+        <h1
+          ref={pageHeadingRef}
+          tabIndex={-1}
+          className="text-lg font-extrabold text-text-main tracking-tight uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+        >
           TEIOOS STUDENT EXAMINATION PORTAL
-        </h2>
+        </h1>
         <p className="text-xs text-text-muted mt-1">
           Please enter your assigned credentials to access your paper.
         </p>

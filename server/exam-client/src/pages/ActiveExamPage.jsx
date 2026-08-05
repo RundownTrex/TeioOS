@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ExamLayout } from '../layouts/ExamLayout';
 import { useExam } from '../hooks/useExam';
 import { useAuthoritativeTimer } from '../hooks/useAuthoritativeTimer';
@@ -104,6 +104,7 @@ const MOCK_QUESTIONS = [
 export const ActiveExamPage = () => {
   const { scheduleId = 'cs-401' } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { session, elevatedToken, syncExamSession } = useExam();
   const { registerHandler, unregisterHandler } = useShortcuts();
   const { speakText, togglePauseResume, stopSpeech, repeatSpeech } = useTTS();
@@ -130,18 +131,29 @@ export const ActiveExamPage = () => {
 
   const debounceTimerRef = useRef(null);
   const autoSubmitRef = useRef(null);
+  const questionHeadingRef = useRef(null);
 
   // True when the server has frozen the individual timer because the candidate
   // left the exam (page closed/hidden or inactivity fallback). While paused,
   // examination time is not counted and answering is disabled until resume.
   const isPaused =
     sessionSnapshot?.status === EXAM_SESSION_STATUS.IN_PROGRESS &&
-    Boolean(sessionSnapshot?.paused_at);
+    Boolean(sessionSnapshot?.paused_at) &&
+    !location.state?.isResumed;
 
   const pausedRef = useRef(false);
   useEffect(() => {
     pausedRef.current = isPaused;
   }, [isPaused]);
+
+  const { secondsRemaining, hasExpired } = useAuthoritativeTimer({
+    expiresAt: session?.expiresAt || null,
+    clockOffsetMs: session?.clockOffsetMs || 0,
+    enabled: Boolean(session?.expiresAt) && !isPaused,
+    onExpire: () => {
+      if (autoSubmitRef.current) autoSubmitRef.current();
+    },
+  });
 
   // Fire-and-forget pause signal: freezes the server-side individual timer so
   // examination time is only counted while the candidate is actively present.
@@ -309,9 +321,19 @@ export const ActiveExamPage = () => {
       return prev;
     });
 
-    announceToScreenReader(`Question ${currentIndex + 1} of ${totalQuestions}. ${currentQuestion?.section || ''}`);
+    const questionNumText = `Question ${currentIndex + 1} of ${totalQuestions}`;
+    const typeText = currentQuestion?.type === 'MCQ' ? 'Multiple Choice' : 'Descriptive Essay';
+    const isAnswered = Boolean(answersMap[currentIndex]);
+    const statusText = isAnswered ? 'Answered' : 'Unanswered';
+    const reviewText = isCurrentFlagged ? '. Marked for review' : '';
+    const sectionText = currentQuestion?.section ? `. ${currentQuestion.section}` : '';
 
-    let speechText = `Question ${currentIndex + 1} of ${totalQuestions}. ${currentQuestion?.section || ''}. Marks: ${currentQuestion?.marks || 1}. Stem: ${currentQuestion?.stem || ''}`;
+    // Centralized live region announcement for blind screen-reader users
+    announceToScreenReader(
+      `${questionNumText}${sectionText}. ${typeText}. ${statusText}${reviewText}.`
+    );
+
+    let speechText = `${questionNumText}${sectionText}. Marks: ${currentQuestion?.marks || 1}. Stem: ${currentQuestion?.stem || ''}`;
     
     if (currentQuestion?.type === 'MCQ' && currentQuestion?.options?.length > 0) {
       const optsText = currentQuestion.options
@@ -324,7 +346,24 @@ export const ActiveExamPage = () => {
     }
 
     speakText(speechText, `Question ${currentIndex + 1}`);
-  }, [currentIndex, totalQuestions, currentQuestion]);
+
+    // Programmatically move keyboard focus to the question card heading on navigation
+    // Ensures screen reader and keyboard users land on the question stem
+    requestAnimationFrame(() => {
+      questionHeadingRef.current?.focus({ preventScroll: true });
+    });
+  }, [currentIndex, totalQuestions, currentQuestion, answersMap, isCurrentFlagged]);
+
+  // Task 3: Announce exam resumption to screen reader users when arriving from Resume flow
+  useEffect(() => {
+    if (location.state?.isResumed) {
+      const durationStr = formatDuration(secondsRemaining);
+      announceToScreenReader(
+        `Exam resumed. Question ${currentIndex + 1} of ${totalQuestions}. Time remaining: ${durationStr}`,
+        'assertive'
+      );
+    }
+  }, [location.state, currentIndex, totalQuestions, secondsRemaining]);
 
   // Synchronize authoritative session + clock offset from periodic snapshot
   useEffect(() => {
@@ -353,20 +392,6 @@ export const ActiveExamPage = () => {
       navigate(`/exam/${scheduleId}/submitted`, { replace: true });
     }
   }, [sessionSnapshot, scheduleId, navigate, isPaused]);
-
-  // Server-authoritative countdown derived from the absolute session expiry.
-  // Survives refresh, reconnect and browser restart because it never trusts a
-  // locally decremented value. Fires handleAutoSubmit exactly once at zero.
-  // While the session is paused the countdown is disabled: the server has
-  // frozen the timer and the old expires_at is no longer authoritative.
-  const { secondsRemaining, hasExpired } = useAuthoritativeTimer({
-    expiresAt: session?.expiresAt || null,
-    clockOffsetMs: session?.clockOffsetMs || 0,
-    enabled: Boolean(session?.expiresAt) && !isPaused,
-    onExpire: () => {
-      if (autoSubmitRef.current) autoSubmitRef.current();
-    },
-  });
 
   // Debounced & Resilient answer saving to server or offline queue
   const persistAnswerToBackend = useCallback(
@@ -731,7 +756,8 @@ export const ActiveExamPage = () => {
       paperTitle="CS-401"
       sectionTitle={currentQuestion.section}
       timerSlot={<Timer secondsRemaining={secondsRemaining} />}
-      hideFooter={true}
+      hideFooter={false}
+      footerSlot={<ExamStatusBar syncStatus={syncStatus} isConnected={isConnected} />}
       sidebarContent={
         <QuestionPalette
           totalQuestions={totalQuestions}
@@ -767,6 +793,7 @@ export const ActiveExamPage = () => {
             answerText={currentQuestion.type === 'DESCRIPTIVE' ? currentAnswer : ''}
             onChangeAnswerText={handleTextChange}
             isDisabled={hasExpired}
+            headingRef={questionHeadingRef}
           />
         </div>
 
@@ -780,9 +807,6 @@ export const ActiveExamPage = () => {
           onSaveNext={handleSaveAndNext}
           hasNext={currentIndex < totalQuestions - 1}
         />
-
-        {/* Telemetry Status Bar */}
-        <ExamStatusBar syncStatus={syncStatus} isConnected={isConnected} />
       </div>
 
       {/* Screen 7: Submit Confirmation Modal Dialog */}

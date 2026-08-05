@@ -47,11 +47,14 @@ export const QuestionTile = ({
   return (
     <button
       type="button"
+      role="gridcell"
       onClick={onClick}
       onKeyDown={onKeyDown}
       disabled={isDisabled}
+      tabIndex={isActive ? 0 : -1}
       title={`Question ${index + 1} (${ariaStatusLabels[status] || 'Unvisited'})`}
       aria-label={`Question ${index + 1}: ${ariaStatusLabels[status] || 'Unvisited'}${isActive ? ', Currently selected' : ''}`}
+      aria-selected={isActive ? 'true' : 'false'}
       aria-current={isActive ? 'true' : undefined}
       {...rest}
       className={`relative w-10 h-10 rounded-lg border-2 flex items-center justify-center font-mono text-xs font-bold transition-all duration-fast ease-in-out select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 active:scale-95 ${

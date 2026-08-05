@@ -10,9 +10,15 @@ export const TTSProvider = ({ children }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentText, setCurrentText] = useState('');
+  const [isSupported, setIsSupported] = useState(true);
   const lastSpokenTextRef = useRef('');
+  const activeUtteranceRef = useRef(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      setIsSupported(false);
+    }
+
     return () => {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
@@ -22,13 +28,14 @@ export const TTSProvider = ({ children }) => {
 
   const speakText = useCallback(
     (text, label = '') => {
-      if (typeof window === 'undefined' || !window.speechSynthesis) {
-        announceToScreenReader(text);
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        setIsSupported(false);
+        announceToScreenReader('Text-to-speech engine is not supported in this browser.');
         return;
       }
 
       if (!ttsEnabled) {
-        announceToScreenReader('Text to speech is currently disabled in accessibility settings.');
+        announceToScreenReader('Text-to-speech is currently disabled in accessibility settings.');
         return;
       }
 
@@ -40,11 +47,12 @@ export const TTSProvider = ({ children }) => {
 
       const cleanText = text.trim();
       const utterance = new SpeechSynthesisUtterance(cleanText);
+
       utterance.rate = ttsSpeed || 1.0;
       utterance.pitch = ttsPitch || 1.0;
       utterance.volume = ttsVolume !== undefined ? ttsVolume : 1.0;
 
-      if (ttsVoiceURI && voices.length > 0) {
+      if (ttsVoiceURI && voices && voices.length > 0) {
         const selectedVoice = voices.find((v) => v.voiceURI === ttsVoiceURI);
         if (selectedVoice) {
           utterance.voice = selectedVoice;
@@ -62,12 +70,18 @@ export const TTSProvider = ({ children }) => {
         setIsSpeaking(false);
         setIsPaused(false);
         setCurrentText('');
+        activeUtteranceRef.current = null;
       };
 
-      utterance.onerror = () => {
+      utterance.onerror = (e) => {
+        // Canceled errors occur when window.speechSynthesis.cancel() is called intentionally
+        if (e.error !== 'canceled') {
+          console.warn('TTS Synthesis error:', e);
+        }
         setIsSpeaking(false);
         setIsPaused(false);
         setCurrentText('');
+        activeUtteranceRef.current = null;
       };
 
       utterance.onpause = () => {
@@ -78,11 +92,18 @@ export const TTSProvider = ({ children }) => {
         setIsPaused(false);
       };
 
+      activeUtteranceRef.current = utterance;
+
       if (label) {
         announceToScreenReader(`Reading aloud: ${label}`);
       }
 
-      window.speechSynthesis.speak(utterance);
+      try {
+        window.speechSynthesis.speak(utterance);
+      } catch (err) {
+        console.warn('SpeechSynthesis speak failed:', err);
+        announceToScreenReader('Speech synthesis failed to play.');
+      }
     },
     [ttsEnabled, ttsSpeed, ttsPitch, ttsVolume, ttsVoiceURI, voices]
   );
@@ -136,6 +157,7 @@ export const TTSProvider = ({ children }) => {
   }, [speakText]);
 
   const value = {
+    isSupported,
     isSpeaking,
     isPaused,
     currentText,

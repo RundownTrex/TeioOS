@@ -26,6 +26,8 @@ export const AccessibilityModal = () => {
   const {
     isModalOpen,
     closeModal,
+    profile,
+    applyProfile,
     theme,
     fontScale,
     lineHeight,
@@ -60,6 +62,13 @@ export const AccessibilityModal = () => {
     useTTS();
 
   const { openHelp } = useShortcuts();
+
+  const profileOptions = [
+    { value: 'default', label: 'Default Baseline', description: 'Standard academic light theme and normal typography' },
+    { value: 'vision', label: 'High Vision Profile', description: 'WCAG AAA High Contrast dark, 150% font scale & wide spacing' },
+    { value: 'motor', label: 'Motor Accessibility Profile', description: '125% font scale, relaxed spacing & reduced animations' },
+    { value: 'cognitive', label: 'Cognitive & Dyslexia Profile', description: 'Lexend legibility font, loose 2.0x line height & wide tracking' },
+  ];
 
   const fontOptions = [
     { value: '100', label: '100% Standard', description: 'Default baseline typography size' },
@@ -149,6 +158,22 @@ export const AccessibilityModal = () => {
       size="lg"
     >
       <div className="space-y-6 select-none max-h-[70vh] overflow-y-auto pr-1">
+        {/* 0. Preset Accessibility Profiles */}
+        <section aria-labelledby="profile-heading">
+          <div className="flex items-center gap-2 mb-3 text-navy-primary font-bold text-sm uppercase tracking-wider">
+            <Sparkles className="w-4 h-4" aria-hidden="true" />
+            <h3 id="profile-heading">Quick Accessibility Profiles</h3>
+          </div>
+          <RadioGroup
+            name="accessibilityProfile"
+            options={profileOptions}
+            value={profile || 'default'}
+            onChange={(val) => applyProfile(val)}
+          />
+        </section>
+
+        <Divider />
+
         {/* 1. Font Size Scaling */}
         <section aria-labelledby="font-scale-heading">
           <div className="flex items-center gap-2 mb-3 text-navy-primary font-bold text-sm uppercase tracking-wider">

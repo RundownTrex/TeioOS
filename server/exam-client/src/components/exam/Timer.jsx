@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Clock } from 'lucide-react';
 import { formatDuration } from '../../utils/formatters';
+import { announceToScreenReader } from '../../utils/ariaAnnounce';
 
 export const Timer = ({
   secondsRemaining = 0,
@@ -9,6 +10,30 @@ export const Timer = ({
 }) => {
   const isCritical = secondsRemaining > 0 && secondsRemaining <= 300; // < 5 minutes
   const formatted = formatDuration(secondsRemaining);
+  const announcedMilestonesRef = useRef(new Set());
+
+  // Task 4: Announce timer milestones (30m, 15m, 5m, 1m) without second-by-second screen reader chatter
+  useEffect(() => {
+    if (secondsRemaining <= 0) return;
+
+    const milestones = [
+      { seconds: 1800, text: '30 minutes remaining in examination session.', priority: 'polite' },
+      { seconds: 900, text: '15 minutes remaining in examination session.', priority: 'polite' },
+      { seconds: 300, text: 'Attention: 5 minutes remaining in examination session.', priority: 'assertive' },
+      { seconds: 60, text: 'Attention: 1 minute remaining in examination session. Prepare to finalize your paper.', priority: 'assertive' },
+    ];
+
+    milestones.forEach(({ seconds, text, priority }) => {
+      if (
+        secondsRemaining <= seconds &&
+        secondsRemaining > seconds - 5 &&
+        !announcedMilestonesRef.current.has(seconds)
+      ) {
+        announcedMilestonesRef.current.add(seconds);
+        announceToScreenReader(text, priority);
+      }
+    });
+  }, [secondsRemaining]);
 
   return (
     <div
@@ -16,8 +41,8 @@ export const Timer = ({
       tabIndex={0}
       role="timer"
       aria-label={`${label}: ${formatted}`}
-      aria-live={isCritical ? 'assertive' : 'off'}
-      className={`inline-flex items-center gap-2.5 px-4 py-1.5 rounded-lg border font-mono font-bold select-none transition-colors focus-visible:outline-none ${
+      aria-live="off"
+      className={`inline-flex items-center gap-2.5 px-4 py-1.5 rounded-lg border font-mono font-bold select-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 ${
         isCritical
           ? 'bg-red-100 text-red-700 border-red-500 animate-pulse'
           : 'bg-surface text-text-main border-border-strong'

@@ -58,6 +58,13 @@ export const QuestionPalette = ({
     if (currentPos === -1) return;
 
     let targetPos = currentPos;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      const mainHeading = document.querySelector('main h2[tabindex="-1"]');
+      if (mainHeading) mainHeading.focus({ preventScroll: true });
+      return;
+    }
+
     if (e.key === 'ArrowRight') { e.preventDefault(); targetPos = Math.min(visibleIndices.length - 1, currentPos + 1); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); targetPos = Math.max(0, currentPos - 1); }
     else if (e.key === 'ArrowDown') { e.preventDefault(); targetPos = Math.min(visibleIndices.length - 1, currentPos + COLS); }
@@ -118,7 +125,7 @@ export const QuestionPalette = ({
       </div>
 
       {/* ── FILTER TABS ── */}
-      <div className="shrink-0 flex gap-1 mb-2">
+      <div role="tablist" aria-label="Question palette filters" className="shrink-0 flex gap-1 mb-2">
         {filterTabs.map((tab) => {
           const count = tab.id === 'ALL' ? totalQuestions : statusCounts[tab.id] || 0;
           const isActive = activeFilter === tab.id;
@@ -126,8 +133,11 @@ export const QuestionPalette = ({
             <button
               key={tab.id}
               type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-controls="palette-grid-container"
               onClick={() => setActiveFilter(tab.id)}
-              className={`flex-1 py-1 rounded-md text-xs font-medium transition-colors duration-fast text-center cursor-pointer border ${
+              className={`flex-1 py-1 rounded-md text-xs font-medium transition-colors duration-fast text-center cursor-pointer border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary ${
                 isActive
                   ? 'bg-navy-primary text-text-inverse border-navy-primary font-bold'
                   : 'bg-transparent text-text-muted border-transparent hover:bg-subtle hover:text-text-main'
@@ -148,7 +158,7 @@ export const QuestionPalette = ({
         className="flex-1 min-h-0 overflow-y-auto"
       >
         {visibleIndices.length > 0 ? (
-          <div className="grid grid-cols-5 gap-2 p-1">
+          <div role="row" className="grid grid-cols-5 gap-2 p-1">
             {visibleIndices.map((idx) => (
               <QuestionTile
                 key={idx}

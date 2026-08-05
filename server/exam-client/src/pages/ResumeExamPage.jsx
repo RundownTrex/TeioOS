@@ -11,6 +11,7 @@ import { RotateCcw, ShieldCheck, Clock, FileText, Flag, PauseCircle } from 'luci
 import { restoreLocalAnswers, restoreWorkbenchState } from '../utils/resilienceManager';
 import { formatDuration } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useFocusOnMount } from '../hooks/useFocusOnMount';
 import { announceToScreenReader } from '../utils/ariaAnnounce';
 import { EXAM_SESSION_STATUS } from '../utils/constants';
 
@@ -35,6 +36,7 @@ export const ResumeExamPage = () => {
   const rollNumber = userProfile?.roll_number || 'STU-2026-8941';
 
   useDocumentTitle('Resume Examination');
+  const pageHeadingRef = useFocusOnMount();
 
   const session = sessionSnapshot;
   const status = session?.status;
@@ -119,7 +121,7 @@ export const ResumeExamPage = () => {
         server_current_time: startData.server_current_time,
         ...startData.session,
       });
-      navigate(`/exam/${scheduleId}/active`, { replace: true });
+      navigate(`/exam/${scheduleId}/active`, { replace: true, state: { isResumed: true } });
     } catch (err) {
       const terminal = err?.code === 'SESSION_SUBMITTED' || err?.code === 'SESSION_EXPIRED';
       if (terminal) {
@@ -138,9 +140,13 @@ export const ResumeExamPage = () => {
           <div className="inline-flex p-3 bg-navy-primary text-text-inverse rounded-2xl shadow-xs mb-3">
             <RotateCcw className="w-7 h-7" aria-hidden="true" />
           </div>
-          <h2 className="text-lg font-extrabold text-text-main tracking-tight uppercase">
+          <h1
+            ref={pageHeadingRef}
+            tabIndex={-1}
+            className="text-lg font-extrabold text-text-main tracking-tight uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+          >
             RESUME EXAMINATION SESSION
-          </h2>
+          </h1>
           <p className="text-xs text-text-muted mt-1 font-medium">
             An active paper session was detected for {studentName} ({rollNumber}).
           </p>

@@ -6,6 +6,7 @@ import { announceToScreenReader } from '../utils/ariaAnnounce';
 export const AccessibilityContext = createContext(null);
 
 const DEFAULT_SETTINGS = {
+  profile: 'default',
   theme: THEMES.DEFAULT,
   fontScale: 100,
   lineHeight: 'normal',
@@ -147,12 +148,59 @@ export const AccessibilityProvider = ({ children }) => {
     });
   };
 
+  const applyProfile = (profileKey) => {
+    switch (profileKey) {
+      case 'vision':
+        setSettings((prev) => ({
+          ...prev,
+          profile: 'vision',
+          theme: THEMES.HIGH_CONTRAST,
+          fontScale: 150,
+          lineHeight: 'relaxed',
+          letterSpacing: 'wide',
+          ttsEnabled: true,
+        }));
+        announceToScreenReader('Applied High Vision Accessibility Profile');
+        break;
+      case 'motor':
+        setSettings((prev) => ({
+          ...prev,
+          profile: 'motor',
+          fontScale: 125,
+          reducedMotion: true,
+          lineHeight: 'relaxed',
+        }));
+        announceToScreenReader('Applied Motor Accessibility Profile');
+        break;
+      case 'cognitive':
+        setSettings((prev) => ({
+          ...prev,
+          profile: 'cognitive',
+          dyslexicFont: true,
+          fontScale: 110,
+          lineHeight: 'loose',
+          letterSpacing: 'wide',
+        }));
+        announceToScreenReader('Applied Cognitive & Dyslexia Accessibility Profile');
+        break;
+      case 'default':
+      default:
+        setSettings((prev) => ({
+          ...DEFAULT_SETTINGS,
+          profile: 'default',
+        }));
+        announceToScreenReader('Applied Default Baseline Accessibility Profile');
+        break;
+    }
+  };
+
   const resetAccessibility = () => {
     setSettings(DEFAULT_SETTINGS);
     announceToScreenReader('Reset all accessibility preferences to factory defaults');
   };
 
   const value = {
+    profile: settings.profile,
     theme: settings.theme,
     fontScale: settings.fontScale,
     lineHeight: settings.lineHeight,
@@ -171,6 +219,7 @@ export const AccessibilityProvider = ({ children }) => {
     openModal,
     closeModal,
     toggleModal,
+    applyProfile,
     setTheme,
     setFontScale,
     setLineHeight,

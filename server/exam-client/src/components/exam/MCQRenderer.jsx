@@ -12,10 +12,6 @@ export const MCQRenderer = ({
   const { speakText } = useTTS();
   const getPrefix = (index) => String.fromCharCode(65 + index);
 
-  const handleOptionFocus = (prefix, text) => {
-    speakText(`Option ${prefix}: ${text}`);
-  };
-
   const handleOptionSelect = (optionId, prefix, text) => {
     if (isDisabled) return;
     if (onSelectOption) onSelectOption(optionId);
@@ -52,7 +48,6 @@ export const MCQRenderer = ({
                 value={option.id}
                 checked={isSelected}
                 disabled={isDisabled}
-                onFocus={() => handleOptionFocus(prefix, text)}
                 onChange={() => handleOptionSelect(option.id, prefix, text)}
                 aria-label={`Option ${prefix}: ${text}`}
                 className="peer sr-only"

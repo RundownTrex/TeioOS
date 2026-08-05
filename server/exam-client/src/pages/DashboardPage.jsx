@@ -11,6 +11,7 @@ import { ErrorState } from '../components/ui/ErrorState';
 import { ArrowRight, User, Clock, Lock, RotateCcw } from 'lucide-react';
 import { formatDateTime } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useFocusOnMount } from '../hooks/useFocusOnMount';
 import { EXAM_SESSION_STATUS } from '../utils/constants';
 
 export const DashboardPage = () => {
@@ -20,6 +21,7 @@ export const DashboardPage = () => {
   const [now, setNow] = useState(() => Date.now());
 
   useDocumentTitle('Student Dashboard');
+  const pageHeadingRef = useFocusOnMount();
 
   // 1-second ticker for real-time kiosk schedule status auto-unlocking
   useEffect(() => {
@@ -126,7 +128,12 @@ export const DashboardPage = () => {
       {/* PRIMARY SECTION: AVAILABLE EXAMINATIONS */}
       <section aria-labelledby="available-exams-heading" className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 id="available-exams-heading" className="text-lg font-extrabold text-text-main tracking-tight uppercase">
+          <h2
+            id="available-exams-heading"
+            ref={pageHeadingRef}
+            tabIndex={-1}
+            className="text-lg font-extrabold text-text-main tracking-tight uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+          >
             AVAILABLE EXAMINATIONS
           </h2>
           <Button variant="outline" size="sm" onClick={() => refetch()}>

@@ -8,12 +8,12 @@ export const Badge = ({
   ...props
 }) => {
   const variants = {
-    success: 'bg-green-50 text-green-800 border-green-300',
-    warning: 'bg-amber-50 text-amber-900 border-amber-300',
-    purple:  'bg-purple-50 text-purple-900 border-purple-300',
-    info:    'bg-blue-50 text-blue-900 border-blue-300',
-    neutral: 'bg-subtle text-text-muted border-border-main',
-    danger:  'bg-red-50 text-red-900 border-red-300',
+    success: 'bg-status-answered-bg text-status-answered border-status-answered',
+    warning: 'bg-status-unanswered-bg text-status-unanswered border-status-unanswered',
+    purple:  'bg-status-review-bg text-status-review border-status-review',
+    info:    'bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700',
+    neutral: 'bg-subtle text-text-main border-border-main',
+    danger:  'bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700',
   };
 
   const sizes = {

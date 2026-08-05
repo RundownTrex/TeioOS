@@ -60,10 +60,10 @@ export const Input = ({
           autoFocus={autoFocus}
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy}
-          className={`w-full h-10 px-3.5 text-sm bg-surface text-text-main border rounded-lg transition-all duration-normal ease-in-out focus:outline-none disabled:bg-subtle disabled:cursor-not-allowed ${
+          className={`w-full h-10 px-3.5 text-sm bg-surface text-text-main border rounded-lg transition-all duration-normal ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 disabled:bg-subtle disabled:cursor-not-allowed ${
             error
-              ? 'border-red-600 focus:border-red-600 focus:ring-2 focus:ring-red-600/20'
-              : 'border-border-main hover:border-border-strong focus:border-navy-primary focus:ring-2 focus:ring-navy-primary/20'
+              ? 'border-red-600 focus:border-red-600'
+              : 'border-border-main hover:border-border-strong focus:border-navy-primary'
           } ${leftIcon ? 'pl-10' : ''} ${rightIcon ? 'pr-10' : ''}`}
           {...props}
         />

@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useExam } from '../hooks/useExam';
 import { CheckCircle2, ShieldCheck, ArrowRight, Home, LogOut } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useFocusOnMount } from '../hooks/useFocusOnMount';
 
 /**
  * Screen 8: Post-Submission Terminal State Screen
@@ -22,6 +23,7 @@ export const SubmittedPage = () => {
   const { clearExamSession } = useExam();
 
   useDocumentTitle('Paper Submitted');
+  const pageHeadingRef = useFocusOnMount();
 
   // Generate deterministic details from student profile and timestamp
   const submissionData = useMemo(() => {
@@ -59,7 +61,11 @@ export const SubmittedPage = () => {
             <div className="inline-flex p-3.5 bg-status-success-bg text-status-success rounded-full shadow-sm mb-3">
               <CheckCircle2 className="w-10 h-10" aria-hidden="true" />
             </div>
-            <h2 className="text-xl font-extrabold text-text-main tracking-tight uppercase">
+            <h2
+              ref={pageHeadingRef}
+              tabIndex={-1}
+              className="text-xl font-extrabold text-text-main tracking-tight uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+            >
               EXAMINATION SUBMITTED SUCCESSFULLY
             </h2>
             <p className="text-xs text-text-muted mt-1.5 leading-relaxed max-w-md mx-auto">

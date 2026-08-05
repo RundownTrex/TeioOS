@@ -49,6 +49,7 @@ export const InstructionsPage = () => {
   const { token: baseToken } = useAuth();
 
   useDocumentTitle('Examination Instructions');
+  const pageHeadingRef = useFocusOnMount();
 
   const { data: apiInstructions, isLoading, isError, error, refetch } = useExamInstructions(scheduleId);
 
@@ -204,7 +205,11 @@ export const InstructionsPage = () => {
             <span className="text-xs font-mono font-bold text-navy-primary uppercase tracking-wider">
               {data.subjectCode} • {data.departmentName}
             </span>
-            <h2 className="text-2xl font-extrabold text-text-main leading-snug mt-1">
+            <h2
+              ref={pageHeadingRef}
+              tabIndex={-1}
+              className="text-2xl font-extrabold text-text-main leading-snug mt-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+            >
               {data.subjectName}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-text-muted font-medium pt-3 mt-2 border-t border-border-main">

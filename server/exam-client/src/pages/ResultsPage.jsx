@@ -8,6 +8,7 @@ import { Alert } from '../components/ui/Alert';
 import { useAuth } from '../hooks/useAuth';
 import { Clock, ArrowLeft, Award, FileText } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useFocusOnMount } from '../hooks/useFocusOnMount';
 
 const MOCK_RESULTS = {
   mixed: {
@@ -80,6 +81,7 @@ export const ResultsPage = () => {
   const isMixed = data.paperType === 'MIXED';
 
   useDocumentTitle('Performance Report');
+  const pageHeadingRef = useFocusOnMount();
 
   return (
     <ExamLayout paperTitle={data.subjectCode} sectionTitle="Performance Report">
@@ -113,7 +115,11 @@ export const ResultsPage = () => {
                 <span className="text-xs font-mono font-bold text-navy-primary uppercase tracking-wider">
                   {data.subjectCode} • PERFORMANCE REPORT
                 </span>
-                <h2 className="text-2xl font-extrabold text-text-main leading-snug mt-1">
+                <h2
+                  ref={pageHeadingRef}
+                  tabIndex={-1}
+                  className="text-2xl font-extrabold text-text-main leading-snug mt-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+                >
                   {data.subjectName}
                 </h2>
                 <p className="text-xs text-text-muted mt-1 font-medium">

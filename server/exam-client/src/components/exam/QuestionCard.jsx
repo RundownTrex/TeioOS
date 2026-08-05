@@ -21,6 +21,7 @@ export const QuestionCard = ({
   onSelectOption,
   onChangeAnswerText,
   isDisabled = false,
+  headingRef = null,
   className = '',
 }) => {
   return (
@@ -34,6 +35,7 @@ export const QuestionCard = ({
           negativeMarks={negativeMarks}
           isMarkedForReview={isMarkedForReview}
           questionText={questionText}
+          headingRef={headingRef}
         />
       </CardHeader>
 

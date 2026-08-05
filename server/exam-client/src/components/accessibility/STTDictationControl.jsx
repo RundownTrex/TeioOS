@@ -106,6 +106,8 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
           {/* Dictation Status Badge */}
           <div className="flex items-center gap-2">
             <span
+              aria-live="polite"
+              aria-atomic="true"
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[11px] font-bold ${
                 isListening
                   ? 'bg-red-100 text-red-800 border border-red-300 animate-pulse'
@@ -114,17 +116,24 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
                   : 'bg-surface text-text-muted border border-border-main'
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-red-600' : isPaused ? 'bg-amber-600' : 'bg-text-muted'}`} />
+              <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-red-600' : isPaused ? 'bg-amber-600' : 'bg-text-muted'}`} aria-hidden="true" />
               <span>{isListening ? 'LISTENING (MIC ON)' : isPaused ? 'DICTATION PAUSED' : 'DICTATION OFF'}</span>
             </span>
           </div>
         </div>
       )}
 
+      {/* Feedback Loop Prevention Guidance */}
+      {isListening && (
+        <p className="text-[11px] text-text-muted italic px-1">
+          Tip: Use headphones or lower speaker volume to prevent microphone feedback from text-to-speech reading.
+        </p>
+      )}
+
       {/* Live Interim Transcript Preview Banner */}
       {interimTranscript && (
         <div className="p-2.5 bg-navy-primary/5 border border-navy-primary/30 rounded-lg text-xs flex items-start gap-2 animate-fadeIn">
-          <CornerDownLeft className="w-3.5 h-3.5 text-navy-primary shrink-0 mt-0.5" />
+          <CornerDownLeft className="w-3.5 h-3.5 text-navy-primary shrink-0 mt-0.5" aria-hidden="true" />
           <div className="flex-1">
             <span className="font-bold text-navy-primary block text-[10px] uppercase tracking-wider mb-0.5">
               Live Speech Dictation Preview:

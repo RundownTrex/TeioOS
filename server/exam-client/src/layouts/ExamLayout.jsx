@@ -13,6 +13,7 @@ export const ExamLayout = ({
   sidebarContent,
   statusText = 'Session Active',
   hideFooter = false,
+  footerSlot,
   children,
 }) => {
   const { userProfile } = useAuth();
@@ -45,16 +46,21 @@ export const ExamLayout = ({
         {sidebarContent && (
           <aside
             id="skip-to-palette"
+            tabIndex={-1}
             aria-label="Question palette sidebar navigation"
-            className="w-[18rem] shrink-0 max-w-[50vw] border-l border-border-main bg-surface p-4 flex flex-col overflow-hidden"
+            className="w-[18rem] shrink-0 max-w-[50vw] border-l border-border-main bg-surface p-4 flex flex-col overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-inset"
           >
             {sidebarContent}
           </aside>
         )}
       </div>
 
-      {/* Persistent Status Bar Footer (Rendered only when hideFooter is false) */}
-      {!hideFooter && <Footer statusText={statusText} autoSaveActive={true} />}
+      {/* Persistent Status Bar Footer — stuck across 100% full width at bottom */}
+      {!hideFooter && (
+        <div className="w-full shrink-0">
+          {footerSlot || <Footer statusText={statusText} autoSaveActive={true} />}
+        </div>
+      )}
     </div>
   );
 };

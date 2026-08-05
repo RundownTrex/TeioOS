@@ -92,7 +92,15 @@ export const STTProvider = ({ children }) => {
         onResultCallbackRef.current = onResultCallback;
       }
 
-      // Stop previous instance if running
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // Stop previous recognition instance if running
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();

@@ -13,6 +13,7 @@ export const Modal = ({
 }) => {
   const dialogRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const titleId = useId();
   const descId = useId();
 
   const sizes = {
@@ -83,19 +84,21 @@ export const Modal = ({
   if (!isOpen) return null;
 
   const modalContent = (
+    // The backdrop must NOT carry aria-hidden. aria-hidden propagates to all
+    // descendants, which would hide the dialog content from assistive technologies.
+    // The dialog element inside uses aria-modal="true" which is the correct signal
+    // to screen readers that content outside the dialog should be treated as inert.
     <div
       className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      aria-hidden="true"
       onClick={onClose}
     >
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
+        aria-labelledby={title ? titleId : undefined}
         aria-describedby={descId}
         tabIndex={-1}
-        aria-hidden={undefined}
         onClick={(e) => e.stopPropagation()}
         className={`w-full bg-surface border border-border-main rounded-xl shadow-lg overflow-hidden flex flex-col max-h-[90vh] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary ${
           sizes[size] || sizes.md
@@ -104,7 +107,7 @@ export const Modal = ({
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-border-main flex items-center justify-between">
           {title ? (
-            <h2 id="modal-title" className="text-base font-bold text-text-main uppercase tracking-wide">
+            <h2 id={titleId} className="text-base font-bold text-text-main uppercase tracking-wide">
               {title}
             </h2>
           ) : (

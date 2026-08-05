@@ -83,7 +83,7 @@ export const RadioGroup = ({
                   className="peer sr-only"
                 />
                 <div
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-normal bg-surface ${
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-normal bg-surface peer-focus-visible:ring-2 peer-focus-visible:ring-navy-primary peer-focus-visible:ring-offset-2 ${
                     isChecked ? 'border-navy-primary' : 'border-border-strong'
                   }`}
                 >

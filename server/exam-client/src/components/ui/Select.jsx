@@ -48,7 +48,7 @@ export const Select = ({
           required={isRequired}
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy}
-          className={`w-full appearance-none px-3.5 py-2 text-sm bg-surface text-text-main border rounded-md transition-colors pr-10 focus-visible:outline-none disabled:bg-subtle disabled:cursor-not-allowed ${
+          className={`w-full appearance-none px-3.5 py-2 text-sm bg-surface text-text-main border rounded-md transition-colors pr-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 disabled:bg-subtle disabled:cursor-not-allowed ${
             error
               ? 'border-red-600 focus:border-red-600'
               : 'border-border-main hover:border-border-strong'

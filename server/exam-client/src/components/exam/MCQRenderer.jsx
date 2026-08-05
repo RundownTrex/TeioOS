@@ -59,7 +59,7 @@ export const MCQRenderer = ({
               />
               <div
                 aria-hidden="true"
-                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center font-bold text-xs transition-colors duration-normal ${
+                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center font-bold text-xs transition-colors duration-normal peer-focus-visible:ring-2 peer-focus-visible:ring-navy-primary peer-focus-visible:ring-offset-2 ${
                   isSelected
                     ? 'border-navy-primary bg-navy-primary text-text-inverse'
                     : 'border-border-strong text-text-muted bg-surface'

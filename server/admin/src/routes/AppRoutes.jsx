@@ -33,6 +33,7 @@ const ScheduleAssignmentsPage = lazy(() => import('../features/schedules/pages/S
 const EvaluationListPage = lazy(() => import('../features/evaluation/pages/EvaluationListPage'));
 const EvaluationWorkbenchPage = lazy(() => import('../features/evaluation/pages/EvaluationWorkbenchPage'));
 const ResultsListPage = lazy(() => import('../features/results/pages/ResultsListPage'));
+const ResultDetailPage = lazy(() => import('../features/results/pages/ResultDetailPage'));
 const AnalyticsOverviewPage = lazy(() => import('../features/analytics/pages/AnalyticsOverviewPage'));
 const StudentMonitoringPage = lazy(() => import('../features/analytics/pages/StudentMonitoringPage'));
 const ExamMonitoringPage = lazy(() => import('../features/analytics/pages/ExamMonitoringPage'));
@@ -168,7 +169,7 @@ export const AppRoutes = () => {
 
               {/* Results */}
               <Route path={PATHS.RESULTS} element={<ResultsListPage />} />
-              <Route path={PATHS.RESULT_DETAIL_PATTERN} element={placeholder('Result Detail')} />
+              <Route path={PATHS.RESULT_DETAIL_PATTERN} element={<ResultDetailPage />} />
 
               {/* Analytics & Reports */}
               <Route path={PATHS.ANALYTICS} element={<AnalyticsOverviewPage />} />

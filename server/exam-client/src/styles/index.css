@@ -32,4 +32,37 @@
     white-space: nowrap;
     border-width: 0;
   }
+
+  /* ==========================================================================
+     Custom Minimal & Theme-Aware Scrollbar Styling
+     ========================================================================== */
+
+  /* Firefox Standard Scrollbar Rules */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+
+  /* WebKit & Chromium Engines (Chrome, Edge, Firefox, Electron, OS Kiosk) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-strong);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-navy-primary);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }

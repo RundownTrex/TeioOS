@@ -15,6 +15,8 @@ from app.schemas.student_exam_delivery import (
     ExamSubmitRequest,
     ExamSubmitConfirmation,
     ExamSessionSnapshotResponse,
+    StudentResultInfo,
+    ExamReviewResponse,
 )
 
 router = APIRouter()
@@ -174,4 +176,40 @@ def submit_exam(
         success=True, 
         message=confirmation.message,
         data=confirmation
+    )
+
+
+@router.get("/{schedule_id}/result", response_model=APIResponse[StudentResultInfo])
+def get_exam_result(
+    schedule_id: UUID,
+    token_payload: Annotated[TokenPayload, Depends(require_student)],
+    session_service: ExamSessionServiceDep,
+):
+    """
+    Get the published result for an exam assignment.
+    Requires Base Student JWT. Throws error if result is not published yet.
+    """
+    data = session_service.get_student_exam_result(UUID(token_payload.sub), schedule_id)
+    return APIResponse(
+        success=True,
+        message="Exam result retrieved successfully",
+        data=data
+    )
+
+
+@router.get("/{schedule_id}/review", response_model=APIResponse[ExamReviewResponse])
+def get_exam_review(
+    schedule_id: UUID,
+    token_payload: Annotated[TokenPayload, Depends(require_student)],
+    session_service: ExamSessionServiceDep,
+):
+    """
+    Get full question-by-question paper review for a published exam.
+    Requires Base Student JWT. Throws 403 error if results are not published yet.
+    """
+    data = session_service.get_student_exam_review(UUID(token_payload.sub), schedule_id)
+    return APIResponse(
+        success=True,
+        message="Exam review retrieved successfully",
+        data=data
     )

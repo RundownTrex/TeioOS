@@ -58,6 +58,22 @@ class ExamSubmitRequest(BaseModel):
 
 # --- Response Models ---
 
+class StudentResultInfo(BaseModel):
+    """
+    Sanitized evaluation and published result status for the student client.
+    Exposes marks/grade ONLY if `is_published` is True.
+    """
+    model_config = ConfigDict(from_attributes=True)
+
+    is_published: bool
+    published_at: datetime | None = None
+    obtained_marks: float | None = None
+    total_marks: float | None = None
+    percentage: float | None = None
+    grade: str | None = None
+    evaluation_status: str
+
+
 class ExamSessionResponse(BaseModel):
     """
     The candidate's personal examination session.
@@ -75,6 +91,7 @@ class ExamSessionResponse(BaseModel):
     duration: int
     last_activity_at: datetime | None = None
     paused_at: datetime | None = None
+    result: StudentResultInfo | None = None
 
 
 class ExamSessionSnapshotResponse(ExamSessionResponse):
@@ -135,3 +152,49 @@ class ExamSubmitConfirmation(BaseModel):
     is_auto_submitted: bool
     submitted_at: datetime
     message: str = "Exam submitted successfully"
+
+
+# --- Exam Review Models (For Published Results) ---
+
+class OptionReviewItem(BaseModel):
+    """Option details revealed for published exam review."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    option_text: str
+    is_correct: bool
+    is_selected: bool = False
+
+
+class QuestionReviewItem(BaseModel):
+    """Question review item with candidate answer and evaluation telemetry."""
+    model_config = ConfigDict(from_attributes=True)
+
+    question_id: UUID
+    question_text: str
+    question_type: QuestionType = QuestionType.MCQ
+    marks: float
+    negative_marks: float = 0.0
+    obtained_marks: float = 0.0
+    status: str  # CORRECT, INCORRECT, PARTIAL, UNANSWERED
+    saved_answer_option_id: Optional[UUID] = None
+    saved_answer_text: Optional[str] = None
+    evaluator_feedback: Optional[str] = None
+    options: List[OptionReviewItem] = []
+
+
+class ExamReviewResponse(BaseModel):
+    """Full published exam review payload."""
+    model_config = ConfigDict(from_attributes=True)
+
+    schedule_id: UUID
+    subject_name: str
+    subject_code: str
+    department_name: str
+    total_marks: float
+    obtained_marks: float
+    percentage: float
+    grade: Optional[str] = None
+    published_at: datetime
+    questions: List[QuestionReviewItem] = []
+

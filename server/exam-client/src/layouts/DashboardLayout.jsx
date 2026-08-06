@@ -16,7 +16,7 @@ export const DashboardLayout = ({ children, onOpenAccessibility }) => {
         onOpenAccessibility={onOpenAccessibility}
       />
 
-      <MainContentWrapper maxWidth="dashboard">
+      <MainContentWrapper maxWidth="workbench">
         {children || <Outlet />}
       </MainContentWrapper>
 

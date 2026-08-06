@@ -17,6 +17,10 @@ from app.schemas.student_exam_delivery import (
     StudentAvailableExamResponse,
     ExamSessionResponse,
     ExamSessionSnapshotResponse,
+    StudentResultInfo,
+    OptionReviewItem,
+    QuestionReviewItem,
+    ExamReviewResponse,
 )
 from app.core.exceptions import (
     AuthorizationException,
@@ -24,6 +28,7 @@ from app.core.exceptions import (
     SessionExpiredException,
     SessionAlreadySubmittedException,
     SessionPausedException,
+    BusinessRuleException,
 )
 from app.services.result_calculation_service import ResultCalculationService
 
@@ -42,11 +47,26 @@ class ExamSessionService:
         self.result_calc_service = result_calc_service
 
     def _build_session_response(
-        self, assignment: StudentExam | None, duration_minutes: int
+        self, assignment: StudentExam | None, duration_minutes: int, total_marks: float | None = None
     ) -> ExamSessionResponse | None:
         """Serializes the candidate's personal exam session for the frontend."""
         if assignment is None:
             return None
+
+        result_info = None
+        if assignment.result:
+            res = assignment.result
+            is_pub = res.published_at is not None
+            result_info = StudentResultInfo(
+                is_published=is_pub,
+                published_at=res.published_at if is_pub else None,
+                obtained_marks=res.obtained_marks if is_pub else None,
+                total_marks=total_marks if is_pub else None,
+                percentage=res.percentage if is_pub else None,
+                grade=res.grade if is_pub else None,
+                evaluation_status=res.evaluation_status.value if res.evaluation_status else "PENDING",
+            )
+
         return ExamSessionResponse(
             assignment_id=assignment.id,
             started_at=assignment.started_at,
@@ -56,6 +76,7 @@ class ExamSessionService:
             duration=duration_minutes,
             last_activity_at=assignment.last_activity_at,
             paused_at=assignment.paused_at,
+            result=result_info,
         )
 
     def _lock_assignment(
@@ -115,7 +136,7 @@ class ExamSessionService:
                     start_time=sched.start_time,
                     end_time=sched.end_time,
                     session=self._build_session_response(
-                        assignment_map.get(sched.id), sched.exam.duration_minutes
+                        assignment_map.get(sched.id), sched.exam.duration_minutes, sched.exam.total_marks
                     ),
                 )
             )
@@ -147,7 +168,7 @@ class ExamSessionService:
             start_time=schedule.start_time,
             end_time=schedule.end_time,
             status=schedule.status,
-            session=self._build_session_response(assignment, schedule.exam.duration_minutes),
+            session=self._build_session_response(assignment, schedule.exam.duration_minutes, schedule.exam.total_marks),
         )
 
     def get_exam_session(self, student_id: uuid.UUID, schedule_id: uuid.UUID) -> ExamSessionSnapshotResponse:
@@ -573,3 +594,143 @@ class ExamSessionService:
         except Exception:
             self.db.rollback()
             raise
+
+    def get_student_exam_result(
+        self, student_id: uuid.UUID, schedule_id: uuid.UUID
+    ) -> StudentResultInfo:
+        """
+        Retrieves the candidate's published result for an exam schedule.
+        If result is not published yet, raises BusinessRuleException.
+        """
+        schedule = self.schedule_repo.get_by_id_with_details(schedule_id)
+        if not schedule:
+            raise ExamUnavailableException("Exam schedule not found")
+
+        assignment = self.assignment_repo.get_by_student_and_schedule(student_id, schedule_id)
+        if not assignment:
+            raise ExamUnavailableException("No exam session found for this schedule")
+
+        if not assignment.result and assignment.status in [AssignmentStatus.SUBMITTED, AssignmentStatus.AUTO_SUBMITTED, AssignmentStatus.EXPIRED]:
+            self.result_calc_service.calculate_for_session(assignment.id)
+            self.db.commit()
+            self.db.refresh(assignment)
+
+        if not assignment.result:
+            raise ExamUnavailableException("No result record found for this exam schedule")
+
+        if assignment.result.published_at is None:
+            raise BusinessRuleException("Exam result has not been published by the administration yet")
+
+        res = assignment.result
+        return StudentResultInfo(
+            is_published=True,
+            published_at=res.published_at,
+            obtained_marks=res.obtained_marks,
+            total_marks=schedule.exam.total_marks if schedule.exam else None,
+            percentage=res.percentage,
+            grade=res.grade,
+            evaluation_status=res.evaluation_status.value if hasattr(res.evaluation_status, "value") else str(res.evaluation_status),
+        )
+
+    def get_student_exam_review(
+        self, student_id: uuid.UUID, schedule_id: uuid.UUID
+    ) -> ExamReviewResponse:
+        """
+        Retrieves full question-by-question review data for a published exam.
+        Includes candidate submitted answers, correct option indicators, awarded marks,
+        and descriptive evaluator feedback.
+        Raises BusinessRuleException if results are not published yet.
+        """
+        schedule = self.schedule_repo.get_by_id_with_details(schedule_id)
+        if not schedule:
+            raise ExamUnavailableException("Exam schedule not found")
+
+        assignment = self.assignment_repo.get_by_student_and_schedule(student_id, schedule_id)
+        if not assignment:
+            raise ExamUnavailableException("No exam session found for this schedule")
+
+        if not assignment.result and assignment.status in [AssignmentStatus.SUBMITTED, AssignmentStatus.AUTO_SUBMITTED, AssignmentStatus.EXPIRED]:
+            self.result_calc_service.calculate_for_session(assignment.id)
+            self.db.commit()
+            self.db.refresh(assignment)
+
+        if not assignment.result:
+            raise ExamUnavailableException("No result record found for this exam schedule")
+
+        if assignment.result.published_at is None:
+            raise BusinessRuleException("Exam review is available only after results are published by the administration")
+
+        res = assignment.result
+
+        # Map student answers by question_id
+        saved_answers_map = {ans.question_id: ans for ans in assignment.answers}
+
+        question_items = []
+        questions = sorted(schedule.exam.questions, key=lambda q: q.display_order) if schedule.exam and schedule.exam.questions else []
+
+        for q in questions:
+            user_ans = saved_answers_map.get(q.id)
+
+            # Map options
+            option_items = []
+            if q.options:
+                sorted_opts = sorted(q.options, key=lambda o: o.display_order)
+                for opt in sorted_opts:
+                    is_selected = user_ans is not None and user_ans.selected_option_id == opt.id
+                    option_items.append(
+                        OptionReviewItem(
+                            id=opt.id,
+                            option_text=opt.option_text,
+                            is_correct=opt.is_correct,
+                            is_selected=is_selected,
+                        )
+                    )
+
+            obtained_marks = user_ans.awarded_marks if user_ans and user_ans.awarded_marks is not None else 0.0
+
+            # Determine question status
+            if not user_ans or (user_ans.selected_option_id is None and not user_ans.answer_text):
+                q_status = "UNANSWERED"
+            elif getattr(q.question_type, "value", str(q.question_type)) == "MCQ":
+                selected_opt = next((o for o in q.options if user_ans and user_ans.selected_option_id == o.id), None)
+                if selected_opt and selected_opt.is_correct:
+                    q_status = "CORRECT"
+                else:
+                    q_status = "INCORRECT"
+            else:
+                # Descriptive
+                if obtained_marks >= q.marks:
+                    q_status = "CORRECT"
+                elif obtained_marks > 0:
+                    q_status = "PARTIAL"
+                else:
+                    q_status = "INCORRECT"
+
+            question_items.append(
+                QuestionReviewItem(
+                    question_id=q.id,
+                    question_text=q.question_text,
+                    question_type=q.question_type,
+                    marks=q.marks,
+                    negative_marks=q.negative_marks or 0.0,
+                    obtained_marks=obtained_marks,
+                    status=q_status,
+                    saved_answer_option_id=user_ans.selected_option_id if user_ans else None,
+                    saved_answer_text=user_ans.answer_text if user_ans else None,
+                    evaluator_feedback=user_ans.evaluator_feedback if user_ans else None,
+                    options=option_items,
+                )
+            )
+
+        return ExamReviewResponse(
+            schedule_id=schedule.id,
+            subject_name=schedule.exam.subject.name if schedule.exam and schedule.exam.subject else "Examination",
+            subject_code=schedule.exam.subject.subject_code if schedule.exam and schedule.exam.subject else "EXAM",
+            department_name=schedule.exam.subject.department.name if schedule.exam and schedule.exam.subject and schedule.exam.subject.department else "Department",
+            total_marks=schedule.exam.total_marks if schedule.exam else 0.0,
+            obtained_marks=res.obtained_marks,
+            percentage=res.percentage,
+            grade=res.grade,
+            published_at=res.published_at,
+            questions=question_items,
+        )

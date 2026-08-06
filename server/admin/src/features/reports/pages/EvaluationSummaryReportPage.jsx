@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Printer, ChevronLeft } from 'lucide-react';
+import { Printer, Download, ChevronLeft } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card, CardHeader, CardBody, CardFooter } from '../../../components/ui/Card';
@@ -20,9 +20,10 @@ import { queryKeys } from '../../../utils/queryKeys';
 import { PAGINATION } from '../../../utils/constants';
 import { PATHS } from '../../../routes/paths';
 import { formatDateTime, formatPercent } from '../../../utils/formatters';
+import { downloadCsv } from '../../../utils/downloadCsv';
 
 /**
- * Evaluation Summary Report (docs/frontend/admin-analytics-monitoring.md §4.4).
+ * Evaluation Summary Report
  * Real data: results filtered by exam — evaluation status counts computed
  * client-side from the result set (capped at max page size).
  */
@@ -56,6 +57,23 @@ export const EvaluationSummaryReportPage = () => {
     event.preventDefault();
     if (!examId) return;
     setReportExamId(examId);
+  };
+
+  const handleExportCsv = () => {
+    const items = resultsQuery.data?.items ?? [];
+    if (!items.length) return;
+    const headers = ['Student Candidate', 'Roll Number', 'Percentage', 'Grade', 'Evaluation Status', 'Published Date'];
+    const rows = items.map((r) => [
+      r.student_exam?.student?.name ?? '—',
+      r.student_exam?.student?.roll_number ?? '—',
+      formatPercent(r.percentage),
+      r.grade ?? '—',
+      r.evaluation_status,
+      formatDateTime(r.published_at),
+    ]);
+    const examObj = (examsQuery.data?.items ?? []).find((e) => e.id === reportExamId);
+    const examTitleClean = examObj?.title ? examObj.title.replace(/\s+/g, '_') : 'exam';
+    downloadCsv(`evaluation-summary-report-${examTitleClean}.csv`, headers, rows);
   };
 
   const columns = [
@@ -99,19 +117,30 @@ export const EvaluationSummaryReportPage = () => {
         title="Evaluation Summary"
         description="Evaluation progress and pending work for one exam."
         actions={
-          <Button
-            variant="ghost"
-            size="md"
-            onClick={() => window.print()}
-            disabled={!resultsQuery.data?.items?.length}
-          >
-            <Printer className="w-5 h-5" aria-hidden="true" />
-            Print report
-          </Button>
+          <div className="flex items-center gap-2 no-print">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={handleExportCsv}
+              disabled={!resultsQuery.data?.items?.length}
+            >
+              <Download className="w-4 h-4 mr-1.5" aria-hidden="true" />
+              Export CSV
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => window.print()}
+              disabled={!resultsQuery.data?.items?.length}
+            >
+              <Printer className="w-4 h-4 mr-1.5" aria-hidden="true" />
+              Print report
+            </Button>
+          </div>
         }
       />
 
-      <Card>
+      <Card className="no-print">
         <CardBody>
           <form onSubmit={generate} className="flex flex-wrap items-end gap-4">
             <div className="w-full max-w-md">
@@ -134,7 +163,7 @@ export const EvaluationSummaryReportPage = () => {
       </Card>
 
       {resultsQuery.isError && (
-        <Alert variant="error" className="mt-6">
+        <Alert variant="error" className="mt-6 no-print">
           Results could not be loaded.
         </Alert>
       )}
@@ -160,7 +189,12 @@ export const EvaluationSummaryReportPage = () => {
           </div>
 
           <Card className="mt-6 print-report-table">
-            <CardHeader>Results</CardHeader>
+            <CardHeader className="bg-subtle/50">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-text-main">Official Evaluation Status Report</h2>
+                <span className="text-xs font-mono text-text-muted">TeioOS Examination System</span>
+              </div>
+            </CardHeader>
             <Table
               columns={columns}
               data={resultsQuery.data?.items ?? []}
@@ -174,7 +208,7 @@ export const EvaluationSummaryReportPage = () => {
                 />
               }
             />
-            <CardFooter className="text-xs text-text-muted">
+            <CardFooter className="text-xs text-text-muted no-print">
               Results are capped at {PAGINATION.MAX_PAGE_SIZE} per report.
             </CardFooter>
           </Card>
@@ -183,7 +217,7 @@ export const EvaluationSummaryReportPage = () => {
 
       <Link
         to={PATHS.REPORTS}
-        className="mt-6 inline-flex items-center gap-1 text-sm text-navy-primary hover:text-navy-hover"
+        className="mt-6 inline-flex items-center gap-1 text-sm text-navy-primary hover:text-navy-hover no-print"
       >
         <ChevronLeft className="w-4 h-4" aria-hidden="true" />
         All reports

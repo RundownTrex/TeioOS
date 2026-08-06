@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { BarChart3, Send, Eye, CheckCircle2, AlertCircle, Award, BookOpen, User, Trash2 } from 'lucide-react';
+import { BarChart3, Send, Eye, CheckCircle2, AlertCircle, Award, BookOpen, User, Trash2, Download } from 'lucide-react';
+import { PATHS } from '../../../routes/paths';
+import { exportResultsToCsv } from '../utils/exportResults';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card } from '../../../components/ui/Card';
@@ -42,6 +45,7 @@ const PUBLISHED_STATUS_OPTIONS = [
  * Strictly displays only backend-provided values (no frontend mark calculations).
  */
 export const ResultsListPage = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { page, pageSize, filters, setPage, setPageSize, setFilter, clearFilters } =
@@ -214,7 +218,7 @@ export const ResultsListPage = () => {
               key: 'view-details',
               label: 'View Result Details',
               icon: <Eye className="w-4 h-4" aria-hidden="true" />,
-              onSelect: () => setSelectedResult(row),
+              onSelect: () => navigate(PATHS.resultDetail(row.id)),
             },
             {
               key: 'publish',
@@ -240,11 +244,42 @@ export const ResultsListPage = () => {
     filters.q || filters.exam_id || filters.class_id || filters.evaluation_status || filters.is_published
   );
 
+  const handleExportCsv = () => {
+    let prefix = 'results';
+    if (filters.class_id) {
+      const classObj = classMap.get(filters.class_id);
+      prefix = classObj ? `results-class-${classObj.name.replace(/\s+/g, '_')}` : 'results-class';
+    } else if (filters.exam_id) {
+      const examObj = examMap.get(filters.exam_id);
+      const title = examObj?.title || subjectMap.get(examObj?.subject_id)?.name || 'exam';
+      prefix = `results-exam-${title.replace(/\s+/g, '_')}`;
+    }
+
+    exportResultsToCsv({
+      results: data?.items ?? [],
+      classMap,
+      subjectMap,
+      filenamePrefix: prefix,
+    });
+  };
+
   return (
     <>
       <PageHeader
         title="Results Management"
         description="View and publish backend-evaluated candidate scores for MCQ and descriptive examinations."
+        actions={
+          <Button
+            variant="outline"
+            size="md"
+            onClick={handleExportCsv}
+            disabled={!data?.items?.length}
+            className="no-print"
+          >
+            <Download className="w-4 h-4 mr-1.5" aria-hidden="true" />
+            Export Results (CSV)
+          </Button>
+        }
       />
 
       <Card>

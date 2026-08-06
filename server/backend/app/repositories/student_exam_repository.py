@@ -32,7 +32,9 @@ class StudentExamRepository(BaseRepository[StudentExam]):
 
     def get_by_student_and_schedule(self, student_id: uuid.UUID, schedule_id: uuid.UUID) -> StudentExam | None:
         """Retrieves the exam assignment (which tracks the session) for a student and schedule."""
-        stmt = select(StudentExam).where(
+        stmt = select(StudentExam).options(
+            joinedload(StudentExam.result)
+        ).where(
             StudentExam.student_id == student_id,
             StudentExam.exam_schedule_id == schedule_id,
         )
@@ -44,7 +46,9 @@ class StudentExamRepository(BaseRepository[StudentExam]):
         """Retrieves all exam assignments for a student across the given schedules."""
         if not schedule_ids:
             return []
-        stmt = select(StudentExam).where(
+        stmt = select(StudentExam).options(
+            joinedload(StudentExam.result)
+        ).where(
             StudentExam.student_id == student_id,
             StudentExam.exam_schedule_id.in_(schedule_ids),
         )

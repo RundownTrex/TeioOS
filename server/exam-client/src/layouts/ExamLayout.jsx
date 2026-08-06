@@ -48,7 +48,7 @@ export const ExamLayout = ({
             id="skip-to-palette"
             tabIndex={-1}
             aria-label="Question palette sidebar navigation"
-            className="w-[18rem] shrink-0 max-w-[50vw] border-l border-border-main bg-surface p-4 flex flex-col overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-inset"
+            className="w-[20rem] shrink-0 max-w-[50vw] border-l border-border-main bg-surface p-4 flex flex-col overflow-y-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-inset"
           >
             {sidebarContent}
           </aside>

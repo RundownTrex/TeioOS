@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Printer, ChevronLeft } from 'lucide-react';
+import { Printer, Download, ChevronLeft } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card, CardHeader, CardBody, CardFooter } from '../../../components/ui/Card';
@@ -21,10 +21,11 @@ import { queryKeys } from '../../../utils/queryKeys';
 import { PAGINATION } from '../../../utils/constants';
 import { PATHS } from '../../../routes/paths';
 import { formatDateTime, formatMarks, formatPercent } from '../../../utils/formatters';
+import { downloadCsv } from '../../../utils/downloadCsv';
 
 /**
- * Student Results Report (docs/frontend/admin-analytics-monitoring.md §4.4).
- * Real data: GET /admin/results/?student_id= — printable via window.print().
+ * Student Results Report
+ * Real data: GET /admin/results/?student_id= — printable via window.print() or exportable as CSV.
  */
 export const StudentResultsReportPage = () => {
   const [studentId, setStudentId] = useState('');
@@ -72,6 +73,36 @@ export const StudentResultsReportPage = () => {
     setReportStudentId(studentId);
   };
 
+  const data = resultsQuery.data;
+
+  const handleExportCsv = () => {
+    if (!data?.items?.length) return;
+    const headers = [
+      'Candidate Name',
+      'Roll Number',
+      'Examination',
+      'Obtained Marks',
+      'Max Marks',
+      'Percentage',
+      'Grade',
+      'Evaluation Status',
+      'Published Date',
+    ];
+    const rows = data.items.map((row) => [
+      selectedStudent?.name ?? '—',
+      selectedStudent?.roll_number ?? '—',
+      displayTitle(row.student_exam?.exam_schedule?.exam?.id),
+      formatMarks(row.obtained_marks),
+      formatMarks(row.student_exam?.exam_schedule?.exam?.total_marks ?? 0),
+      formatPercent(row.percentage),
+      row.grade ?? '—',
+      row.evaluation_status,
+      formatDateTime(row.published_at),
+    ]);
+    const studentNameClean = selectedStudent?.name ? selectedStudent.name.replace(/\s+/g, '_') : 'student';
+    downloadCsv(`student-results-report-${studentNameClean}.csv`, headers, rows);
+  };
+
   const columns = [
     {
       key: 'exam',
@@ -109,22 +140,36 @@ export const StudentResultsReportPage = () => {
     },
   ];
 
-  const data = resultsQuery.data;
-
   return (
     <>
       <PageHeader
         title="Student Results Report"
         description="Marks, grades, and evaluation status for a single student."
         actions={
-          <Button variant="ghost" size="md" onClick={() => window.print()} disabled={!data?.items?.length}>
-            <Printer className="w-5 h-5" aria-hidden="true" />
-            Print report
-          </Button>
+          <div className="flex items-center gap-2 no-print">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={handleExportCsv}
+              disabled={!data?.items?.length}
+            >
+              <Download className="w-4 h-4 mr-1.5" aria-hidden="true" />
+              Export CSV
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => window.print()}
+              disabled={!data?.items?.length}
+            >
+              <Printer className="w-4 h-4 mr-1.5" aria-hidden="true" />
+              Print report
+            </Button>
+          </div>
         }
       />
 
-      <Card>
+      <Card className="no-print">
         <CardBody>
           <form onSubmit={generate} className="flex flex-wrap items-end gap-4">
             <div className="w-full max-w-md">
@@ -147,35 +192,44 @@ export const StudentResultsReportPage = () => {
       </Card>
 
       {resultsQuery.isError && (
-        <Alert variant="error" className="mt-6">
+        <Alert variant="error" className="mt-6 no-print">
           Results could not be loaded.
         </Alert>
       )}
 
       {reportStudentId && (
         <Card className="mt-6 print-report-table">
-          <CardHeader>Report</CardHeader>
+          <CardHeader className="bg-subtle/50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-text-main">
+                Official Student Academic Performance Report
+              </h2>
+              <span className="text-xs font-mono text-text-muted">
+                TeioOS Examination System
+              </span>
+            </div>
+          </CardHeader>
           <CardBody>
             <dl className="grid gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-4 mb-6 text-sm">
               <div>
-                <dt className="text-xs uppercase tracking-wide text-text-muted">Generated</dt>
+                <dt className="text-xs uppercase tracking-wide text-text-muted font-bold">Report Generated</dt>
                 <dd className="text-text-main font-medium tabular-nums">
                   {formatDateTime(new Date().toISOString())}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-text-muted">Student</dt>
+                <dt className="text-xs uppercase tracking-wide text-text-muted font-bold">Candidate</dt>
                 <dd className="text-text-main font-medium">
                   {selectedStudent?.name ?? '—'} ({selectedStudent?.roll_number ?? '—'})
                 </dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-text-muted">Exams</dt>
+                <dt className="text-xs uppercase tracking-wide text-text-muted font-bold">Exams Recorded</dt>
                 <dd className="text-text-main font-medium tabular-nums">{data?.total ?? 0}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-text-muted">Average %</dt>
-                <dd className="text-text-main font-medium tabular-nums">
+                <dt className="text-xs uppercase tracking-wide text-text-muted font-bold">Average Percentage</dt>
+                <dd className="text-text-main font-medium tabular-nums font-bold">
                   {data?.items?.length
                     ? formatPercent(
                         data.items.reduce((sum, r) => sum + r.percentage, 0) / data.items.length,
@@ -198,7 +252,7 @@ export const StudentResultsReportPage = () => {
               />
             }
           />
-          <CardFooter>
+          <CardFooter className="no-print">
             <div className="flex justify-end">
               <Pagination
                 page={data?.page ?? 1}
@@ -215,7 +269,7 @@ export const StudentResultsReportPage = () => {
 
       <Link
         to={PATHS.REPORTS}
-        className="mt-6 inline-flex items-center gap-1 text-sm text-navy-primary hover:text-navy-hover"
+        className="mt-6 inline-flex items-center gap-1 text-sm text-navy-primary hover:text-navy-hover no-print"
       >
         <ChevronLeft className="w-4 h-4" aria-hidden="true" />
         All reports

@@ -46,41 +46,87 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Print stylesheet — report pages (Student Results, Exam Summary,
- * Evaluation Summary). Hides application chrome and flattens the canvas so
- * reports print cleanly to paper or PDF via the browser's print dialog.
+ * Print stylesheet — Administrative Report Printing & PDF Export
+ * Hides application chrome, form controls, action buttons, pagination, and
+ * navigation elements. Flattens canvas to high-contrast black/white for
+ * crisp PDF exports and physical printing.
  * ------------------------------------------------------------------------- */
 @media print {
+  @page {
+    margin: 1.2cm;
+    size: auto;
+  }
+
+  /* Hide app chrome, forms, action buttons, pagination, & navigation */
   header,
   aside,
-  footer {
+  footer,
+  nav,
+  button,
+  form,
+  .no-print,
+  .print-hidden,
+  a[href^="/"],
+  [role="toolbar"] {
     display: none !important;
   }
 
-  body {
-    background-color: #FFFFFF !important;
-  }
-
-  main {
+  /* Force white background and dark text */
+  html, body, main, #main-content {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
     overflow: visible !important;
   }
 
-  .shadow-sm,
-  .shadow-md,
-  .shadow-lg {
+  /* Force containers and cards to white background with clean borders */
+  div, section, article, dl, table, tr, td, th {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #111827 !important;
     box-shadow: none !important;
+    text-shadow: none !important;
   }
 
-  /* Report header + tables keep their on-screen layout, with stronger
-     borders so column structure survives low-resolution printing. */
-  .print-report-table table,
-  .print-report-table td,
-  .print-report-table th {
-    border-color: var(--color-border-strong) !important;
-    break-inside: avoid;
+  /* Print-friendly table formatting */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
   }
 
-  .print-no-break {
-    break-inside: avoid;
+  th, td {
+    border: 1px solid #d1d5db !important;
+    padding: 0.5rem 0.75rem !important;
+    color: #111827 !important;
+    font-size: 10pt !important;
+  }
+
+  th {
+    background-color: #f3f4f6 !important;
+    font-weight: 700 !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-no-break, .card {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: #111827 !important;
   }
 }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Printer, ChevronLeft } from 'lucide-react';
+import { Printer, Download, ChevronLeft } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card, CardHeader, CardBody, CardFooter } from '../../../components/ui/Card';
@@ -23,6 +23,7 @@ import { queryKeys } from '../../../utils/queryKeys';
 import { PAGINATION, PASS_PERCENTAGE } from '../../../utils/constants';
 import { PATHS } from '../../../routes/paths';
 import { formatDateTime, formatNumber, formatPercent } from '../../../utils/formatters';
+import { downloadCsv } from '../../../utils/downloadCsv';
 
 const MARKS_BUCKETS = [
   { label: '0–19%', min: 0, max: 19.99 },
@@ -33,7 +34,7 @@ const MARKS_BUCKETS = [
 ];
 
 /**
- * Exam Summary Report (docs/frontend/admin-analytics-monitoring.md §4.4).
+ * Exam Summary Report
  * Real data: exam detail + schedules + published results (aggregates and
  * marks distribution computed client-side; results capped at max page size).
  */
@@ -98,6 +99,31 @@ export const ExamSummaryReportPage = () => {
     event.preventDefault();
     if (!examId) return;
     setReportExamId(examId);
+  };
+
+  const handleExportCsv = () => {
+    const items = resultsQuery.data?.items ?? [];
+    if (!items.length) return;
+    const headers = [
+      'Candidate Name',
+      'Roll Number',
+      'Obtained Marks',
+      'Exam Total Marks',
+      'Percentage',
+      'Grade',
+      'Published Date',
+    ];
+    const rows = items.map((r) => [
+      r.student_exam?.student?.name ?? '—',
+      r.student_exam?.student?.roll_number ?? '—',
+      formatNumber(r.obtained_marks),
+      formatNumber(r.student_exam?.exam_schedule?.exam?.total_marks ?? 0),
+      formatPercent(r.percentage),
+      r.grade ?? '—',
+      formatDateTime(r.published_at),
+    ]);
+    const examTitleClean = exam?.title ? exam.title.replace(/\s+/g, '_') : 'exam';
+    downloadCsv(`exam-summary-report-${examTitleClean}.csv`, headers, rows);
   };
 
   const scheduleColumns = [
@@ -166,19 +192,30 @@ export const ExamSummaryReportPage = () => {
         title="Exam Summary"
         description="Performance summary, pass rate, and marks distribution for one exam."
         actions={
-          <Button
-            variant="ghost"
-            size="md"
-            onClick={() => window.print()}
-            disabled={!resultsQuery.data?.items?.length}
-          >
-            <Printer className="w-5 h-5" aria-hidden="true" />
-            Print report
-          </Button>
+          <div className="flex items-center gap-2 no-print">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={handleExportCsv}
+              disabled={!resultsQuery.data?.items?.length}
+            >
+              <Download className="w-4 h-4 mr-1.5" aria-hidden="true" />
+              Export CSV
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => window.print()}
+              disabled={!resultsQuery.data?.items?.length}
+            >
+              <Printer className="w-4 h-4 mr-1.5" aria-hidden="true" />
+              Print report
+            </Button>
+          </div>
         }
       />
 
-      <Card>
+      <Card className="no-print">
         <CardBody>
           <form onSubmit={generate} className="flex flex-wrap items-end gap-4">
             <div className="w-full max-w-md">
@@ -201,7 +238,7 @@ export const ExamSummaryReportPage = () => {
       </Card>
 
       {resultsQuery.isError && (
-        <Alert variant="error" className="mt-6">
+        <Alert variant="error" className="mt-6 no-print">
           Exam data could not be loaded.
         </Alert>
       )}
@@ -210,25 +247,30 @@ export const ExamSummaryReportPage = () => {
         <>
           {exam && (
             <Card className="mt-6 print-no-break">
-              <CardHeader>Exam information</CardHeader>
+              <CardHeader className="bg-subtle/50">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-bold text-text-main">Official Examination Summary Report</h2>
+                  <span className="text-xs font-mono text-text-muted">TeioOS Examination System</span>
+                </div>
+              </CardHeader>
               <CardBody>
                 <dl className="grid gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-4 text-sm">
                   <div>
-                    <dt className="text-xs uppercase tracking-wide text-text-muted">Exam</dt>
+                    <dt className="text-xs uppercase tracking-wide text-text-muted font-bold">Exam Title</dt>
                     <dd className="text-text-main font-medium">{exam.title || 'Untitled exam'}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs uppercase tracking-wide text-text-muted">Subject</dt>
+                    <dt className="text-xs uppercase tracking-wide text-text-muted font-bold">Subject</dt>
                     <dd className="text-text-main font-medium">
                       {subjectNames.get(exam.subject_id)?.name ?? '—'}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs uppercase tracking-wide text-text-muted">Total marks</dt>
+                    <dt className="text-xs uppercase tracking-wide text-text-muted font-bold">Total Marks</dt>
                     <dd className="text-text-main font-medium tabular-nums">{exam.total_marks}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs uppercase tracking-wide text-text-muted">Duration</dt>
+                    <dt className="text-xs uppercase tracking-wide text-text-muted font-bold">Duration</dt>
                     <dd className="text-text-main font-medium tabular-nums">
                       {exam.duration_minutes} min
                     </dd>
@@ -254,7 +296,7 @@ export const ExamSummaryReportPage = () => {
 
               <div className="grid gap-6 xl:grid-cols-2 mt-6">
                 <Card className="print-no-break">
-                  <CardHeader>Marks distribution</CardHeader>
+                  <CardHeader>Marks Distribution</CardHeader>
                   <CardBody>
                     <BarList
                       items={distribution}
@@ -277,7 +319,7 @@ export const ExamSummaryReportPage = () => {
               </div>
 
               <Card className="mt-6 print-report-table">
-                <CardHeader>Participants</CardHeader>
+                <CardHeader>Candidate Results Summary</CardHeader>
                 <Table
                   columns={participantColumns}
                   data={resultsQuery.data?.items ?? []}
@@ -291,7 +333,7 @@ export const ExamSummaryReportPage = () => {
                     />
                   }
                 />
-                <CardFooter className="text-xs text-text-muted">
+                <CardFooter className="text-xs text-text-muted no-print">
                   Results are capped at {PAGINATION.MAX_PAGE_SIZE} per report; pass threshold is{' '}
                   {PASS_PERCENTAGE}%.
                 </CardFooter>
@@ -303,7 +345,7 @@ export const ExamSummaryReportPage = () => {
 
       <Link
         to={PATHS.REPORTS}
-        className="mt-6 inline-flex items-center gap-1 text-sm text-navy-primary hover:text-navy-hover"
+        className="mt-6 inline-flex items-center gap-1 text-sm text-navy-primary hover:text-navy-hover no-print"
       >
         <ChevronLeft className="w-4 h-4" aria-hidden="true" />
         All reports

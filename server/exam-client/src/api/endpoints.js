@@ -14,6 +14,8 @@ export const API_ENDPOINTS = {
   PAUSE_EXAM: (scheduleId) => `/student/exams/${scheduleId}/pause`,
   QUESTIONS: (scheduleId) => `/student/exams/${scheduleId}/questions`,
   SUBMIT_EXAM: (scheduleId) => `/student/exams/${scheduleId}/submit`,
+  RESULT: (scheduleId) => `/student/exams/${scheduleId}/result`,
+  REVIEW: (scheduleId) => `/student/exams/${scheduleId}/review`,
 
   // Answer Submission Endpoints
   SAVE_ANSWER: '/student/answers/',

@@ -10,19 +10,23 @@ export const NetworkStatusIndicator = ({
     <span
       role="status"
       aria-live="assertive"
-      className={`inline-flex items-center gap-1.5 text-xs font-mono select-none ${
+      className={`inline-flex items-center gap-1.5 text-xs font-mono leading-none select-none ${
         isConnected ? 'text-text-muted' : 'text-red-600 font-bold'
       } ${className}`}
     >
       {isConnected ? (
         <>
-          <Wifi className="w-3.5 h-3.5 text-green-600 shrink-0" aria-hidden="true" />
-          <span>Server: Connected (TLS 1.3){latencyMs ? ` │ ${latencyMs}ms` : ''}</span>
+          <span className="shrink-0 flex items-center justify-center">
+            <Wifi className="w-3.5 h-3.5 text-green-600 shrink-0" aria-hidden="true" />
+          </span>
+          <span className="leading-none flex items-center">Server: Connected (TLS 1.3){latencyMs ? ` │ ${latencyMs}ms` : ''}</span>
         </>
       ) : (
         <>
-          <WifiOff className="w-3.5 h-3.5 text-red-600 shrink-0 animate-pulse" aria-hidden="true" />
-          <span>CONNECTION INTERRUPTED</span>
+          <span className="shrink-0 flex items-center justify-center">
+            <WifiOff className="w-3.5 h-3.5 text-red-600 animate-pulse shrink-0" aria-hidden="true" />
+          </span>
+          <span className="leading-none flex items-center">CONNECTION INTERRUPTED</span>
         </>
       )}
     </span>

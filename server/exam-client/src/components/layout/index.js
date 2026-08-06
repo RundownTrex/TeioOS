@@ -8,3 +8,5 @@ export { Header } from './Header';
 export { StatusBar } from './StatusBar';
 export { Footer } from './Footer';
 export { MainContentWrapper } from './MainContentWrapper';
+export { DashboardSection } from './DashboardSection';
+

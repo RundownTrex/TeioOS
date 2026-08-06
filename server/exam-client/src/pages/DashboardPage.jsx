@@ -8,7 +8,8 @@ import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState } from '../components/ui/ErrorState';
-import { ArrowRight, User, Clock, Lock, RotateCcw } from 'lucide-react';
+import { DashboardSection } from '../components/layout/DashboardSection';
+import { ArrowRight, User, Clock, Lock, RotateCcw, RefreshCw } from 'lucide-react';
 import { formatDateTime } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
@@ -68,6 +69,10 @@ export const DashboardPage = () => {
     return false;
   });
 
+  // The primary active paper is the first in-progress or available exam
+  const primaryExam = activeExams[0];
+  const upcomingExams = activeExams.slice(1);
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -89,87 +94,41 @@ export const DashboardPage = () => {
   }
 
   return (
-    <div className="space-y-6 select-none">
-      {/* STUDENT INFORMATION BANNER (Text-only, High Contrast) */}
-      <Card className="border-border-main bg-surface shadow-sm">
-        <CardHeader className="bg-subtle/50 pb-2">
-          <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
-            <User className="w-4 h-4 text-navy-primary" aria-hidden="true" />
-            STUDENT INFORMATION
-          </h3>
-        </CardHeader>
-        <CardBody className="py-4">
-          <div className="text-sm font-medium text-text-main leading-relaxed">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span><strong>Name:</strong> {student.name}</span>
-              {student.rollNumber && (
-                <>
-                  <span className="text-border-strong hidden sm:inline">│</span>
-                  <span><strong>Roll Number:</strong> {student.rollNumber}</span>
-                </>
-              )}
-              {student.department && (
-                <>
-                  <span className="text-border-strong hidden sm:inline">│</span>
-                  <span><strong>Department:</strong> {student.department}</span>
-                </>
-              )}
-              {student.className && (
-                <>
-                  <span className="text-border-strong hidden sm:inline">│</span>
-                  <span><strong>Class:</strong> {student.className}</span>
-                </>
-              )}
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-
-      {/* PRIMARY SECTION: AVAILABLE EXAMINATIONS */}
-      <section aria-labelledby="available-exams-heading" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2
-            id="available-exams-heading"
-            ref={pageHeadingRef}
-            tabIndex={-1}
-            className="text-lg font-extrabold text-text-main tracking-tight uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
-          >
-            AVAILABLE EXAMINATIONS
-          </h2>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            Refresh List
-          </Button>
-        </div>
-
-        {activeExams.length === 0 ? (
-          <EmptyState
-            title="No Examinations Currently Available"
-            description="There are no active or scheduled examination papers assigned to your student profile at this time."
-            actionLabel="Refresh List"
-            onAction={() => refetch()}
-          />
-        ) : (
-          <div className="space-y-4">
-            {activeExams.map((exam) => {
-              const startTimeMs = exam.start_time ? new Date(exam.start_time).getTime() : 0;
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 select-none">
+      {/* ── PRIMARY COLUMN (8 COLS ON DESKTOP) ── */}
+      <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+        {/* SECTION 1: CURRENT / ACTIVE EXAMINATION HERO */}
+        <DashboardSection
+          id="current-exam"
+          title="CURRENT EXAMINATION"
+          headingRef={pageHeadingRef}
+          action={
+            <Button variant="outline" size="sm" onClick={() => refetch()} leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>
+              Refresh List
+            </Button>
+          }
+        >
+          {primaryExam ? (
+            (() => {
+              const startTimeMs = primaryExam.start_time ? new Date(primaryExam.start_time).getTime() : 0;
               const isUpcoming = startTimeMs > now;
-              const resumeActive = isInProgress(exam);
+              const resumeActive = isInProgress(primaryExam);
               const statusText = resumeActive
                 ? 'IN PROGRESS'
                 : isUpcoming
                   ? 'SCHEDULED'
-                  : (exam.status || 'READY TO START');
+                  : (primaryExam.status || 'READY TO START');
               const badgeVariant = resumeActive ? 'info' : isUpcoming ? 'info' : 'success';
 
               return (
-                <Card key={exam.schedule_id} className="border border-navy-primary/30 hover:border-navy-primary bg-surface shadow-sm transition-all duration-normal">
+                <Card className="border border-border-main bg-surface shadow-sm">
                   <CardHeader className="flex flex-wrap items-start justify-between gap-3 bg-subtle/30 pb-3">
                     <div>
                       <span className="text-xs font-mono font-semibold text-navy-primary uppercase">
-                        {exam.subject_code} • {exam.department_name}
+                        {primaryExam.subject_code} • {primaryExam.department_name}
                       </span>
                       <h3 className="text-xl font-bold text-text-main leading-snug">
-                        {exam.subject_name}
+                        {primaryExam.subject_name}
                       </h3>
                     </div>
                     <Badge variant={badgeVariant} size="md">
@@ -179,9 +138,9 @@ export const DashboardPage = () => {
 
                   <CardBody className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-text-muted font-medium pt-1">
-                      <div><strong>Window:</strong> {formatDateTime(exam.start_time)}</div>
-                      <div><strong>Duration:</strong> {exam.duration_minutes} Mins</div>
-                      <div><strong>Total Marks:</strong> {exam.total_marks}</div>
+                      <div><strong>Window:</strong> {formatDateTime(primaryExam.start_time)}</div>
+                      <div><strong>Duration:</strong> {primaryExam.duration_minutes} Mins</div>
+                      <div><strong>Total Marks:</strong> {primaryExam.total_marks}</div>
                     </div>
 
                     {resumeActive && (
@@ -194,7 +153,7 @@ export const DashboardPage = () => {
                     {isUpcoming && (
                       <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-300 text-amber-900 text-xs rounded-md">
                         <Clock className="w-4 h-4 shrink-0 text-amber-600" aria-hidden="true" />
-                        <span>Examination scheduled to start at {formatDateTime(exam.start_time)}. Instructions can be reviewed in advance.</span>
+                        <span>Examination scheduled to start at {formatDateTime(primaryExam.start_time)}. Instructions can be reviewed in advance.</span>
                       </div>
                     )}
 
@@ -204,9 +163,9 @@ export const DashboardPage = () => {
                           variant="primary"
                           size="lg"
                           fullWidth={true}
-                          onClick={() => navigate(`/exam/${exam.schedule_id}/resume`)}
+                          onClick={() => navigate(`/exam/${primaryExam.schedule_id}/resume`)}
                           rightIcon={<RotateCcw className="w-4 h-4" />}
-                          ariaLabel={`Resume active examination for ${exam.subject_name}`}
+                          ariaLabel={`Resume active examination for ${primaryExam.subject_name}`}
                         >
                           Resume Examination
                         </Button>
@@ -215,9 +174,9 @@ export const DashboardPage = () => {
                           variant={isUpcoming ? 'secondary' : 'primary'}
                           size="lg"
                           fullWidth={true}
-                          onClick={() => navigate(`/exam/${exam.schedule_id}/instructions`)}
+                          onClick={() => navigate(`/exam/${primaryExam.schedule_id}/instructions`)}
                           rightIcon={isUpcoming ? <Lock className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
-                          ariaLabel={`Proceed to Examination Instructions for ${exam.subject_name}`}
+                          ariaLabel={`Proceed to Examination Instructions for ${primaryExam.subject_name}`}
                         >
                           {isUpcoming ? 'Read Instructions (Exam Scheduled)' : 'Proceed to Examination Instructions'}
                         </Button>
@@ -226,59 +185,155 @@ export const DashboardPage = () => {
                   </CardBody>
                 </Card>
               );
-            })}
-          </div>
-        )}
-      </section>
+            })()
+          ) : (
+            <EmptyState
+              title="No Active Examinations Available"
+              description="There are no active or scheduled examination papers assigned to your student profile at this time."
+              actionLabel="Refresh List"
+              onAction={() => refetch()}
+            />
+          )}
+        </DashboardSection>
 
-      {/* SECONDARY SECTION: COMPLETED PAPERS */}
-      <section aria-labelledby="completed-exams-heading" className="space-y-4 pt-4 border-t border-border-main">
-        <h2 id="completed-exams-heading" className="text-base font-bold text-text-main tracking-tight uppercase">
-          COMPLETED PAPERS
-        </h2>
-
-        <Card className="border-border-main bg-surface overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs" aria-labelledby="completed-exams-heading">
-              <caption className="sr-only">Completed examinations history table</caption>
-              <thead className="bg-subtle text-text-muted font-semibold uppercase tracking-wider border-b border-border-main">
-                <tr>
-                  <th scope="col" className="px-4 py-3">Code</th>
-                  <th scope="col" className="px-4 py-3">Subject Title</th>
-                  <th scope="col" className="px-4 py-3">Date</th>
-                  <th scope="col" className="px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-main text-text-main">
-                {completedExams.length > 0 ? (
-                  completedExams.map((exam) => (
-                    <tr key={exam.schedule_id} className="hover:bg-subtle/40">
-                      <th scope="row" className="px-4 py-3 font-mono font-bold text-navy-primary text-left">
+        {/* SECTION 2: UPCOMING EXAMINATIONS GRID (WHEN > 1 PAPER) */}
+        {upcomingExams.length > 0 && (
+          <DashboardSection id="upcoming-exams" title="UPCOMING EXAMINATIONS">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {upcomingExams.map((exam) => {
+                const startTimeMs = exam.start_time ? new Date(exam.start_time).getTime() : 0;
+                const isUpcoming = startTimeMs > now;
+                return (
+                  <Card key={exam.schedule_id} className="border border-border-main bg-surface shadow-sm">
+                    <CardHeader className="bg-subtle/30 pb-2">
+                      <span className="text-[11px] font-mono font-semibold text-navy-primary uppercase">
                         {exam.subject_code}
-                      </th>
-                      <td className="px-4 py-3 font-medium">{exam.subject_name}</td>
-                      <td className="px-4 py-3 text-text-muted">
-                        {exam.start_time ? new Date(exam.start_time).toISOString().split('T')[0] : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant="purple" size="sm">
-                          Submitted (Evaluation Pending)
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-6 text-center text-text-muted font-medium">
-                      No completed examination papers found.
-                    </td>
-                  </tr>
+                      </span>
+                      <h4 className="text-sm font-bold text-text-main leading-tight truncate">
+                        {exam.subject_name}
+                      </h4>
+                    </CardHeader>
+                    <CardBody className="space-y-3 pt-2">
+                      <div className="text-xs text-text-muted space-y-1">
+                        <div><strong>Start:</strong> {formatDateTime(exam.start_time)}</div>
+                        <div><strong>Duration:</strong> {exam.duration_minutes} Mins</div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        fullWidth={true}
+                        onClick={() => navigate(`/exam/${exam.schedule_id}/instructions`)}
+                        rightIcon={isUpcoming ? <Lock className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                      >
+                        {isUpcoming ? 'View Schedule' : 'Start Exam'}
+                      </Button>
+                    </CardBody>
+                  </Card>
+                );
+              })}
+            </div>
+          </DashboardSection>
+        )}
+      </div>
+
+      {/* ── SIDEBAR COLUMN (4 COLS ON DESKTOP) ── */}
+      <div className="lg:col-span-5 xl:col-span-4 space-y-6">
+        {/* SECTION 3: COMPACT STUDENT PROFILE */}
+        <DashboardSection id="student-profile" title="STUDENT PROFILE">
+          <Card className="border-border-main bg-surface shadow-sm">
+            <CardBody className="py-3 px-4">
+              <div className="text-xs font-medium text-text-main leading-relaxed space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-navy-primary shrink-0" aria-hidden="true" />
+                  <span className="font-bold text-sm text-text-main">{student.name}</span>
+                </div>
+                {student.rollNumber && (
+                  <div className="text-text-muted">
+                    <strong className="text-text-main">Roll No:</strong> {student.rollNumber}
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </section>
+                {student.department && (
+                  <div className="text-text-muted">
+                    <strong className="text-text-main">Dept:</strong> {student.department} {student.className ? `(${student.className})` : ''}
+                  </div>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        </DashboardSection>
+
+        {/* SECTION 4: COMPLETED PAPERS */}
+        <DashboardSection id="completed-exams" title="COMPLETED PAPERS">
+          {completedExams.length > 0 ? (
+            <Card className="border-border-main bg-surface overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs" aria-labelledby="completed-exams-heading">
+                  <caption className="sr-only">Completed examinations history table</caption>
+                  <thead className="bg-subtle text-text-muted font-semibold uppercase tracking-wider border-b border-border-main">
+                    <tr>
+                      <th scope="col" className="px-3 py-2.5">Code</th>
+                      <th scope="col" className="px-3 py-2.5">Title</th>
+                      <th scope="col" className="px-3 py-2.5">Status</th>
+                      <th scope="col" className="px-3 py-2.5 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-main text-text-main">
+                    {completedExams.map((exam) => {
+                      const result = exam.session?.result;
+                      const isPublished = Boolean(result?.is_published);
+                      const obtainedMarks = result?.obtained_marks;
+                      const totalMarks = result?.total_marks ?? exam.total_marks;
+
+                      return (
+                        <tr key={exam.schedule_id} className="hover:bg-subtle/40">
+                          <th scope="row" className="px-3 py-2.5 font-mono font-bold text-navy-primary text-left">
+                            {exam.subject_code}
+                          </th>
+                          <td className="px-3 py-2.5 font-medium truncate max-w-[120px]" title={exam.subject_name}>
+                            {exam.subject_name}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            {isPublished ? (
+                              <Badge variant="success" size="sm" title={`Result Published (${obtainedMarks}/${totalMarks})`}>
+                                {obtainedMarks !== undefined && obtainedMarks !== null
+                                  ? `Published (${obtainedMarks}/${totalMarks})`
+                                  : 'Result Published'}
+                              </Badge>
+                            ) : (
+                              <Badge variant="purple" size="sm">
+                                Submitted (Pending)
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 text-right">
+                            {isPublished ? (
+                              <Button
+                                variant="outline"
+                                size="xs"
+                                onClick={() => navigate(`/exam/${exam.schedule_id}/review`)}
+                                ariaLabel={`Review paper for ${exam.subject_name}`}
+                              >
+                                Review
+                              </Button>
+                            ) : (
+                              <span className="text-[11px] text-text-muted italic">In Eval</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          ) : (
+            <EmptyState
+              title="No Completed Papers"
+              description="You have not completed or submitted any examination papers yet."
+            />
+          )}
+        </DashboardSection>
+      </div>
     </div>
   );
 };

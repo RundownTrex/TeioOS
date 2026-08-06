@@ -25,6 +25,7 @@ import { ActiveExamPage } from './pages/ActiveExamPage';
 import { SubmittedPage } from './pages/SubmittedPage';
 import { ResumeExamPage } from './pages/ResumeExamPage';
 import { ResultsPage } from './pages/ResultsPage';
+import { ExamReviewPage } from './pages/ExamReviewPage';
 import { OfflinePage } from './pages/OfflinePage';
 import { LoadingPage } from './pages/LoadingPage';
 import { EmptyPage } from './pages/EmptyPage';
@@ -99,6 +100,9 @@ export function App() {
 
                           {/* Performance Report Results Route */}
                           <Route path="/exam/:scheduleId/results" element={<ResultsPage />} />
+
+                          {/* Paper Review Route (For Published Exams) */}
+                          <Route path="/exam/:scheduleId/review" element={<ExamReviewPage />} />
 
                           {/* Resume Active Session Route */}
                           <Route path="/exam/:scheduleId/resume" element={<ResumeExamPage />} />

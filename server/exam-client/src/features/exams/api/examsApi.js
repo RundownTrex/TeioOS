@@ -54,13 +54,12 @@ export const examsApi = {
     );
   },
 
-  /**
-   * Fire-and-forget pause signal sent when the exam page is hidden or closed.
-   * Uses fetch with `keepalive` (sendBeacon cannot attach the Authorization
-   * header) so the request completes during page unload. The server treats the
-   * pause as idempotent; if it never arrives, the server-side inactivity
-   * sweeper pauses the session as a fallback.
-   */
+  getExamReview: async (scheduleId, baseToken) => {
+    return axiosClient.get(API_ENDPOINTS.REVIEW(scheduleId), {
+      headers: baseToken ? { Authorization: `Bearer ${baseToken}` } : {},
+    });
+  },
+
   pauseExam: (scheduleId, baseToken) => {
     const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
     return fetch(`${baseURL}${API_ENDPOINTS.PAUSE_EXAM(scheduleId)}`, {
@@ -71,7 +70,7 @@ export const examsApi = {
         Authorization: `Bearer ${baseToken}`,
       },
     }).catch(() => {
-      // Best-effort only: the inactivity sweeper is the safety net.
+      // Best-effort only
     });
   },
 };

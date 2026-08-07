@@ -158,13 +158,23 @@ class ExamSessionService:
             raise AuthorizationException("You are not assigned to this exam")
 
         assignment = self.assignment_repo.get_by_student_and_schedule(student_id, schedule_id)
+        
+        questions = schedule.exam.questions if (schedule.exam and schedule.exam.questions) else []
+        mcq_cnt = sum(1 for q in questions if getattr(q, 'question_type', None) and str(q.question_type).lower() in ('mcq', 'questiontype.mcq'))
+        desc_cnt = sum(1 for q in questions if getattr(q, 'question_type', None) and str(q.question_type).lower() in ('descriptive', 'questiontype.descriptive'))
+
         return ExamInstructionResponse(
             schedule_id=schedule.id,
+            exam_title=schedule.exam.title if (schedule.exam and schedule.exam.title) else schedule.exam.subject.name,
             subject_name=schedule.exam.subject.name,
             subject_code=schedule.exam.subject.subject_code,
             department_name=schedule.exam.subject.department.name,
             duration_minutes=schedule.exam.duration_minutes,
             total_marks=schedule.exam.total_marks,
+            total_questions=len(questions),
+            mcq_count=mcq_cnt,
+            descriptive_count=desc_cnt,
+            instructions=schedule.exam.instructions,
             start_time=schedule.start_time,
             end_time=schedule.end_time,
             status=schedule.status,

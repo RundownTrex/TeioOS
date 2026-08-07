@@ -12,33 +12,27 @@ import { useExamInstructions } from '../features/exams/hooks/useExamInstructions
 import { useExam } from '../hooks/useExam';
 import { useAuth } from '../hooks/useAuth';
 import { examsApi } from '../features/exams/api/examsApi';
-import { ShieldCheck, Info, ArrowRight, ArrowLeft, Clock, Lock, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Info, ArrowRight, ArrowLeft, Clock, Lock, CheckCircle2, FileText } from 'lucide-react';
 import { formatDateTime } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useFocusOnMount } from '../hooks/useFocusOnMount';
 
-const DEFAULT_INSTRUCTIONS_DATA = {
-  subjectCode: 'CS-401',
-  subjectName: 'Algorithms & Data Structures',
-  departmentName: 'Computer Science & Engineering',
-  durationMinutes: 180,
-  totalMarks: 100,
-  totalQuestions: '22 (20 MCQs + 2 Descriptive Questions)',
-  rules: [
-    'Ensure you remain seated at your designated computer terminal throughout the examination.',
-    'The examination countdown timer will start immediately upon clicking "Begin Examination".',
-    'Your responses are continuously auto-saved locally every 10 seconds.',
-    'Navigation between questions is completely free using the Question Palette sidebar.',
-    'Marking a question for review does NOT exclude it from final evaluation if an answer is selected.',
-    'Do not attempt to close the Firefox kiosk browser window or switch desktop applications.',
-  ],
-  technicalNotice: [
-    'You may adjust font size scaling and color contrast themes at any time using [Alt + A].',
-    'In the event of a network disruption, your responses remain securely cached in local storage.',
-  ],
-};
+const STANDARD_CONDUCT_RULES = [
+  'Ensure you remain seated at your designated computer terminal throughout the examination.',
+  'The examination countdown timer will start immediately upon clicking "Begin Examination".',
+  'Your responses are continuously auto-saved locally and synchronized with the server.',
+  'Navigation between questions is completely free using the Question Palette sidebar.',
+  'Marking a question for review does NOT exclude it from final evaluation if an answer is selected.',
+  'Do not attempt to close the browser window or switch desktop applications during the exam session.',
+];
+
+const TECHNICAL_ACCESSIBILITY_NOTICES = [
+  'You may adjust font size scaling and color contrast themes at any time using [Alt + A].',
+  'In the event of a network disruption, your responses remain securely cached in local storage until reconnected.',
+];
 
 export const InstructionsPage = () => {
-  const { scheduleId = 'cs-401' } = useParams();
+  const { scheduleId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [hasAgreed, setHasAgreed] = useState(false);
@@ -53,8 +47,7 @@ export const InstructionsPage = () => {
 
   const { data: apiInstructions, isLoading, isError, error, refetch } = useExamInstructions(scheduleId);
 
-  // Auto-redirect candidate to dashboard if exam is already submitted/completed,
-  // or to the terminal submitted screen if their personal session is terminal
+  // Auto-redirect candidate if exam is already completed or personal session is in state
   useEffect(() => {
     if (apiInstructions?.status === 'COMPLETED' || apiInstructions?.status === 'SUBMITTED') {
       navigate('/dashboard', { replace: true });
@@ -69,24 +62,40 @@ export const InstructionsPage = () => {
     ) {
       navigate(`/exam/${scheduleId}/submitted`, { replace: true });
     } else if (sessionStatus === 'in_progress') {
-      // Session already started: candidate should resume rather than begin again
       navigate(`/exam/${scheduleId}/resume`, { replace: true });
     }
   }, [apiInstructions, scheduleId, navigate]);
 
-  // 1-second ticker for real-time kiosk CTA button auto-unlocking
+  // 1-second ticker for real-time schedule window status
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  const totalQuestionsDisplay = (() => {
+    const total = apiInstructions?.total_questions || 0;
+    const mcqs = apiInstructions?.mcq_count || 0;
+    const desc = apiInstructions?.descriptive_count || 0;
+    if (mcqs > 0 && desc > 0) {
+      return `${total} (${mcqs} MCQ${mcqs > 1 ? 's' : ''} + ${desc} Descriptive)`;
+    }
+    if (mcqs > 0) {
+      return `${total} (${mcqs} MCQ${mcqs > 1 ? 's' : ''})`;
+    }
+    if (desc > 0) {
+      return `${total} (${desc} Descriptive Question${desc > 1 ? 's' : ''})`;
+    }
+    return `${total} Question${total === 1 ? '' : 's'}`;
+  })();
+
   const data = {
-    ...DEFAULT_INSTRUCTIONS_DATA,
-    subjectCode: apiInstructions?.subject_code || DEFAULT_INSTRUCTIONS_DATA.subjectCode,
-    subjectName: apiInstructions?.subject_name || DEFAULT_INSTRUCTIONS_DATA.subjectName,
-    departmentName: apiInstructions?.department_name || DEFAULT_INSTRUCTIONS_DATA.departmentName,
-    durationMinutes: apiInstructions?.duration_minutes || DEFAULT_INSTRUCTIONS_DATA.durationMinutes,
-    totalMarks: apiInstructions?.total_marks || DEFAULT_INSTRUCTIONS_DATA.totalMarks,
+    subjectCode: apiInstructions?.subject_code || '',
+    subjectName: apiInstructions?.exam_title || apiInstructions?.subject_name || 'Examination',
+    departmentName: apiInstructions?.department_name || '',
+    durationMinutes: apiInstructions?.duration_minutes || 0,
+    totalMarks: apiInstructions?.total_marks || 0,
+    totalQuestions: totalQuestionsDisplay,
+    customInstructions: apiInstructions?.instructions || null,
     startTime: apiInstructions?.start_time,
     endTime: apiInstructions?.end_time,
   };
@@ -109,8 +118,6 @@ export const InstructionsPage = () => {
             throw new Error('Failed to obtain examination access token from backend server.');
           }
 
-          // Initialize session with live elevated JWT token & authoritative
-          // session payload (expires_at + server time) from the backend
           initExamSession({
             token: startData.access_token,
             scheduleId: scheduleId,
@@ -118,8 +125,6 @@ export const InstructionsPage = () => {
             serverCurrentTime: startData.server_current_time,
           });
 
-          // Seed the shared session query with the fresh snapshot so the active
-          // page mounts with an unpaused session instead of a stale cached one.
           queryClient.setQueryData(['examSession', scheduleId, baseToken], {
             server_current_time: startData.server_current_time,
             ...startData.session,
@@ -134,7 +139,6 @@ export const InstructionsPage = () => {
             'Failed to start examination session. You may have already submitted this exam.';
 
           if (apiErr?.code === 'SESSION_SUBMITTED') {
-            // Server already has the submission: route to the terminal screen
             navigate(`/exam/${scheduleId}/submitted`, { replace: true });
             return;
           }
@@ -145,14 +149,13 @@ export const InstructionsPage = () => {
             errorMsg.toLowerCase().includes('closed') ||
             errorMsg.toLowerCase().includes('completed')
           ) {
-            // Automatically redirect to dashboard instead of leaving candidate stuck on instructions
             navigate('/dashboard', { replace: true });
             return;
           }
 
           setStartError(errorMsg);
           setIsStarting(false);
-          return; // STOP execution immediately - do NOT proceed with invalid token
+          return;
         }
       } else {
         setStartError('Authentication token missing. Please log in again.');
@@ -197,14 +200,16 @@ export const InstructionsPage = () => {
   }
 
   return (
-    <ExamLayout paperTitle={data.subjectCode} sectionTitle="Instructions & Rules">
+    <ExamLayout paperTitle={data.subjectCode || 'EXAM'} sectionTitle="Instructions & Rules">
       <div className="max-w-[800px] mx-auto space-y-6 select-none my-2">
         <Card className="border-border-main bg-surface shadow-sm">
           {/* Paper Metadata Banner */}
           <CardHeader className="bg-subtle/40 border-b border-border-main pb-4">
-            <span className="text-xs font-mono font-bold text-navy-primary uppercase tracking-wider">
-              {data.subjectCode} • {data.departmentName}
-            </span>
+            {(data.subjectCode || data.departmentName) && (
+              <span className="text-xs font-mono font-bold text-navy-primary uppercase tracking-wider">
+                {data.subjectCode}{data.subjectCode && data.departmentName ? ' • ' : ''}{data.departmentName}
+              </span>
+            )}
             <h2
               ref={pageHeadingRef}
               tabIndex={-1}
@@ -244,6 +249,19 @@ export const InstructionsPage = () => {
               </Alert>
             )}
 
+            {/* Custom Exam Instructions (If set on Exam by Admin/Teacher) */}
+            {data.customInstructions && (
+              <section aria-labelledby="custom-instructions-heading" className="space-y-3 p-4 bg-subtle/70 rounded-lg border border-border-main">
+                <h3 id="custom-instructions-heading" className="text-sm font-bold text-text-main uppercase tracking-wider flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-navy-primary" aria-hidden="true" />
+                  SPECIFIC EXAMINATION INSTRUCTIONS:
+                </h3>
+                <div className="text-xs text-text-main leading-relaxed whitespace-pre-line font-medium">
+                  {data.customInstructions}
+                </div>
+              </section>
+            )}
+
             {/* Candidate Conduct & Rules */}
             <section aria-labelledby="conduct-rules-heading" className="space-y-3">
               <h3 id="conduct-rules-heading" className="text-sm font-bold text-text-main uppercase tracking-wider flex items-center gap-2">
@@ -251,7 +269,7 @@ export const InstructionsPage = () => {
                 CANDIDATE CONDUCT & EXAMINATION RULES:
               </h3>
               <ol className="list-decimal pl-5 space-y-2.5 text-xs text-text-main leading-relaxed font-normal">
-                {data.rules.map((rule, idx) => (
+                {STANDARD_CONDUCT_RULES.map((rule, idx) => (
                   <li key={idx} className="pl-1">
                     {rule}
                   </li>
@@ -266,7 +284,7 @@ export const InstructionsPage = () => {
                 TECHNICAL & ACCESSIBILITY NOTICE:
               </h3>
               <ul className="list-disc pl-5 space-y-1.5 text-xs text-text-muted leading-relaxed">
-                {data.technicalNotice.map((notice, idx) => (
+                {TECHNICAL_ACCESSIBILITY_NOTICES.map((notice, idx) => (
                   <li key={idx} className="pl-1">
                     {notice}
                   </li>

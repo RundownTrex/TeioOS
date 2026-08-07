@@ -2,7 +2,7 @@ from typing import Sequence
 from uuid import UUID
 from datetime import datetime, timezone
 from sqlalchemy import select, and_, or_, func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.exam_schedule import ExamSchedule, ExamScheduleStatus
 from app.models.exam import Exam
@@ -25,6 +25,7 @@ class ExamScheduleRepository(BaseRepository[ExamSchedule]):
             joinedload(ExamSchedule.exam)
             .joinedload(Exam.subject)
             .joinedload(Subject.department),
+            joinedload(ExamSchedule.exam).selectinload(Exam.questions),
             joinedload(ExamSchedule.assigned_students)
         )
         return self.session.execute(stmt).scalars().first()

@@ -109,11 +109,16 @@ class ExamInstructionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
     schedule_id: UUID
+    exam_title: str | None = None
     subject_name: str
     subject_code: str
     department_name: str
     duration_minutes: int
     total_marks: float
+    total_questions: int = 0
+    mcq_count: int = 0
+    descriptive_count: int = 0
+    instructions: str | None = None
     start_time: datetime
     end_time: datetime
     status: str

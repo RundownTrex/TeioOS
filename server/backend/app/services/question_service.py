@@ -6,7 +6,7 @@ from app.models.question import Question, QuestionType
 from app.models.option import Option
 from app.repositories.question_repository import QuestionRepository
 from app.repositories.exam_repository import ExamRepository
-from app.schemas.question import QuestionCreate, QuestionUpdate
+from app.schemas.question import QuestionCreate, QuestionUpdate, QuestionResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import NotFoundException, BusinessRuleException
 
@@ -23,7 +23,7 @@ class QuestionService:
         exam_id: UUID | None = None,
         search: str | None = None,
         question_type: QuestionType | None = None,
-    ) -> PaginatedData[Question]:
+    ) -> PaginatedData[QuestionResponse]:
         skip = (page - 1) * page_size
         search_query = search.strip() if search else None
         q_type = question_type.value if question_type else None

@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models.exam_schedule import ExamSchedule, ExamScheduleStatus
 from app.repositories.exam_schedule_repository import ExamScheduleRepository
 from app.repositories.exam_repository import ExamRepository
-from app.schemas.exam_schedule import ExamScheduleCreate, ExamScheduleUpdate
+from app.schemas.exam_schedule import ExamScheduleCreate, ExamScheduleUpdate, ExamScheduleResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import NotFoundException, ValidationException, ConflictException
 
@@ -23,7 +23,7 @@ class ExamScheduleService:
         exam_id: UUID | None = None,
         search: str | None = None,
         status: str | None = None,
-    ) -> PaginatedData[ExamSchedule]:
+    ) -> PaginatedData[ExamScheduleResponse]:
         skip = (page - 1) * page_size
         search_query = search.strip() if search else None
         items = self.schedule_repo.get_all(

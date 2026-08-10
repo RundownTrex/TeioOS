@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.models.subject import Subject
 from app.repositories.subject_repository import SubjectRepository
 from app.repositories.department_repository import DepartmentRepository
-from app.schemas.subject import SubjectCreate, SubjectUpdate
+from app.schemas.subject import SubjectCreate, SubjectUpdate, SubjectResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import NotFoundException, ConflictException, BusinessRuleException
 
@@ -22,7 +22,7 @@ class SubjectService:
         page_size: int,
         q: str | None = None,
         department_id: UUID | None = None,
-    ) -> PaginatedData[Subject]:
+    ) -> PaginatedData[SubjectResponse]:
         search = q.strip() if q else None
         if department_id is not None:
             self._validate_department(department_id)

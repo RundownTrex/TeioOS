@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from app.models.class_ import Class
 from app.repositories.class_repository import ClassRepository
 from app.repositories.department_repository import DepartmentRepository
-from app.schemas.class_ import ClassCreate, ClassUpdate
+from app.schemas.class_ import ClassCreate, ClassUpdate, ClassResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import ConflictException, NotFoundException, BusinessRuleException
 
@@ -26,7 +26,7 @@ class ClassService:
         page_size: int,
         q: str | None = None,
         department_id: UUID | None = None,
-    ) -> PaginatedData[Class]:
+    ) -> PaginatedData[ClassResponse]:
         search = q.strip() if q else None
         if department_id is not None:
             self._validate_department(department_id)

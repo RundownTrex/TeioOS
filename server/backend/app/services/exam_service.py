@@ -7,7 +7,7 @@ from app.repositories.exam_repository import ExamRepository
 from app.repositories.exam_schedule_repository import ExamScheduleRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.subject_repository import SubjectRepository
-from app.schemas.exam import ExamCreate, ExamUpdate
+from app.schemas.exam import ExamCreate, ExamUpdate, ExamResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import NotFoundException, BusinessRuleException
 
@@ -33,7 +33,7 @@ class ExamService:
         subject_id: UUID | None = None,
         search: str | None = None,
         status: str | None = None,
-    ) -> PaginatedData[Exam]:
+    ) -> PaginatedData[ExamResponse]:
         skip = (page - 1) * page_size
         search_query = search.strip() if search else None
         items = self.exam_repo.get_all(skip, page_size, subject_id=subject_id, search=search_query, status=status)

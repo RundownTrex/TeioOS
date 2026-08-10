@@ -7,7 +7,7 @@ from app.repositories.student_exam_repository import StudentExamRepository
 from app.repositories.student_repository import StudentRepository
 from app.repositories.exam_schedule_repository import ExamScheduleRepository
 from app.repositories.class_repository import ClassRepository
-from app.schemas.student_exam import StudentAssignmentCreate, StudentAssignmentUpdate
+from app.schemas.student_exam import StudentAssignmentCreate, StudentAssignmentUpdate, StudentAssignmentResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import NotFoundException, ConflictException
 
@@ -34,7 +34,7 @@ class StudentExamService:
         q: str | None = None,
         class_id: UUID | None = None,
         status: str | None = None,
-    ) -> PaginatedData[StudentExam]:
+    ) -> PaginatedData[StudentAssignmentResponse]:
         # Validate schedule exists
         if not self.schedule_repo.get_by_id(schedule_id):
             raise NotFoundException(resource_name="ExamSchedule")

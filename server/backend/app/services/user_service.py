@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.user import User, UserRole
 from app.repositories.user_repository import UserRepository
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import ConflictException, NotFoundException
 from app.core.security import get_password_hash
@@ -16,7 +16,7 @@ class UserService:
 
     def get_users(
         self, page: int, page_size: int, search: str | None = None, role: UserRole | None = None
-    ) -> PaginatedData[User]:
+    ) -> PaginatedData[UserResponse]:
         skip = (page - 1) * page_size
         items = self.user_repo.get_all(skip, page_size, search=search, role=role)
         total = self.user_repo.get_count(search=search, role=role)

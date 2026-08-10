@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models.student import Student
 from app.repositories.student_repository import StudentRepository
 from app.repositories.class_repository import ClassRepository
-from app.schemas.student import StudentCreate, StudentUpdate
+from app.schemas.student import StudentCreate, StudentUpdate, StudentResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import ConflictException, NotFoundException
 from app.core.security import get_password_hash
@@ -28,7 +28,7 @@ class StudentService:
         q: str | None = None,
         class_id: UUID | None = None,
         is_active: bool | None = None,
-    ) -> PaginatedData[Student]:
+    ) -> PaginatedData[StudentResponse]:
         search = q.strip() if q else None
         if class_id is not None:
             class_obj = self.class_repo.get_by_id(class_id)

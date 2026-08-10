@@ -6,7 +6,7 @@ from app.models.option import Option
 from app.models.question import Question, QuestionType
 from app.repositories.option_repository import OptionRepository
 from app.repositories.question_repository import QuestionRepository
-from app.schemas.option import OptionCreate, OptionUpdate
+from app.schemas.option import OptionCreate, OptionUpdate, OptionResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import NotFoundException, ConflictException, ValidationException, BusinessRuleException
 
@@ -16,7 +16,7 @@ class OptionService:
         self.option_repo = option_repo
         self.question_repo = question_repo
 
-    def get_options(self, page: int, page_size: int, question_id: UUID | None = None) -> PaginatedData[Option]:
+    def get_options(self, page: int, page_size: int, question_id: UUID | None = None) -> PaginatedData[OptionResponse]:
         skip = (page - 1) * page_size
         items = self.option_repo.get_all(skip, page_size, question_id)
         total = self.option_repo.get_count(question_id)

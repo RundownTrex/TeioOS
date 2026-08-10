@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from app.models.department import Department
 from app.repositories.department_repository import DepartmentRepository
-from app.schemas.department import DepartmentCreate, DepartmentUpdate
+from app.schemas.department import DepartmentCreate, DepartmentUpdate, DepartmentResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import ConflictException, NotFoundException, BusinessRuleException
 
@@ -13,7 +13,7 @@ class DepartmentService:
         self.db = db
         self.department_repo = department_repo
 
-    def get_departments(self, page: int, page_size: int, q: str | None = None) -> PaginatedData[Department]:
+    def get_departments(self, page: int, page_size: int, q: str | None = None) -> PaginatedData[DepartmentResponse]:
         search = q.strip() if q else None
         skip = (page - 1) * page_size
         items = self.department_repo.get_all(skip, page_size, search)

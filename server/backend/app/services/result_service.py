@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.models.result import Result, EvaluationStatus
 from app.repositories.result_repository import ResultRepository
+from app.schemas.result import ResultResponse
 from app.schemas.pagination import PaginatedData
 from app.core.exceptions import NotFoundException, BusinessRuleException
 
@@ -24,7 +25,7 @@ class ResultService:
         q: str | None = None,
         evaluation_status: str | None = None,
         is_published: bool | None = None,
-    ) -> PaginatedData[Result]:
+    ) -> PaginatedData[ResultResponse]:
         """
         Fetch results filtered by optional query parameters.
         Results are eager loaded with session, student, schedule, and exam data.

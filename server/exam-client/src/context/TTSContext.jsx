@@ -39,7 +39,13 @@ export const TTSProvider = ({ children }) => {
         return;
       }
 
-      window.speechSynthesis.cancel();
+      // Cancel ongoing synthesis cleanly
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {
+        // ignore
+      }
+
       setIsSpeaking(false);
       setIsPaused(false);
 
@@ -48,12 +54,25 @@ export const TTSProvider = ({ children }) => {
       const cleanText = text.trim();
       const utterance = new SpeechSynthesisUtterance(cleanText);
 
-      utterance.rate = ttsSpeed || 1.0;
-      utterance.pitch = ttsPitch || 1.0;
-      utterance.volume = ttsVolume !== undefined ? ttsVolume : 1.0;
+      // Clamp speed and pitch to safe bounds to avoid Linux system voice distortion in Firefox
+      const safeSpeed = Math.min(Math.max(ttsSpeed || 1.0, 0.5), 2.0);
+      const safePitch = Math.min(Math.max(ttsPitch || 1.0, 0.8), 1.2);
 
-      if (ttsVoiceURI && voices && voices.length > 0) {
-        const selectedVoice = voices.find((v) => v.voiceURI === ttsVoiceURI);
+      utterance.rate = safeSpeed;
+      utterance.pitch = safePitch;
+      utterance.volume = Math.min(Math.max(ttsVolume !== undefined ? ttsVolume : 1.0, 0.0), 1.0);
+
+      // Smart voice resolution fallback for Firefox & cross-browser compatibility
+      if (voices && voices.length > 0) {
+        let selectedVoice = ttsVoiceURI ? voices.find((v) => v.voiceURI === ttsVoiceURI) : null;
+
+        if (!selectedVoice) {
+          selectedVoice =
+            voices.find((v) => v.default && v.lang.startsWith('en')) ||
+            voices.find((v) => v.lang.startsWith('en')) ||
+            voices[0];
+        }
+
         if (selectedVoice) {
           utterance.voice = selectedVoice;
         }
@@ -71,10 +90,10 @@ export const TTSProvider = ({ children }) => {
         setIsPaused(false);
         setCurrentText('');
         activeUtteranceRef.current = null;
+        if (typeof window !== 'undefined') window._activeTTSUtterance = null;
       };
 
       utterance.onerror = (e) => {
-        // Canceled errors occur when window.speechSynthesis.cancel() is called intentionally
         if (e.error !== 'canceled') {
           console.warn('TTS Synthesis error:', e);
         }
@@ -82,6 +101,7 @@ export const TTSProvider = ({ children }) => {
         setIsPaused(false);
         setCurrentText('');
         activeUtteranceRef.current = null;
+        if (typeof window !== 'undefined') window._activeTTSUtterance = null;
       };
 
       utterance.onpause = () => {
@@ -93,20 +113,28 @@ export const TTSProvider = ({ children }) => {
       };
 
       activeUtteranceRef.current = utterance;
+      // Retain strong reference on window object to prevent Firefox Gecko garbage-collecting utterance mid-speech
+      if (typeof window !== 'undefined') {
+        window._activeTTSUtterance = utterance;
+      }
 
       if (label) {
         announceToScreenReader(`Reading aloud: ${label}`);
       }
 
-      try {
-        window.speechSynthesis.speak(utterance);
-      } catch (err) {
-        console.warn('SpeechSynthesis speak failed:', err);
-        announceToScreenReader('Speech synthesis failed to play.');
-      }
+      // Micro-delay after cancel() prevents Firefox Gecko engine dropping speak() calls
+      setTimeout(() => {
+        try {
+          window.speechSynthesis.speak(utterance);
+        } catch (err) {
+          console.warn('SpeechSynthesis speak failed:', err);
+          announceToScreenReader('Speech synthesis failed to play.');
+        }
+      }, 50);
     },
     [ttsEnabled, ttsSpeed, ttsPitch, ttsVolume, ttsVoiceURI, voices]
   );
+
 
   const pauseSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {

@@ -1,4 +1,4 @@
-import axiosClient from '../../../api/axiosClient';
+import axiosClient, { baseURL } from '../../../api/axiosClient';
 import { API_ENDPOINTS } from '../../../api/endpoints';
 
 export const examsApi = {
@@ -61,7 +61,6 @@ export const examsApi = {
   },
 
   pauseExam: (scheduleId, baseToken) => {
-    const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
     return fetch(`${baseURL}${API_ENDPOINTS.PAUSE_EXAM(scheduleId)}`, {
       method: 'POST',
       keepalive: true,

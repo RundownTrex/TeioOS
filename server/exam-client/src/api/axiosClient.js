@@ -2,7 +2,7 @@ import axios from 'axios';
 import { STORAGE_KEYS } from '../utils/constants';
 import { getItem } from '../utils/storage';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+export const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 export const axiosClient = axios.create({
   baseURL,

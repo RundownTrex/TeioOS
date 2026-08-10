@@ -8,9 +8,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.db.session import SessionLocal
 from app.models.user import User, UserRole
 from app.core.security import get_password_hash
+from app.core.config import settings
 
 
 def seed_admin():
+    admin_password = os.getenv("ADMIN_PASSWORD")
+    if not admin_password:
+        if settings.app_env.lower() != "development":
+            print(
+                "[ERROR] ADMIN_PASSWORD environment variable must be explicitly set in non-development environments.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        admin_password = "admin123"
+
     db = SessionLocal()
     try:
         # Check if admin user already exists
@@ -19,7 +30,6 @@ def seed_admin():
             print("[INFO] Admin user 'admin' already exists in the database.")
             return
 
-        admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
         admin_user = User(
             username="admin",
             email=os.getenv("ADMIN_EMAIL", "admin@teioos.local"),

@@ -1,3 +1,5 @@
+from typing import Any
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,6 +9,7 @@ class Settings(BaseSettings):
     # Application
     app_name: str = "TeioOS Exam Server"
     app_version: str = "0.1.0"
+    app_env: str = "development"
     debug: bool = False
 
     # Database
@@ -20,6 +23,9 @@ class Settings(BaseSettings):
     secret_key: str = "default_unsafe_secret_key_change_in_production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 1440  # 1 day default
+
+    # CORS
+    cors_origins: list[str] | str = ["http://localhost:3000", "http://localhost:3001"]
 
     # Examination timing
     # Interval (seconds) between server-side sweeps that auto-submit sessions
@@ -36,6 +42,33 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
     )
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            if v.startswith("[") and v.endswith("]"):
+                import json
+                try:
+                    return json.loads(v)
+                except Exception:
+                    pass
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        if self.app_env.lower() != "development":
+            if not self.secret_key or self.secret_key == "default_unsafe_secret_key_change_in_production":
+                raise ValueError(
+                    "SECRET_KEY must be explicitly set via environment variable in production "
+                    "and cannot use the default unsafe fallback."
+                )
+            if not self.database_password:
+                raise ValueError(
+                    "DATABASE_PASSWORD must be set via environment variable in production."
+                )
+        return self
 
     @property
     def database_url(self) -> str:

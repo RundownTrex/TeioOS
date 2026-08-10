@@ -31,27 +31,52 @@ export const AccessibilityProvider = ({ children }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [voices, setVoices] = useState([]);
 
-  // Fetch browser speech synthesis voices natively
+  // Fetch browser speech synthesis voices natively with cross-browser fallback handling
   useEffect(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
     const loadVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
+      if (!availableVoices || availableVoices.length === 0) return;
+
       setVoices(availableVoices);
-      if (availableVoices.length > 0 && !settings.ttsVoiceURI) {
-        const defaultVoice =
-          availableVoices.find((v) => v.lang.startsWith('en')) || availableVoices[0];
-        if (defaultVoice) {
-          setSettings((prev) => ({ ...prev, ttsVoiceURI: defaultVoice.voiceURI }));
+
+      setSettings((prev) => {
+        // Verify if saved ttsVoiceURI exists in current browser's voice list
+        const voiceExists = availableVoices.some((v) => v.voiceURI === prev.ttsVoiceURI);
+
+        if (!prev.ttsVoiceURI || !voiceExists) {
+          // Priority fallback: Default English voice -> Any English voice -> First available voice
+          const defaultVoice =
+            availableVoices.find((v) => v.default && v.lang.startsWith('en')) ||
+            availableVoices.find((v) => v.lang.startsWith('en')) ||
+            availableVoices[0];
+
+          if (defaultVoice) {
+            return { ...prev, ttsVoiceURI: defaultVoice.voiceURI };
+          }
         }
-      }
+        return prev;
+      });
     };
 
     loadVoices();
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+
+    if (window.speechSynthesis.addEventListener) {
+      window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    } else if (window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
+
+    return () => {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        if (window.speechSynthesis.removeEventListener) {
+          window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+        }
+      }
+    };
   }, []);
+
 
   // Apply all accessibility attributes dynamically to root html tag for instant live application (No refresh required)
   useEffect(() => {

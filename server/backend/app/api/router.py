@@ -21,6 +21,7 @@ from app.api.routes.admin.settings import router as admin_settings_router
 from app.api.routes.student.auth import router as student_auth_router
 from app.api.routes.student.exams import router as student_exams_router
 from app.api.routes.student.answers import router as student_answers_router
+from app.api.routes.student.speech import router as student_speech_router
 
 apirouter = APIRouter(prefix="/api/v1")
 
@@ -45,3 +46,4 @@ apirouter.include_router(admin_settings_router, prefix="/admin/settings", tags=[
 apirouter.include_router(student_auth_router, prefix="/student/auth", tags=["Student Auth"])
 apirouter.include_router(student_exams_router, prefix="/student/exams", tags=["Student Exams"])
 apirouter.include_router(student_answers_router, prefix="/student/answers", tags=["Student Answers"])
+apirouter.include_router(student_speech_router, prefix="/student/speech", tags=["Student Speech Dictation"])

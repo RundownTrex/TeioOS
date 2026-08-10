@@ -17,6 +17,8 @@ export const API_ENDPOINTS = {
   RESULT: (scheduleId) => `/student/exams/${scheduleId}/result`,
   REVIEW: (scheduleId) => `/student/exams/${scheduleId}/review`,
 
-  // Answer Submission Endpoints
+  // Answer & Speech Submission Endpoints
   SAVE_ANSWER: '/student/answers/',
+  TRANSCRIBE_SPEECH: '/student/speech/transcribe',
 };
+

@@ -352,7 +352,7 @@ export const ActiveExamPage = () => {
     requestAnimationFrame(() => {
       questionHeadingRef.current?.focus({ preventScroll: true });
     });
-  }, [currentIndex, totalQuestions, currentQuestion, answersMap, isCurrentFlagged]);
+  }, [currentIndex, totalQuestions, currentQuestion]);
 
   // Task 3: Announce exam resumption to screen reader users when arriving from Resume flow
   useEffect(() => {

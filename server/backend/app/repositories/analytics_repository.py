@@ -8,7 +8,7 @@ from app.models.question import Question, QuestionType
 from app.models.exam import Exam
 from app.models.exam_schedule import ExamSchedule
 from app.models.subject import Subject
-from app.models.result import Result
+from app.models.result import Result, EvaluationStatus
 
 _SUBMITTED_STATUSES = [AssignmentStatus.SUBMITTED, AssignmentStatus.AUTO_SUBMITTED]
 
@@ -90,9 +90,13 @@ class AnalyticsRepository:
             .subquery()
         )
         stmt = (
-            select(StudentExam, pending_counts.c.pending_count)
-            .join(pending_counts, pending_counts.c.student_exam_id == StudentExam.id)
-            .where(StudentExam.status.in_(_SUBMITTED_STATUSES))
+            select(StudentExam, func.coalesce(pending_counts.c.pending_count, 1).label("pending_count"))
+            .join(Result, Result.student_exam_id == StudentExam.id)
+            .outerjoin(pending_counts, pending_counts.c.student_exam_id == StudentExam.id)
+            .where(
+                StudentExam.status.in_(_SUBMITTED_STATUSES),
+                Result.evaluation_status.in_([EvaluationStatus.PENDING, EvaluationStatus.PARTIALLY_EVALUATED]),
+            )
             .options(
                 joinedload(StudentExam.student),
                 joinedload(StudentExam.exam_schedule).joinedload(ExamSchedule.exam).joinedload(Exam.subject),

@@ -34,7 +34,13 @@ export const EvaluationListPage = () => {
     placeholderData: (prev) => prev,
   });
 
-  const pendingList = pendingQuery.data ?? [];
+  const pendingList = useMemo(() => {
+    const raw = pendingQuery.data;
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.data)) return raw.data;
+    if (Array.isArray(raw?.items)) return raw.items;
+    return [];
+  }, [pendingQuery.data]);
 
   const filteredList = useMemo(() => {
     if (!searchQuery.trim()) return pendingList;

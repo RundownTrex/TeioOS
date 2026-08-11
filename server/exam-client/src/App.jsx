@@ -51,7 +51,7 @@ export function App() {
             <ShortcutProvider>
               <AuthProvider>
                 <ExamProvider>
-                  <BrowserRouter>
+                  <BrowserRouter basename="/exam">
                     <Routes>
                       <Route element={<RootLayout />}>
                         {/* Default root redirects to dashboard */}

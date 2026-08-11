@@ -69,7 +69,14 @@ export const EvaluationWorkbenchPage = () => {
     queryFn: ({ signal }) => evaluationApi.getSessionAnswers(studentExamId, { signal }),
   });
 
-  const pendingList = pendingQuery.data ?? [];
+  const pendingList = useMemo(() => {
+    const raw = pendingQuery.data;
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.data)) return raw.data;
+    if (Array.isArray(raw?.items)) return raw.items;
+    return [];
+  }, [pendingQuery.data]);
+
   const currentPendingIndex = pendingList.findIndex((item) => item.id === studentExamId);
   const currentStudentMeta = currentPendingIndex >= 0 ? pendingList[currentPendingIndex] : null;
 

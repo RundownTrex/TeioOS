@@ -74,7 +74,7 @@ export const AppRoutes = () => {
               'Access Restricted',
               'You are not authorized to access this section. Contact a TeioOS administrator if you believe this is an error.',
               'Go to Dashboard',
-              () => window.location.assign(PATHS.DASHBOARD)
+              () => window.location.assign('/admin' + PATHS.DASHBOARD)
             )}
           />
           <Route
@@ -103,7 +103,7 @@ export const AppRoutes = () => {
               '404 — Page Not Found',
               'The requested view does not exist or has moved.',
               'Go to Dashboard',
-              () => window.location.assign(PATHS.DASHBOARD)
+              () => window.location.assign('/admin' + PATHS.DASHBOARD)
             )}
           />
         </Route>

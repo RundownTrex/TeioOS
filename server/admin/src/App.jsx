@@ -15,7 +15,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ToastProvider>
-          <BrowserRouter>
+          <BrowserRouter basename="/admin">
             <AuthProvider>
               <AppRoutes />
             </AuthProvider>

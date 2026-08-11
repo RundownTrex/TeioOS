@@ -27,12 +27,18 @@ def seed_admin():
         # Check if admin user already exists
         existing_admin = db.query(User).filter(User.username == "admin").first()
         if existing_admin:
-            print("[INFO] Admin user 'admin' already exists in the database.")
+            if existing_admin.email.endswith(".local"):
+                new_email = os.getenv("ADMIN_EMAIL", "admin@teioos.org")
+                existing_admin.email = new_email
+                db.commit()
+                print(f"[INFO] Updated admin user email from .local to '{new_email}'.")
+            else:
+                print("[INFO] Admin user 'admin' already exists in the database.")
             return
 
         admin_user = User(
             username="admin",
-            email=os.getenv("ADMIN_EMAIL", "admin@teioos.local"),
+            email=os.getenv("ADMIN_EMAIL", "admin@teioos.org"),
             name="System Administrator",
             role=UserRole.ADMIN,
             password_hash=get_password_hash(admin_password),

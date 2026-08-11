@@ -32,11 +32,12 @@ class StudentSessionInfo(BaseModel):
 class UserBase(BaseModel):
     username: str = Field(..., max_length=100, description="Unique username")
     name: str = Field(..., max_length=255, description="Full name of the user")
-    email: EmailStr = Field(..., description="Valid email address")
+    email: str = Field(..., max_length=255, description="Email address")
     role: UserRole = Field(..., description="Role of the user (e.g., admin, teacher)")
     is_active: bool = Field(True, description="Account active status")
 
 class UserCreate(UserBase):
+    email: EmailStr = Field(..., description="Valid email address")
     password: str = Field(..., min_length=8, description="Plaintext password")
 
 class UserUpdate(BaseModel):

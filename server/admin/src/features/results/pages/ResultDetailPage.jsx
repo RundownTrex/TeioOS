@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   MessageSquare,
+  Printer,
 } from 'lucide-react';
 
 import { Card, CardHeader, CardBody } from '../../../components/ui/Card';

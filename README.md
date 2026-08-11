@@ -138,6 +138,113 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 
 The setup scripts check system prerequisites, create Python virtual environments, generate `.env` files, install frontend npm packages, provision the PostgreSQL user and database, execute database migrations, and seed the default administrator account (`admin` / `admin123`).
 
+## Containerized Production Deployment
+
+TeioOS can be deployed as a single integrated container stack using Docker and Docker Compose. The central Nginx gateway serves as the single public entry point for both frontend React applications and the FastAPI backend.
+
+### Container Prerequisites
+
+- Docker Engine (v24.0+)
+- Docker Compose (v2.20+)
+
+### Deployment Steps
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/RundownTrex/TeioOS.git
+   cd TeioOS
+   ```
+
+2. Prepare environment configuration:
+   Copy `.env.example` to `.env` at the repository root:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Generate a secure `SECRET_KEY`:
+   Run the following Python command to generate a 64-character hex secret key:
+   ```bash
+   python3 -c "import secrets; print(secrets.token_hex(32))"
+   ```
+
+4. Configure required secrets in `.env`:
+   Edit `.env` and set non-default values for the following required variables:
+   - `SECRET_KEY`: Paste the generated hex key.
+   - `DATABASE_PASSWORD`: Set a secure database user password.
+   - `POSTGRES_PASSWORD`: Set to match `DATABASE_PASSWORD`.
+   - `ADMIN_PASSWORD`: Set the initial administrator password.
+   - `CORS_ORIGINS`: Set to match the gateway public origin (e.g. `http://localhost:8080` or `http://<SERVER_IP>:8080`).
+
+5. Launch the container stack:
+   ```bash
+   docker compose up -d
+   ```
+   The stack automatically initializes PostgreSQL, executes database schema migrations via Alembic, seeds the initial administrator account, and starts the Nginx gateway.
+
+
+### Backup & Restore
+
+TeioOS includes automated database backup and restore scripts independent of container lifecycles.
+
+#### Taking a Database Backup
+To take a live, non-disruptive database backup from the running `teioos-db` container:
+```bash
+./scripts/backup.sh
+```
+- **Storage Location:** Backups are saved in `backups/teioos_backup_YYYYMMDD_HHMMSS.sql.gz`.
+- **Format:** Gzip-compressed SQL dump generated with `pg_dump --clean --if-exists`.
+
+#### Restoring a Database Backup
+To restore a backup file into the running `teioos-db` container:
+```bash
+./scripts/restore.sh backups/teioos_backup_20260811_120000.sql.gz
+```
+- **Warning:** Restoring is a destructive operation that will drop and replace existing data in the target database. Interactive confirmation is required unless `--yes` is specified.
+- **Automated / Non-interactive Restore:**
+  ```bash
+  ./scripts/restore.sh backups/teioos_backup_20260811_120000.sql.gz --yes
+  ```
+
+#### Examination Deployment Backup Recommendations
+- **Before Exam Sessions:** Take a backup immediately prior to opening an examination window to preserve pre-exam configuration and candidate assignments.
+- **After Exam Sessions:** Take a backup immediately following exam completion to secure candidate answer submissions and evaluation results.
+- **Before Upgrades/Migrations:** Take a backup prior to applying system updates or Alembic migrations.
+
+### Local Area Network (LAN) Deployment
+
+To allow candidate client devices and administrator workstations on the local network to access the TeioOS Exam Server:
+
+#### 1. Identify Server LAN IP Address
+Find the server host machine's LAN IP address:
+```bash
+ip -4 addr show
+```
+*(Identify the IP under the primary active network interface, e.g. `10.182.180.124` or `192.168.1.50`).*
+
+#### 2. Configure CORS in `.env`
+Update `CORS_ORIGINS` in `.env` to include the server's LAN IP origin alongside `localhost`:
+```ini
+CORS_ORIGINS=http://localhost:8080,http://10.182.180.124:8080
+```
+Restart the backend to apply changes:
+```bash
+docker compose restart backend
+```
+*Note: Hardcoding dynamic DHCP LAN IPs is sensitive to network changes. For production institutional deployments, assign a static IP address or static DHCP reservation to the server machine.*
+
+#### 3. Firewall Configuration
+Ensure inbound TCP connections to port `8080` are allowed through any active host firewall:
+```bash
+# Example for UFW
+sudo ufw allow in on wlan0 to any port 8080 proto tcp
+```
+
+#### 4. LAN Access Endpoints
+Client devices on the same local network can connect using the server's LAN IP:
+- Candidate Examination Client: `http://<LAN_IP>:8080/exam/`
+- Administrator Dashboard: `http://<LAN_IP>:8080/admin/`
+- API Health Check: `http://<LAN_IP>:8080/api/v1/health`
+
 ## Required Environment Variables
 
 Backend environment configuration is stored in `server/backend/.env`:

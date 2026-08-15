@@ -1,0 +1,27 @@
+# Build directories
+binary/
+cache/
+chroot/
+
+# Generated build metadata
+binary.modified_timestamps
+chroot.files
+chroot.packages.install
+chroot.packages.live
+
+# Generated image metadata
+live-image-*.contents
+live-image-*.files
+live-image-*.packages
+
+# Generated images
+*.iso
+*.iso.hybrid
+*.img
+*.raw
+
+# Temporary build files
+.tmp/
+
+# live-build internal state
+.build/

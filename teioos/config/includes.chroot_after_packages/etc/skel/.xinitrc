@@ -5,7 +5,8 @@ xset s off
 xset s noblank
 
 # Start openbox in the background to handle window management
-openbox &
+#openbox &
+openbox --config-file /etc/xdg/openbox/rc.xml &
 
 # Hide cursor when idle
 unclutter -idle 1 &
@@ -23,4 +24,5 @@ exec chromium \
   --disable-translate \
   --disable-features=TranslateUI \
   --autoplay-policy=no-user-gesture-required \
-  --check-for-update-interval=31536000
+  --check-for-update-interval=31536000 \
+  --disable-context-menu

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_config xmlns="http://openbox.org/3.4/rc">
+  <keyboard>
+    <!-- Block new tab -->
+    <keybind key="C-t">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block new window -->
+    <keybind key="C-n">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block incognito window -->
+    <keybind key="C-S-n">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block close tab -->
+    <keybind key="C-w">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block close window -->
+    <keybind key="C-S-w">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block address bar focus -->
+    <keybind key="C-l">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="C-d">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="F6">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block history -->
+    <keybind key="C-h">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block downloads -->
+    <keybind key="C-j">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block dev tools -->
+    <keybind key="C-S-i">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="C-S-j">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="F12">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block view source -->
+    <keybind key="C-u">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block save page -->
+    <keybind key="C-s">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block print -->
+    <keybind key="C-p">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block open file -->
+    <keybind key="C-o">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block bookmark bar / bookmark manager -->
+    <keybind key="C-S-b">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="C-S-o">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block clear browsing data -->
+    <keybind key="C-S-Delete">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block tab switching -->
+    <keybind key="C-Tab">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="C-S-Tab">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block fullscreen toggle -->
+    <keybind key="F11">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block Alt+F4 close -->
+    <keybind key="A-F4">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block Alt+Home -->
+    <keybind key="A-Home">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block find -->
+    <keybind key="C-f">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="C-g">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block zoom -->
+    <keybind key="C-plus">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="C-minus">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="C-0">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block reload (keep F5 allowed for normal page refresh) -->
+    <keybind key="C-S-r">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block settings -->
+    <keybind key="A-e">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block task manager -->
+    <keybind key="S-Escape">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+  </keyboard>
+  <mouse>
+  </mouse>
+  <applications>
+    <application class="*">
+      <decor>no</decor>
+      <maximized>true</maximized>
+      <fullscreen>true</fullscreen>
+    </application>
+  </applications>
+</openbox_config>

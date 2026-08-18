@@ -14,6 +14,10 @@ at-spi2-core
 pulseaudio
 pulseaudio-utils
 alsa-utils
+speech-dispatcher
+speech-dispatcher-espeak-ng
+espeak-ng
+libespeak-ng1
 unclutter
 x11-xserver-utils
 avahi-daemon

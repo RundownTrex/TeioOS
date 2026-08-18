@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
 
-useradd -m -s /bin/bash examuser
+useradd -m -s /bin/bash -G audio,video,pulse,pulse-access,input examuser || useradd -m -s /bin/bash examuser
+usermod -aG audio,video,pulse,pulse-access,input examuser 2>/dev/null || true
 passwd -d examuser
 
 # Explicitly ensure kiosk config is in place, regardless of skel timing

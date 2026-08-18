@@ -31,7 +31,10 @@
   "DownloadRestrictions": 3,
   "AudioCaptureAllowed": true,
   "AudioCaptureAllowedUrls": [
-    "http://teioos-server.local:8080"
+    "http://teioos-server.local:8080",
+    "http://teioos-server.local:8080/*",
+    "http://127.0.0.1:8080/*",
+    "http://localhost:8080/*"
   ],
   "VideoCaptureAllowed": false,
   "ScreenCaptureAllowed": false,

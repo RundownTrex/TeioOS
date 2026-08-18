@@ -176,6 +176,10 @@
     <keybind key="S-Escape">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
+    <!-- Toggle Orca Screen Reader (Alt+Super+S) -->
+    <keybind key="A-W-s">
+      <action name="Execute"><command>orca --replace &amp;</command></action>
+    </keybind>
   </keyboard>
   <mouse>
   </mouse>

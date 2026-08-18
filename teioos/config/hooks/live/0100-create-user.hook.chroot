@@ -5,8 +5,9 @@ useradd -m -s /bin/bash examuser
 passwd -d examuser
 
 # Explicitly ensure kiosk config is in place, regardless of skel timing
-mkdir -p /home/examuser
+mkdir -p /home/examuser/.config/openbox
 cp /etc/skel/.xinitrc /home/examuser/.xinitrc
 cp /etc/skel/.bash_profile /home/examuser/.bash_profile
-chown examuser:examuser /home/examuser/.xinitrc /home/examuser/.bash_profile
+cp /etc/xdg/openbox/rc.xml /home/examuser/.config/openbox/rc.xml
+chown -R examuser:examuser /home/examuser
 chmod +x /home/examuser/.xinitrc

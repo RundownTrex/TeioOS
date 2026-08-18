@@ -5,6 +5,9 @@
     <keybind key="C-t">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
+    <keybind key="C-S-t">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
     <!-- Block new window -->
     <keybind key="C-n">
       <action name="Execute"><command>/bin/true</command></action>
@@ -13,12 +16,28 @@
     <keybind key="C-S-n">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
-    <!-- Block close tab -->
+    <!-- Block close tab (Ctrl+W, Ctrl+F4) -->
     <keybind key="C-w">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
-    <!-- Block close window -->
+    <keybind key="C-F4">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block close window (Ctrl+Shift+W, Ctrl+Shift+F4, Alt+F4) -->
     <keybind key="C-S-w">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="C-S-F4">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="A-F4">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block browser exit (Ctrl+Q, Ctrl+Shift+Q) -->
+    <keybind key="C-q">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="C-S-q">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
     <!-- Block address bar focus -->
@@ -26,6 +45,9 @@
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
     <keybind key="C-d">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="A-d">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
     <keybind key="F6">
@@ -44,6 +66,9 @@
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
     <keybind key="C-S-j">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="C-S-c">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
     <keybind key="F12">
@@ -83,16 +108,25 @@
     <keybind key="C-S-Tab">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
+    <!-- Block window switching -->
+    <keybind key="A-Tab">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="A-S-Tab">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <!-- Block navigation -->
+    <keybind key="A-Left">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="A-Right">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="A-Home">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
     <!-- Block fullscreen toggle -->
     <keybind key="F11">
-      <action name="Execute"><command>/bin/true</command></action>
-    </keybind>
-    <!-- Block Alt+F4 close -->
-    <keybind key="A-F4">
-      <action name="Execute"><command>/bin/true</command></action>
-    </keybind>
-    <!-- Block Alt+Home -->
-    <keybind key="A-Home">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
     <!-- Block find -->
@@ -100,6 +134,9 @@
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
     <keybind key="C-g">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="F3">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
     <!-- Block zoom -->
@@ -112,12 +149,27 @@
     <keybind key="C-0">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
+    <keybind key="C-equal">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
     <!-- Block reload (keep F5 allowed for normal page refresh) -->
     <keybind key="C-S-r">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
-    <!-- Block settings -->
+    <!-- Block settings / menus / help -->
     <keybind key="A-e">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="A-f">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="F1">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="F7">
+      <action name="Execute"><command>/bin/true</command></action>
+    </keybind>
+    <keybind key="F10">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
     <!-- Block task manager -->

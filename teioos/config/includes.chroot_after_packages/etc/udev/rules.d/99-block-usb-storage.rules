@@ -1,0 +1,10 @@
+# Block USB Mass Storage Class devices (Interface Class 08h / Device Class 08h)
+# Preserves USB HID (03h keyboard/mouse) and USB Hubs (09h)
+
+# De-authorize USB devices identifying as mass storage class
+ACTION=="add", SUBSYSTEM=="usb", ATTR{bInterfaceClass}=="08", ATTR{authorized}="0"
+ACTION=="add", SUBSYSTEM=="usb", ATTR{bDeviceClass}=="08", ATTR{authorized}="0"
+
+# De-authorize devices managed by usb-storage or uas drivers
+ACTION=="add", SUBSYSTEMS=="usb", DRIVERS=="usb-storage", RUN+="/bin/sh -c 'echo 0 > /sys$devpath/authorized 2>/dev/null || true'"
+ACTION=="add", SUBSYSTEMS=="usb", DRIVERS=="uas", RUN+="/bin/sh -c 'echo 0 > /sys$devpath/authorized 2>/dev/null || true'"

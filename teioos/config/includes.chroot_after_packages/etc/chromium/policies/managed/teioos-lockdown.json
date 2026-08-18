@@ -8,11 +8,37 @@
   "PasswordManagerEnabled": false,
   "PrintingEnabled": false,
   "SavingBrowserHistoryDisabled": true,
+  "AllowDeletingBrowserHistory": false,
   "TranslateEnabled": false,
-  "URLAllowlist": ["*"],
+  "URLBlocklist": [
+    "*"
+  ],
+  "URLAllowlist": [
+    "http://teioos-server.local:8080/*",
+    "teioos-server.local:8080",
+    "http://teioos-server.local/*",
+    "teioos-server.local",
+    "http://127.0.0.1:8080/*",
+    "http://localhost:8080/*",
+    "about:blank",
+    "blob:*",
+    "data:*"
+  ],
   "DefaultBrowserSettingEnabled": false,
   "SpellcheckEnabled": false,
   "SyncDisabled": true,
   "PromptForDownloadLocation": false,
-  "DownloadRestrictions": 3
+  "DownloadRestrictions": 3,
+  "AudioCaptureAllowed": true,
+  "AudioCaptureAllowedUrls": [
+    "http://teioos-server.local:8080"
+  ],
+  "VideoCaptureAllowed": false,
+  "ScreenCaptureAllowed": false,
+  "AutofillAddressEnabled": false,
+  "AutofillCreditCardEnabled": false,
+  "ShowHomeButton": false,
+  "BookmarkBarEnabled": false,
+  "MetricsReportingEnabled": false
 }
+

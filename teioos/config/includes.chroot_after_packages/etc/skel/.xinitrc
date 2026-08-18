@@ -5,7 +5,6 @@ xset s off
 xset s noblank
 
 # Start openbox in the background to handle window management
-#openbox &
 openbox --config-file /etc/xdg/openbox/rc.xml &
 
 # Hide cursor when idle

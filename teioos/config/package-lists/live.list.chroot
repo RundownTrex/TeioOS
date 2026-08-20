@@ -23,3 +23,14 @@ x11-xserver-utils
 avahi-daemon
 avahi-utils
 libnss-mdns
+
+# Disk & dual-boot tools for installed system
+efibootmgr
+dosfstools
+e2fsprogs
+parted
+os-prober
+ntfs-3g
+
+# Kernel for installed system (grub-installer uses this to configure boot)
+linux-image-amd64

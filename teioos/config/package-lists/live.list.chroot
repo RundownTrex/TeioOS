@@ -34,3 +34,15 @@ ntfs-3g
 
 # Kernel for installed system (grub-installer uses this to configure boot)
 linux-image-amd64
+
+# Hardware Firmware & Microcode (Broad device support for real laptops & PCs)
+firmware-linux
+firmware-misc-nonfree
+firmware-realtek
+firmware-iwlwifi
+firmware-atheros
+firmware-brcm80211
+firmware-sof-signed
+intel-microcode
+amd64-microcode
+

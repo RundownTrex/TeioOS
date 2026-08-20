@@ -3,6 +3,7 @@ set -e
 lb config noauto \
     --distribution trixie \
     --architectures amd64 \
+    --archive-areas "main contrib non-free non-free-firmware" \
     --binary-images iso-hybrid \
     --debian-installer live \
     --debian-installer-gui true \

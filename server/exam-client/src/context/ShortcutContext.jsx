@@ -8,15 +8,27 @@ export const ShortcutContext = createContext(null);
 export const DEFAULT_SHORTCUTS = {
   nextQuestion: { key: 'N', alt: true, ctrl: false, shift: false, label: 'Next Question', category: 'Exam Navigation' },
   prevQuestion: { key: 'P', alt: true, ctrl: false, shift: false, label: 'Previous Question', category: 'Exam Navigation' },
+  
+  // Direct MCQ Option Selection Hotkeys (Options A through H)
+  selectOptionA: { key: '1', alt: true, ctrl: false, shift: false, label: 'Select Option A / 1', category: 'MCQ Option Selection' },
+  selectOptionB: { key: '2', alt: true, ctrl: false, shift: false, label: 'Select Option B / 2', category: 'MCQ Option Selection' },
+  selectOptionC: { key: '3', alt: true, ctrl: false, shift: false, label: 'Select Option C / 3', category: 'MCQ Option Selection' },
+  selectOptionD: { key: '4', alt: true, ctrl: false, shift: false, label: 'Select Option D / 4', category: 'MCQ Option Selection' },
+  selectOptionE: { key: '5', alt: true, ctrl: false, shift: false, label: 'Select Option E / 5', category: 'MCQ Option Selection' },
+  selectOptionF: { key: '6', alt: true, ctrl: false, shift: false, label: 'Select Option F / 6', category: 'MCQ Option Selection' },
+  selectOptionG: { key: '7', alt: true, ctrl: false, shift: false, label: 'Select Option G / 7', category: 'MCQ Option Selection' },
+  selectOptionH: { key: '8', alt: true, ctrl: false, shift: false, label: 'Select Option H / 8', category: 'MCQ Option Selection' },
+
   markReview: { key: 'M', alt: true, ctrl: false, shift: false, label: 'Mark for Review', category: 'Question Actions' },
   clearResponse: { key: 'C', alt: true, ctrl: false, shift: false, label: 'Clear Response', category: 'Question Actions' },
-  saveResponse: { key: 'S', alt: true, ctrl: false, shift: false, label: 'Save Response', category: 'Question Actions' },
-  focusPalette: { key: 'Q', alt: true, ctrl: false, shift: false, label: 'Focus Question Palette', category: 'Quick Focus' },
-  focusTimer: { key: 'T', alt: true, ctrl: false, shift: false, label: 'Focus Remaining Time', category: 'Quick Focus' },
+  saveResponse: { key: 'S', alt: true, ctrl: false, shift: false, label: 'Save Response to Server', category: 'Question Actions' },
+  focusPalette: { key: 'Q', alt: true, ctrl: false, shift: false, label: 'Focus Question Palette Grid', category: 'Quick Focus' },
+  focusTimer: { key: 'T', alt: true, ctrl: false, shift: false, label: 'Announce Remaining Time', category: 'Quick Focus' },
   submitExam: { key: 'Enter', alt: false, ctrl: true, shift: false, label: 'Submit Examination', category: 'Question Actions' },
   accessibility: { key: 'A', alt: true, ctrl: false, shift: false, label: 'Accessibility Preferences', category: 'System' },
   showHelp: { key: 'H', alt: true, ctrl: false, shift: false, label: 'Keyboard Shortcuts Help', category: 'System' },
-  
+  audioTour: { key: 'I', alt: true, ctrl: false, shift: false, label: 'Play Spoken Audio Navigation Guide', category: 'Audio & Speech' },
+
   // Speech-to-Text (STT) Dictation Shortcut
   sttToggle: { key: 'D', alt: true, ctrl: false, shift: false, label: 'Toggle Speech Dictation (Descriptive Answers)', category: 'Speech-to-Text' },
 
@@ -27,17 +39,6 @@ export const DEFAULT_SHORTCUTS = {
   ttsPauseResume: { key: 'K', alt: true, ctrl: false, shift: false, label: 'Pause / Resume Speech', category: 'Text-to-Speech' },
   ttsStop: { key: 'X', alt: true, ctrl: false, shift: false, label: 'Stop Speech', category: 'Text-to-Speech' },
   ttsRepeat: { key: 'E', alt: true, ctrl: false, shift: false, label: 'Repeat Last Spoken Text', category: 'Text-to-Speech' },
-
-  // Question Jump Shortcuts
-  jumpQuestion1: { key: '1', alt: true, ctrl: false, shift: false, label: 'Jump to Question 1', category: 'Question Jump' },
-  jumpQuestion2: { key: '2', alt: true, ctrl: false, shift: false, label: 'Jump to Question 2', category: 'Question Jump' },
-  jumpQuestion3: { key: '3', alt: true, ctrl: false, shift: false, label: 'Jump to Question 3', category: 'Question Jump' },
-  jumpQuestion4: { key: '4', alt: true, ctrl: false, shift: false, label: 'Jump to Question 4', category: 'Question Jump' },
-  jumpQuestion5: { key: '5', alt: true, ctrl: false, shift: false, label: 'Jump to Question 5', category: 'Question Jump' },
-  jumpQuestion6: { key: '6', alt: true, ctrl: false, shift: false, label: 'Jump to Question 6', category: 'Question Jump' },
-  jumpQuestion7: { key: '7', alt: true, ctrl: false, shift: false, label: 'Jump to Question 7', category: 'Question Jump' },
-  jumpQuestion8: { key: '8', alt: true, ctrl: false, shift: false, label: 'Jump to Question 8', category: 'Question Jump' },
-  jumpQuestion9: { key: '9', alt: true, ctrl: false, shift: false, label: 'Jump to Question 9', category: 'Question Jump' },
 };
 
 export const ShortcutProvider = ({ children }) => {

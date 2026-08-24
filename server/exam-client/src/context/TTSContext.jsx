@@ -5,7 +5,16 @@ import { announceToScreenReader } from '../utils/ariaAnnounce';
 export const TTSContext = createContext(null);
 
 export const TTSProvider = ({ children }) => {
-  const { ttsEnabled, ttsSpeed, ttsPitch, ttsVolume, ttsVoiceURI, voices } = useAccessibility();
+  const {
+    ttsEnabled,
+    ttsSpeed,
+    ttsPitch,
+    ttsVolume,
+    ttsVoiceURI,
+    voices,
+    screenReaderMode,
+    isMicActive,
+  } = useAccessibility();
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -34,6 +43,33 @@ export const TTSProvider = ({ children }) => {
         return;
       }
 
+      if (!text || !text.trim()) return;
+
+      const cleanText = text.trim();
+      lastSpokenTextRef.current = cleanText;
+
+      // Rule 1: Desktop Screen Reader Mode (e.g. Orca on Linux).
+      // Suppress browser Web Speech synthesis and route output exclusively to ARIA live regions
+      // to avoid dual-voice collision.
+      if (screenReaderMode) {
+        if (label) {
+          announceToScreenReader(`${label}: ${cleanText}`);
+        } else {
+          announceToScreenReader(cleanText);
+        }
+        return;
+      }
+
+      // Rule 2: Speech-to-Text Microphone Mutual Exclusion.
+      // If the candidate is currently dictating into the microphone, suppress speaker audio
+      // to avoid acoustic feedback loops into the mic.
+      if (isMicActive) {
+        if (label) {
+          announceToScreenReader(label);
+        }
+        return;
+      }
+
       if (!ttsEnabled) {
         announceToScreenReader('Text-to-speech is currently disabled in accessibility settings.');
         return;
@@ -48,10 +84,6 @@ export const TTSProvider = ({ children }) => {
 
       setIsSpeaking(false);
       setIsPaused(false);
-
-      if (!text || !text.trim()) return;
-
-      const cleanText = text.trim();
       const utterance = new SpeechSynthesisUtterance(cleanText);
 
       // Clamp speed and pitch to safe bounds to avoid Linux system voice distortion in Firefox
@@ -132,7 +164,7 @@ export const TTSProvider = ({ children }) => {
         }
       }, 50);
     },
-    [ttsEnabled, ttsSpeed, ttsPitch, ttsVolume, ttsVoiceURI, voices]
+    [ttsEnabled, ttsSpeed, ttsPitch, ttsVolume, ttsVoiceURI, voices, screenReaderMode, isMicActive]
   );
 
 
@@ -157,6 +189,10 @@ export const TTSProvider = ({ children }) => {
   }, []);
 
   const togglePauseResume = useCallback(() => {
+    if (screenReaderMode) {
+      announceToScreenReader('Screen reader mode is active. Browser voice reader is muted.');
+      return;
+    }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       if (window.speechSynthesis.paused) {
         resumeSpeech();
@@ -164,7 +200,7 @@ export const TTSProvider = ({ children }) => {
         pauseSpeech();
       }
     }
-  }, [pauseSpeech, resumeSpeech]);
+  }, [screenReaderMode, pauseSpeech, resumeSpeech]);
 
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {

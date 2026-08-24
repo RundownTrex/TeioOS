@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAccessibility } from '../../hooks/useAccessibility';
 import { useTTS } from '../../hooks/useTTS';
 import { useShortcuts } from '../../hooks/useShortcuts';
 import { Modal } from '../ui/Modal';
+import { Tabs, TabList, Tab, TabPanel } from '../ui/Tabs';
 import { RadioGroup } from '../ui/RadioGroup';
 import { Switch } from '../ui/Switch';
 import { Button } from '../ui/Button';
@@ -19,7 +20,8 @@ import {
   RotateCcw,
   Sparkles,
   Keyboard,
-  ZapOff,
+  ShieldCheck,
+  Eye,
 } from 'lucide-react';
 
 export const AccessibilityModal = () => {
@@ -27,6 +29,7 @@ export const AccessibilityModal = () => {
     isModalOpen,
     closeModal,
     profile,
+    screenReaderMode,
     applyProfile,
     theme,
     fontScale,
@@ -48,6 +51,7 @@ export const AccessibilityModal = () => {
     setLetterSpacing,
     toggleDyslexicFont,
     toggleReducedMotion,
+    toggleScreenReaderMode,
     setTtsSpeed,
     setTtsPitch,
     setTtsVolume,
@@ -62,9 +66,11 @@ export const AccessibilityModal = () => {
     useTTS();
 
   const { openHelp } = useShortcuts();
+  const [activeTab, setActiveTab] = useState('profiles');
 
   const profileOptions = [
     { value: 'default', label: 'Default Baseline', description: 'Standard academic light theme and normal typography' },
+    { value: 'screenreader', label: 'Screen Reader Profile (Orca / NVDA)', description: 'Optimized for blind candidates. Suppresses browser TTS and maximizes semantic ARIA landmarks' },
     { value: 'vision', label: 'High Vision Profile', description: 'WCAG AAA High Contrast dark, 150% font scale & wide spacing' },
     { value: 'motor', label: 'Motor Accessibility Profile', description: '125% font scale, relaxed spacing & reduced animations' },
     { value: 'cognitive', label: 'Cognitive & Dyslexia Profile', description: 'Lexend legibility font, loose 2.0x line height & wide tracking' },
@@ -93,7 +99,7 @@ export const AccessibilityModal = () => {
   const themeOptions = [
     { value: 'default', label: 'Standard Light Mode', description: 'Calm academic paper canvas (#F8FAF9)' },
     { value: 'dark', label: 'Dark Mode', description: 'Reduced glare for dark environments' },
-    { value: 'high-contrast', label: 'High Contrast Dark', description: 'WCAG AAA black canvas (#000000) & yellow highlights' },
+    { value: 'high-contrast', label: 'High Contrast Dark (WCAG AAA)', description: 'True black canvas (#000000) & yellow highlights' },
   ];
 
   const sttLangOptions = [
@@ -112,7 +118,7 @@ export const AccessibilityModal = () => {
 
   const handleTestVoice = () => {
     speakText(
-      'TeioOS text-to-speech test announcement. Web Speech API engine working correctly.',
+      'TeioOS text-to-speech voice verification. Speech engine is operating correctly.',
       'Voice Test Sample'
     );
   };
@@ -143,7 +149,7 @@ export const AccessibilityModal = () => {
           Shortcuts (Alt+H)
         </Button>
         <Button variant="primary" size="md" onClick={closeModal}>
-          Apply & Return
+          Apply & Close (Esc)
         </Button>
       </div>
     </div>
@@ -157,127 +163,163 @@ export const AccessibilityModal = () => {
       footer={footerActions}
       size="lg"
     >
-      <div className="space-y-6 select-none max-h-[70vh] overflow-y-auto pr-1">
-        {/* 0. Preset Accessibility Profiles */}
-        <section aria-labelledby="profile-heading">
-          <div className="flex items-center gap-2 mb-3 text-navy-primary font-bold text-sm uppercase tracking-wider">
-            <Sparkles className="w-4 h-4" aria-hidden="true" />
-            <h3 id="profile-heading">Quick Accessibility Profiles</h3>
+      <Tabs defaultValue={activeTab} value={activeTab} onChange={setActiveTab}>
+        {/* Category Navigation Tabs */}
+        <TabList ariaLabel="Accessibility preference categories">
+          <Tab value="profiles" icon={Sparkles}>Profiles</Tab>
+          <Tab value="display" icon={Type}>Display</Tab>
+          <Tab value="speech" icon={Volume2}>Speech & Audio</Tab>
+          <Tab value="dictation" icon={Mic}>Dictation</Tab>
+        </TabList>
+
+        {/* ── TAB 1: PRESET PROFILES ── */}
+        <TabPanel value="profiles" className="space-y-4">
+          <div>
+            <h3 className="text-sm font-bold text-navy-primary uppercase tracking-wide mb-1">
+              One-Click Accessibility Profiles
+            </h3>
+            <p className="text-xs text-text-muted mb-3">
+              Select a preset designed for your specific assistive requirements, or customize individual settings in the other tabs.
+            </p>
           </div>
+
           <RadioGroup
             name="accessibilityProfile"
             options={profileOptions}
             value={profile || 'default'}
             onChange={(val) => applyProfile(val)}
           />
-        </section>
 
-        <Divider />
-
-        {/* 1. Font Size Scaling */}
-        <section aria-labelledby="font-scale-heading">
-          <div className="flex items-center gap-2 mb-3 text-navy-primary font-bold text-sm uppercase tracking-wider">
-            <Type className="w-4 h-4" aria-hidden="true" />
-            <h3 id="font-scale-heading">Font Size Scaling</h3>
+          <div className="p-3.5 bg-subtle/50 border border-border-main rounded-lg flex items-start gap-2.5 text-xs text-text-main">
+            <ShieldCheck className="w-4 h-4 text-navy-primary shrink-0 mt-0.5" aria-hidden="true" />
+            <p>
+              Applying a profile instantly updates all contrast, typography, and speech engine settings across the examination client without reloading the page.
+            </p>
           </div>
-          <RadioGroup
-            name="fontScale"
-            options={fontOptions}
-            value={String(fontScale)}
-            onChange={(val) => setFontScale(Number(val))}
-          />
-        </section>
+        </TabPanel>
 
-        <Divider />
+        {/* ── TAB 2: DISPLAY & TYPOGRAPHY ── */}
+        <TabPanel value="display" className="space-y-5 max-h-[60vh] overflow-y-auto pr-1">
+          {/* Theme selection */}
+          <section aria-labelledby="theme-heading" className="space-y-3">
+            <div className="flex items-center gap-2 text-navy-primary font-bold text-xs uppercase tracking-wider">
+              <Sun className="w-4 h-4" aria-hidden="true" />
+              <h3 id="theme-heading">Color Contrast Theme</h3>
+            </div>
+            <RadioGroup
+              name="theme"
+              options={themeOptions}
+              value={theme}
+              onChange={(val) => setTheme(val)}
+            />
+          </section>
 
-        {/* 2. Line Height & Letter Spacing */}
-        <section aria-labelledby="spacing-heading" className="space-y-4">
-          <div className="flex items-center gap-2 text-navy-primary font-bold text-sm uppercase tracking-wider">
-            <Sparkles className="w-4 h-4" aria-hidden="true" />
-            <h3 id="spacing-heading">Typography Spacing & Legibility</h3>
-          </div>
+          <Divider />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <span className="text-xs font-bold text-text-main uppercase tracking-wider mb-2 block">
-                Line Height (Vertical):
-              </span>
-              <RadioGroup
-                name="lineHeight"
-                options={lineHeightOptions}
-                value={lineHeight}
-                onChange={(val) => setLineHeight(val)}
-              />
+          {/* Font Scaling */}
+          <section aria-labelledby="font-scale-heading" className="space-y-3">
+            <div className="flex items-center gap-2 text-navy-primary font-bold text-xs uppercase tracking-wider">
+              <Eye className="w-4 h-4" aria-hidden="true" />
+              <h3 id="font-scale-heading">Font Size Scaling</h3>
+            </div>
+            <RadioGroup
+              name="fontScale"
+              options={fontOptions}
+              value={String(fontScale)}
+              onChange={(val) => setFontScale(Number(val))}
+            />
+          </section>
+
+          <Divider />
+
+          {/* Spacing & Legibility */}
+          <section aria-labelledby="spacing-heading" className="space-y-3">
+            <div className="flex items-center gap-2 text-navy-primary font-bold text-xs uppercase tracking-wider">
+              <Type className="w-4 h-4" aria-hidden="true" />
+              <h3 id="spacing-heading">Typography Spacing & Dyslexia Support</h3>
             </div>
 
-            <div>
-              <span className="text-xs font-bold text-text-main uppercase tracking-wider mb-2 block">
-                Letter Spacing (Tracking):
-              </span>
-              <RadioGroup
-                name="letterSpacing"
-                options={letterSpacingOptions}
-                value={letterSpacing}
-                onChange={(val) => setLetterSpacing(val)}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <span className="text-xs font-bold text-text-main uppercase tracking-wider mb-1.5 block">
+                  Line Spacing (Vertical):
+                </span>
+                <RadioGroup
+                  name="lineHeight"
+                  options={lineHeightOptions}
+                  value={lineHeight}
+                  onChange={(val) => setLineHeight(val)}
+                />
+              </div>
+
+              <div>
+                <span className="text-xs font-bold text-text-main uppercase tracking-wider mb-1.5 block">
+                  Letter Spacing (Tracking):
+                </span>
+                <RadioGroup
+                  name="letterSpacing"
+                  options={letterSpacingOptions}
+                  value={letterSpacing}
+                  onChange={(val) => setLetterSpacing(val)}
+                />
+              </div>
+            </div>
+
+            <div className="p-3 border border-border-main bg-subtle/40 rounded-lg space-y-2 mt-2">
+              <Switch
+                id="dyslexic-font-switch"
+                label="Dyslexia-Friendly Font (Lexend / High Legibility)"
+                checked={dyslexicFont}
+                onChange={toggleDyslexicFont}
+              />
+              <Switch
+                id="reduced-motion-switch"
+                label="Reduce Motion & Disable Animations"
+                checked={reducedMotion}
+                onChange={toggleReducedMotion}
               />
             </div>
-          </div>
+          </section>
+        </TabPanel>
 
-          {/* Dyslexia Friendly Font Switch */}
-          <div className="p-3.5 border border-border-main bg-subtle/50 rounded-lg mt-3">
+        {/* ── TAB 3: SPEECH & AUDIO ── */}
+        <TabPanel value="speech" className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+          {/* Screen Reader Mode Banner */}
+          <div className="p-3.5 bg-surface border border-border-strong rounded-xl space-y-2 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-navy-primary uppercase tracking-wider flex items-center gap-1.5">
+                <Volume2 className="w-4 h-4" aria-hidden="true" />
+                Screen Reader Compatibility
+              </span>
+            </div>
             <Switch
-              id="dyslexic-font-switch"
-              label="Enable Dyslexia-Friendly Font (Lexend / High Legibility)"
-              checked={dyslexicFont}
-              onChange={toggleDyslexicFont}
+              id="screen-reader-mode-switch"
+              label="Desktop Screen Reader Mode (Orca / NVDA / VoiceOver)"
+              checked={screenReaderMode}
+              onChange={toggleScreenReaderMode}
             />
-          </div>
-        </section>
-
-        <Divider />
-
-        {/* 3. Color Contrast Theme & Motion */}
-        <section aria-labelledby="theme-heading" className="space-y-4">
-          <div className="flex items-center gap-2 text-navy-primary font-bold text-sm uppercase tracking-wider">
-            <Sun className="w-4 h-4" aria-hidden="true" />
-            <h3 id="theme-heading">Color Contrast & Motion Preferences</h3>
+            <p className="text-[11px] text-text-muted leading-relaxed">
+              When active, browser synthetic speech is muted to prevent audio collision with your desktop screen reader. All updates are routed to native ARIA live regions.
+            </p>
           </div>
 
-          <RadioGroup
-            name="theme"
-            options={themeOptions}
-            value={theme}
-            onChange={(val) => setTheme(val)}
-          />
-
-          <div className="p-3.5 border border-border-main bg-subtle/50 rounded-lg">
-            <Switch
-              id="reduced-motion-switch"
-              label="Reduce Animations & Motion (Disable Smooth Transitions)"
-              checked={reducedMotion}
-              onChange={toggleReducedMotion}
-            />
-          </div>
-        </section>
-
-        <Divider />
-
-        {/* 4. Text-to-Speech (TTS) Browser Engine Preferences */}
-        <section aria-labelledby="tts-heading" className="space-y-4">
-          <div className="flex items-center gap-2 text-navy-primary font-bold text-sm uppercase tracking-wider">
-            <Volume2 className="w-4 h-4" aria-hidden="true" />
-            <h3 id="tts-heading">Text-to-Speech (TTS) Voice Engine</h3>
-          </div>
-
-          <div className="p-4 border border-border-main bg-subtle/50 rounded-lg space-y-4">
+          {/* In-browser TTS settings */}
+          <div className="p-4 border border-border-main bg-subtle/40 rounded-xl space-y-4">
             <Switch
               id="tts-enable-switch"
-              label="Enable Screen Voice Reader (TTS)"
-              checked={ttsEnabled}
+              label="Enable In-Browser Voice Reader (Web Speech TTS)"
+              checked={ttsEnabled && !screenReaderMode}
+              disabled={screenReaderMode}
               onChange={toggleTTS}
             />
 
-            {ttsEnabled && (
+            {screenReaderMode && (
+              <p className="text-xs text-amber-700 dark:text-amber-300 font-medium">
+                Note: In-browser voice reader is paused because Desktop Screen Reader Mode is currently active.
+              </p>
+            )}
+
+            {ttsEnabled && !screenReaderMode && (
               <div className="space-y-4 pt-3 border-t border-border-main text-xs">
                 {/* Voice Selection */}
                 {voices.length > 0 && (
@@ -307,8 +349,12 @@ export const AccessibilityModal = () => {
                     max="2.0"
                     step="0.1"
                     value={ttsSpeed}
+                    aria-valuemin={0.5}
+                    aria-valuemax={2.0}
+                    aria-valuenow={ttsSpeed}
+                    aria-valuetext={`${ttsSpeed.toFixed(1)} times normal speed`}
                     onChange={(e) => setTtsSpeed(e.target.value)}
-                    className="w-full accent-navy-primary cursor-pointer focus-visible:outline-none"
+                    className="w-full accent-navy-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 rounded-sm"
                   />
                 </div>
 
@@ -328,8 +374,12 @@ export const AccessibilityModal = () => {
                     max="1.5"
                     step="0.1"
                     value={ttsPitch}
+                    aria-valuemin={0.5}
+                    aria-valuemax={1.5}
+                    aria-valuenow={ttsPitch}
+                    aria-valuetext={`Pitch level ${ttsPitch.toFixed(1)}`}
                     onChange={(e) => setTtsPitch(e.target.value)}
-                    className="w-full accent-navy-primary cursor-pointer focus-visible:outline-none"
+                    className="w-full accent-navy-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 rounded-sm"
                   />
                 </div>
 
@@ -349,15 +399,19 @@ export const AccessibilityModal = () => {
                     max="1.0"
                     step="0.05"
                     value={ttsVolume}
+                    aria-valuemin={0.0}
+                    aria-valuemax={1.0}
+                    aria-valuenow={ttsVolume}
+                    aria-valuetext={`Volume ${Math.round(ttsVolume * 100)} percent`}
                     onChange={(e) => setTtsVolume(e.target.value)}
-                    className="w-full accent-navy-primary cursor-pointer focus-visible:outline-none"
+                    className="w-full accent-navy-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 rounded-sm"
                   />
                 </div>
 
-                {/* Live Controls Panel */}
+                {/* Live Controls */}
                 <div className="pt-3 border-t border-border-main space-y-2">
                   <span className="font-bold text-text-main uppercase tracking-wider block text-[11px]">
-                    Speech Engine Live Controls:
+                    Live Voice Controls:
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
@@ -415,21 +469,23 @@ export const AccessibilityModal = () => {
               </div>
             )}
           </div>
-        </section>
+        </TabPanel>
 
-        <Divider />
-
-        {/* 5. Speech-to-Text (STT) Preferences (Descriptive Questions Only) */}
-        <section aria-labelledby="stt-heading" className="space-y-4">
-          <div className="flex items-center gap-2 text-navy-primary font-bold text-sm uppercase tracking-wider">
-            <Mic className="w-4 h-4" aria-hidden="true" />
-            <h3 id="stt-heading">Speech-to-Text (STT) Voice Dictation</h3>
+        {/* ── TAB 4: SPEECH DICTATION (STT) ── */}
+        <TabPanel value="dictation" className="space-y-4">
+          <div>
+            <h3 className="text-sm font-bold text-navy-primary uppercase tracking-wide mb-1">
+              Speech-to-Text Voice Dictation
+            </h3>
+            <p className="text-xs text-text-muted mb-3">
+              Dictate answers hands-free for descriptive essay questions.
+            </p>
           </div>
 
-          <div className="p-4 border border-border-main bg-subtle/50 rounded-lg space-y-4">
+          <div className="p-4 border border-border-main bg-subtle/50 rounded-xl space-y-4">
             <Switch
               id="stt-enable-switch"
-              label="Enable Speech Dictation (Descriptive Answers Only)"
+              label="Enable Speech Dictation (Descriptive Questions Only)"
               checked={sttEnabled}
               onChange={toggleSTT}
             />
@@ -444,14 +500,14 @@ export const AccessibilityModal = () => {
                   value={sttLanguage}
                   onChange={(e) => setSttLanguage(e.target.value)}
                 />
-                <p className="text-[11px] text-text-muted">
-                  Note: Speech-to-Text dictation operates exclusively for descriptive essay questions and will not activate for multiple-choice (MCQ) answers.
+                <p className="text-[11px] text-text-muted leading-relaxed">
+                  Speech-to-Text operates exclusively for descriptive essay questions (hotkey <kbd className="px-1 py-0.5 font-mono bg-surface border border-border-main rounded text-[10px]">Alt+D</kbd>). When active, microphone audio is transcribed directly into the active text area.
                 </p>
               </div>
             )}
           </div>
-        </section>
-      </div>
+        </TabPanel>
+      </Tabs>
     </Modal>
   );
 };

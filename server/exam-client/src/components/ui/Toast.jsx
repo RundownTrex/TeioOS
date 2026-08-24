@@ -16,9 +16,9 @@ export const Toast = ({
   }, [duration, onClose]);
 
   const icons = {
-    info: <Info className="w-5 h-5 text-blue-500 shrink-0" />,
-    success: <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />,
-    error: <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />,
+    info: <Info className="w-5 h-5 text-blue-500 shrink-0" aria-hidden="true" />,
+    success: <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" aria-hidden="true" />,
+    error: <AlertCircle className="w-5 h-5 text-red-500 shrink-0" aria-hidden="true" />,
   };
 
   return (
@@ -34,9 +34,9 @@ export const Toast = ({
           type="button"
           onClick={onClose}
           aria-label="Close notification"
-          className="p-1 rounded text-text-muted hover:text-text-main hover:bg-subtle transition-colors focus-visible:outline-none"
+          className="p-1 rounded text-text-muted hover:text-text-main hover:bg-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4" aria-hidden="true" />
         </button>
       )}
     </div>

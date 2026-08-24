@@ -51,6 +51,16 @@ export const QuestionPalette = ({
     return indices;
   }, [totalQuestions, activeFilter, getQuestionStatus]);
 
+  // Chunk visible indices into rows of 5 for proper ARIA grid semantics
+  const gridRows = useMemo(() => {
+    const rows = [];
+    const COLS = 5;
+    for (let i = 0; i < visibleIndices.length; i += COLS) {
+      rows.push(visibleIndices.slice(i, i + COLS));
+    }
+    return rows;
+  }, [visibleIndices]);
+
   // Keyboard grid navigation (5 columns)
   const handleGridKeyDown = (e, currentIdx) => {
     const COLS = 5;
@@ -157,19 +167,23 @@ export const QuestionPalette = ({
         aria-label="Question palette grid"
         className="flex-1 min-h-0 overflow-y-auto"
       >
-        {visibleIndices.length > 0 ? (
-          <div role="row" className="grid grid-cols-5 gap-2 p-1">
-            {visibleIndices.map((idx) => (
-              <QuestionTile
-                key={idx}
-                index={idx}
-                status={getQuestionStatus(idx)}
-                isActive={currentIndex === idx}
-                onClick={() => onSelectQuestion && onSelectQuestion(idx)}
-                onKeyDown={(e) => handleGridKeyDown(e, idx)}
-                isDisabled={isDisabled}
-                data-question-idx={idx}
-              />
+        {gridRows.length > 0 ? (
+          <div className="flex flex-col gap-2 p-1">
+            {gridRows.map((rowIndices, rowIdx) => (
+              <div key={rowIdx} role="row" className="grid grid-cols-5 gap-2">
+                {rowIndices.map((idx) => (
+                  <QuestionTile
+                    key={idx}
+                    index={idx}
+                    status={getQuestionStatus(idx)}
+                    isActive={currentIndex === idx}
+                    onClick={() => onSelectQuestion && onSelectQuestion(idx)}
+                    onKeyDown={(e) => handleGridKeyDown(e, idx)}
+                    isDisabled={isDisabled}
+                    data-question-idx={idx}
+                  />
+                ))}
+              </div>
             ))}
           </div>
         ) : (

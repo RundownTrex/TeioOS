@@ -7,6 +7,7 @@ export const AccessibilityContext = createContext(null);
 
 const DEFAULT_SETTINGS = {
   profile: 'default',
+  screenReaderMode: false,
   theme: THEMES.DEFAULT,
   fontScale: 100,
   lineHeight: 'normal',
@@ -30,6 +31,7 @@ export const AccessibilityProvider = ({ children }) => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [voices, setVoices] = useState([]);
+  const [isMicActive, setIsMicActive] = useState(false);
 
   // Fetch browser speech synthesis voices natively with cross-browser fallback handling
   useEffect(() => {
@@ -87,9 +89,11 @@ export const AccessibilityProvider = ({ children }) => {
     root.setAttribute('data-letter-spacing', settings.letterSpacing);
     root.setAttribute('data-dyslexic-font', settings.dyslexicFont ? 'true' : 'false');
     root.setAttribute('data-reduced-motion', settings.reducedMotion ? 'true' : 'false');
+    root.setAttribute('data-screen-reader-mode', settings.screenReaderMode ? 'true' : 'false');
+    root.setAttribute('data-mic-active', isMicActive ? 'true' : 'false');
 
     setItem(STORAGE_KEYS.ACCESSIBILITY_SETTINGS, settings, localStorage);
-  }, [settings]);
+  }, [settings, isMicActive]);
 
   const openModal = useCallback(() => setIsModalOpen(true), []);
   const closeModal = useCallback(() => setIsModalOpen(false), []);
@@ -128,6 +132,31 @@ export const AccessibilityProvider = ({ children }) => {
       const next = !prev.reducedMotion;
       announceToScreenReader(`Animation reduction toggled ${next ? 'on' : 'off'}`);
       return { ...prev, reducedMotion: next };
+    });
+  };
+
+  const toggleScreenReaderMode = () => {
+    setSettings((prev) => {
+      const next = !prev.screenReaderMode;
+      announceToScreenReader(
+        next
+          ? 'Screen reader mode enabled. Browser text-to-speech is muted to avoid conflicting with your desktop screen reader.'
+          : 'Screen reader mode disabled. Browser text-to-speech is available.'
+      );
+      return { ...prev, screenReaderMode: next };
+    });
+  };
+
+  const setScreenReaderMode = (enabled) => {
+    setSettings((prev) => {
+      const next = Boolean(enabled);
+      if (prev.screenReaderMode === next) return prev;
+      announceToScreenReader(
+        next
+          ? 'Screen reader mode enabled. Browser text-to-speech is muted to avoid conflicting with your desktop screen reader.'
+          : 'Screen reader mode disabled. Browser text-to-speech is available.'
+      );
+      return { ...prev, screenReaderMode: next };
     });
   };
 
@@ -175,10 +204,25 @@ export const AccessibilityProvider = ({ children }) => {
 
   const applyProfile = (profileKey) => {
     switch (profileKey) {
+      case 'screenreader':
+        setSettings((prev) => ({
+          ...prev,
+          profile: 'screenreader',
+          screenReaderMode: true,
+          theme: THEMES.HIGH_CONTRAST,
+          fontScale: 150,
+          lineHeight: 'relaxed',
+          letterSpacing: 'wide',
+          ttsEnabled: false,
+          reducedMotion: true,
+        }));
+        announceToScreenReader('Applied Screen Reader Accessibility Profile. Desktop screen reader mode active.');
+        break;
       case 'vision':
         setSettings((prev) => ({
           ...prev,
           profile: 'vision',
+          screenReaderMode: false,
           theme: THEMES.HIGH_CONTRAST,
           fontScale: 150,
           lineHeight: 'relaxed',
@@ -191,6 +235,7 @@ export const AccessibilityProvider = ({ children }) => {
         setSettings((prev) => ({
           ...prev,
           profile: 'motor',
+          screenReaderMode: false,
           fontScale: 125,
           reducedMotion: true,
           lineHeight: 'relaxed',
@@ -201,6 +246,7 @@ export const AccessibilityProvider = ({ children }) => {
         setSettings((prev) => ({
           ...prev,
           profile: 'cognitive',
+          screenReaderMode: false,
           dyslexicFont: true,
           fontScale: 110,
           lineHeight: 'loose',
@@ -226,6 +272,7 @@ export const AccessibilityProvider = ({ children }) => {
 
   const value = {
     profile: settings.profile,
+    screenReaderMode: settings.screenReaderMode,
     theme: settings.theme,
     fontScale: settings.fontScale,
     lineHeight: settings.lineHeight,
@@ -240,11 +287,15 @@ export const AccessibilityProvider = ({ children }) => {
     voices,
     sttEnabled: settings.sttEnabled,
     sttLanguage: settings.sttLanguage,
+    isMicActive,
+    setIsMicActive,
     isModalOpen,
     openModal,
     closeModal,
     toggleModal,
     applyProfile,
+    toggleScreenReaderMode,
+    setScreenReaderMode,
     setTheme,
     setFontScale,
     setLineHeight,

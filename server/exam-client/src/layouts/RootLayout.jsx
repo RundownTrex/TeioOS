@@ -2,17 +2,30 @@ import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { SkipLinks } from '../components/layout/SkipLinks';
 import { AccessibilityModal } from '../components/accessibility/AccessibilityModal';
-import { ShortcutHelpModal } from '../components/accessibility/ShortcutHelpModal';
+import { ShortcutHelpModal, AUDIO_SHORTCUTS_TOUR } from '../components/accessibility/ShortcutHelpModal';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useAccessibility } from '../hooks/useAccessibility';
+import { useTTS } from '../hooks/useTTS';
 import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 export const RootLayout = () => {
   const location = useLocation();
   const { registerHandler, unregisterHandler } = useShortcuts();
   const { isModalOpen, toggleModal } = useAccessibility();
+  const { speakText, stopSpeech, isSpeaking } = useTTS();
 
-  // Register global accessibility shortcut (Alt+A) on mount so it works on every page
+  // Initial auditory orientation cue when candidate loads the exam platform
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      announceToScreenReader(
+        'Welcome to TeioOS Examination Platform. Press Alt+H for keyboard shortcuts, Alt+I to hear the complete spoken audio tour, or Tab to navigate.',
+        'polite'
+      );
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Register global accessibility (Alt+A) and audio tour (Alt+I) shortcuts
   useEffect(() => {
     registerHandler('accessibility', () => {
       const willOpen = !isModalOpen;
@@ -22,10 +35,19 @@ export const RootLayout = () => {
       );
     });
 
+    registerHandler('audioTour', () => {
+      if (isSpeaking) {
+        stopSpeech();
+      } else {
+        speakText(AUDIO_SHORTCUTS_TOUR, 'Audio Navigation Guide');
+      }
+    });
+
     return () => {
       unregisterHandler('accessibility');
+      unregisterHandler('audioTour');
     };
-  }, [registerHandler, unregisterHandler, toggleModal, isModalOpen]);
+  }, [registerHandler, unregisterHandler, toggleModal, isModalOpen, speakText, stopSpeech, isSpeaking]);
 
   // Automatic Screen Reader Announcement on Route Page Change
   useEffect(() => {

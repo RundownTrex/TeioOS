@@ -10,7 +10,7 @@ export const MCQRenderer = ({
   className = '',
 }) => {
   const { speakText } = useTTS();
-  const getPrefix = (index) => String.fromCharCode(65 + index);
+  const getPrefix = (option, index) => option?.prefix || String.fromCharCode(65 + index);
 
   const handleOptionSelect = (optionId, prefix, text) => {
     if (isDisabled) return;
@@ -19,15 +19,14 @@ export const MCQRenderer = ({
   };
 
   return (
-    <div
-      role="radiogroup"
-      aria-label="Multiple choice answer options"
-      className={`flex flex-col gap-3 my-3 ${className}`}
+    <fieldset
+      className={`border-0 p-0 m-0 flex flex-col gap-3 my-3 ${className}`}
     >
+      <legend className="sr-only">Multiple choice answer options</legend>
       {options.map((option, idx) => {
         const optionId = `${questionName}-opt-${option.id || idx}`;
         const isSelected = String(selectedOptionId) === String(option.id);
-        const prefix = getPrefix(idx);
+        const prefix = getPrefix(option, idx);
         const text = option.text || option.option_text || '';
 
         return (
@@ -71,7 +70,7 @@ export const MCQRenderer = ({
           </label>
         );
       })}
-    </div>
+    </fieldset>
   );
 };
 

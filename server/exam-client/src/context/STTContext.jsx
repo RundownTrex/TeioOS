@@ -7,7 +7,7 @@ import { API_ENDPOINTS } from '../api/endpoints';
 export const STTContext = createContext(null);
 
 export const STTProvider = ({ children }) => {
-  const { sttEnabled, sttLanguage } = useAccessibility();
+  const { sttEnabled, sttLanguage, setIsMicActive } = useAccessibility();
 
   const [isSupported, setIsSupported] = useState(true);
   const [dictationMode, setDictationMode] = useState('native'); // 'native' | 'audio_recorder'
@@ -49,6 +49,7 @@ export const STTProvider = ({ children }) => {
   // Cleanup active audio/recognition streams on unmount
   useEffect(() => {
     return () => {
+      if (setIsMicActive) setIsMicActive(false);
       if (recognitionRef.current) {
         shouldRestartRef.current = false;
         try {
@@ -78,7 +79,7 @@ export const STTProvider = ({ children }) => {
         }
       }
     };
-  }, []);
+  }, [setIsMicActive]);
 
   const stopAudioRecorderStream = useCallback(() => {
     if (animFrameRef.current) {
@@ -103,6 +104,7 @@ export const STTProvider = ({ children }) => {
 
   const stopDictation = useCallback(() => {
     shouldRestartRef.current = false;
+    if (setIsMicActive) setIsMicActive(false);
 
     if (dictationMode === 'native' && recognitionRef.current) {
       try {
@@ -125,10 +127,11 @@ export const STTProvider = ({ children }) => {
     setIsPaused(false);
     setInterimTranscript('');
     announceToScreenReader('Speech to text dictation stopped');
-  }, [dictationMode, stopAudioRecorderStream]);
+  }, [dictationMode, stopAudioRecorderStream, setIsMicActive]);
 
   const pauseDictation = useCallback(() => {
     shouldRestartRef.current = false;
+    if (setIsMicActive) setIsMicActive(false);
 
     if (dictationMode === 'native' && recognitionRef.current) {
       try {
@@ -149,7 +152,7 @@ export const STTProvider = ({ children }) => {
     setIsListening(false);
     setIsPaused(true);
     announceToScreenReader('Speech to text dictation paused');
-  }, [dictationMode]);
+  }, [dictationMode, setIsMicActive]);
 
   // Audio Level Meter Analyzer for Web Audio
   const setupAudioMeter = (stream) => {
@@ -230,6 +233,7 @@ export const STTProvider = ({ children }) => {
           setIsListening(true);
           setIsPaused(false);
           shouldRestartRef.current = true;
+          if (setIsMicActive) setIsMicActive(true);
           announceToScreenReader(`Native dictation active in ${recognition.lang}. Speak your descriptive response.`);
         };
 
@@ -276,11 +280,13 @@ export const STTProvider = ({ children }) => {
           if (event.error === 'not-allowed' || event.error === 'permission-denied') {
             errorMsg = 'Microphone permission denied. Please allow microphone access in browser.';
             shouldRestartRef.current = false;
+            if (setIsMicActive) setIsMicActive(false);
           } else if (event.error === 'no-speech') {
             errorMsg = 'No speech detected. Microphone is listening...';
           } else if (event.error === 'audio-capture') {
             errorMsg = 'No microphone device found on your computer.';
             shouldRestartRef.current = false;
+            if (setIsMicActive) setIsMicActive(false);
           } else if (event.error === 'network') {
             // Network fallback: Switch to MediaRecorder audio dictation mode
             console.warn('WebSpeech network error. Falling back to Firefox Audio Dictation mode...');
@@ -300,9 +306,11 @@ export const STTProvider = ({ children }) => {
               recognition.start();
             } catch (err) {
               setIsListening(false);
+              if (setIsMicActive) setIsMicActive(false);
             }
           } else {
             setIsListening(false);
+            if (setIsMicActive) setIsMicActive(false);
           }
         };
 
@@ -312,6 +320,7 @@ export const STTProvider = ({ children }) => {
           recognition.start();
         } catch (err) {
           setError('Failed to start microphone speech recognition.');
+          if (setIsMicActive) setIsMicActive(false);
         }
         return;
       }
@@ -324,6 +333,7 @@ export const STTProvider = ({ children }) => {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           setError('Speech Recognition and Microphone Media API are unsupported in this browser.');
           announceToScreenReader('Speech Recognition is unsupported in this browser.', 'assertive');
+          if (setIsMicActive) setIsMicActive(false);
           return;
         }
 
@@ -353,12 +363,14 @@ export const STTProvider = ({ children }) => {
             setIsListening(true);
             setIsPaused(false);
             shouldRestartRef.current = true;
+            if (setIsMicActive) setIsMicActive(true);
             announceToScreenReader('Audio speech dictation started. Speak into your microphone.');
           };
 
           mediaRecorder.onstop = async () => {
             stopAudioRecorderStream();
             setIsListening(false);
+            if (setIsMicActive) setIsMicActive(false);
 
             if (audioChunksRef.current.length === 0) return;
 
@@ -415,10 +427,11 @@ export const STTProvider = ({ children }) => {
           setError('Microphone permission denied or microphone hardware absent.');
           announceToScreenReader('Microphone access denied.', 'assertive');
           setIsListening(false);
+          if (setIsMicActive) setIsMicActive(false);
         }
       }
     },
-    [sttEnabled, sttLanguage, stopAudioRecorderStream]
+    [sttEnabled, sttLanguage, stopAudioRecorderStream, setIsMicActive]
   );
 
   const resumeDictation = useCallback(

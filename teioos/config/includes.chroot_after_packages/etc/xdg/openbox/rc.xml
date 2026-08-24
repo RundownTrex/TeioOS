@@ -178,7 +178,7 @@
     </keybind>
     <!-- Toggle Orca Screen Reader (Alt+Super+S) -->
     <keybind key="A-W-s">
-      <action name="Execute"><command>orca --replace &amp;</command></action>
+      <action name="Execute"><command>/usr/local/bin/teioos-toggle-orca</command></action>
     </keybind>
   </keyboard>
   <mouse>

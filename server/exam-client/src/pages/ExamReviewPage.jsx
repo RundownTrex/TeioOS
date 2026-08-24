@@ -382,7 +382,7 @@ export const ExamReviewPage = () => {
                       {q.evaluator_feedback && (
                         <div className="p-3.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-text-main text-sm space-y-1">
                           <span className="font-bold text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1.5 uppercase tracking-wider">
-                            <MessageSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                            <MessageSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" aria-hidden="true" />
                             Evaluator Feedback & Comments:
                           </span>
                           <p className="whitespace-pre-wrap leading-relaxed italic">{q.evaluator_feedback}</p>

@@ -582,10 +582,82 @@ export const ActiveExamPage = () => {
 
   autoSubmitRef.current = handleAutoSubmit;
 
+  const handleSelectOptionByIndex = useCallback(
+    (optionIndex) => {
+      if (hasExpired) return;
+      if (currentQuestion?.type !== 'MCQ' || !currentQuestion?.options) return;
+      if (optionIndex < 0 || optionIndex >= currentQuestion.options.length) return;
+
+      const selectedOpt = currentQuestion.options[optionIndex];
+      if (!selectedOpt) return;
+
+      handleSelectOption(selectedOpt.id);
+      const prefix = selectedOpt.prefix || String.fromCharCode(65 + optionIndex);
+      const text = selectedOpt.text || selectedOpt.option_text || '';
+      announceToScreenReader(`Selected Option ${prefix}: ${text}`);
+      speakText(`Selected Option ${prefix}: ${text}`, 'Option Selected');
+    },
+    [hasExpired, currentQuestion, handleSelectOption, speakText]
+  );
+
+  // Spoken Question Transition Announcement whenever current question changes
+  useEffect(() => {
+    if (!currentQuestion || totalQuestions === 0) return;
+    const qType = currentQuestion.type === 'MCQ' ? 'Multiple Choice Question' : 'Descriptive Essay Question';
+    const marks = currentQuestion.marks || 1;
+    announceToScreenReader(
+      `Question ${currentIndex + 1} of ${totalQuestions}. ${qType}, ${marks} ${marks === 1 ? 'mark' : 'marks'}. ${currentQuestion.stem || ''}`
+    );
+  }, [currentIndex, currentQuestion, totalQuestions]);
+
+  // Single-key Direct Option Selection (Keys 1..8 and A..H when not typing in textarea)
+  useEffect(() => {
+    const handleDirectOptionKey = (e) => {
+      const isInputElem =
+        e.target &&
+        (e.target.tagName === 'INPUT' ||
+          e.target.tagName === 'TEXTAREA' ||
+          e.target.isContentEditable);
+
+      if (isInputElem) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+      if (currentQuestion?.type === 'MCQ' && currentQuestion?.options?.length > 0) {
+        const key = e.key.toUpperCase();
+        let idx = -1;
+
+        if (/^[1-9]$/.test(key)) {
+          idx = parseInt(key, 10) - 1;
+        } else if (/^[A-Z]$/.test(key)) {
+          idx = key.charCodeAt(0) - 65; // A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7...
+        }
+
+        if (idx >= 0 && idx < currentQuestion.options.length) {
+          e.preventDefault();
+          handleSelectOptionByIndex(idx);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleDirectOptionKey);
+    return () => window.removeEventListener('keydown', handleDirectOptionKey);
+  }, [currentQuestion, handleSelectOptionByIndex]);
+
   // Register Global Keyboard Shortcuts & Web Speech API TTS/STT Handlers
   useEffect(() => {
     registerHandler('nextQuestion', handleSaveAndNext);
     registerHandler('prevQuestion', handlePrevious);
+    
+    // Direct Option Selection (Alt+1 through Alt+8)
+    registerHandler('selectOptionA', () => handleSelectOptionByIndex(0));
+    registerHandler('selectOptionB', () => handleSelectOptionByIndex(1));
+    registerHandler('selectOptionC', () => handleSelectOptionByIndex(2));
+    registerHandler('selectOptionD', () => handleSelectOptionByIndex(3));
+    registerHandler('selectOptionE', () => handleSelectOptionByIndex(4));
+    registerHandler('selectOptionF', () => handleSelectOptionByIndex(5));
+    registerHandler('selectOptionG', () => handleSelectOptionByIndex(6));
+    registerHandler('selectOptionH', () => handleSelectOptionByIndex(7));
+
     registerHandler('markReview', handleToggleReview);
     registerHandler('clearResponse', handleClearResponse);
     registerHandler('saveResponse', handleManualSave);
@@ -636,7 +708,11 @@ export const ActiveExamPage = () => {
     registerHandler('ttsReadOptions', () => {
       if (currentQuestion?.type === 'MCQ' && currentQuestion?.options?.length > 0) {
         const optionsText = currentQuestion.options
-          .map((opt) => `Option ${opt.prefix}: ${opt.text || opt.option_text}`)
+          .map((opt, i) => {
+            const prefix = opt.prefix || String.fromCharCode(65 + i);
+            const text = opt.text || opt.option_text || '';
+            return `Option ${prefix}: ${text}`;
+          })
           .join('. ');
         speakText(`Question ${currentIndex + 1} options: ${optionsText}`, 'All Options');
       } else {
@@ -649,7 +725,10 @@ export const ActiveExamPage = () => {
       if (currentQuestion?.type === 'MCQ') {
         const selected = currentQuestion?.options?.find((opt) => String(opt.id) === String(val));
         if (selected) {
-          speakText(`Selected answer for Question ${currentIndex + 1} is Option ${selected.prefix}: ${selected.text || selected.option_text}`, 'Selected Option');
+          const selectedIdx = currentQuestion.options.findIndex((opt) => String(opt.id) === String(val));
+          const prefix = selected.prefix || String.fromCharCode(65 + selectedIdx);
+          const text = selected.text || selected.option_text || '';
+          speakText(`Selected answer for Question ${currentIndex + 1} is Option ${prefix}: ${text}`, 'Selected Option');
         } else {
           speakText(`No option currently selected for Question ${currentIndex + 1}.`, 'No Selection');
         }
@@ -667,20 +746,17 @@ export const ActiveExamPage = () => {
     registerHandler('ttsStop', stopSpeech);
     registerHandler('ttsRepeat', repeatSpeech);
 
-    // Register Alt+1 through Alt+9 question jumps
-    for (let i = 1; i <= 9; i++) {
-      registerHandler(`jumpQuestion${i}`, () => {
-        const targetIndex = i - 1;
-        if (targetIndex < totalQuestions) {
-          setCurrentIndex(targetIndex);
-          announceToScreenReader(`Jumped to Question ${i}`);
-        }
-      });
-    }
-
     return () => {
       unregisterHandler('nextQuestion');
       unregisterHandler('prevQuestion');
+      unregisterHandler('selectOptionA');
+      unregisterHandler('selectOptionB');
+      unregisterHandler('selectOptionC');
+      unregisterHandler('selectOptionD');
+      unregisterHandler('selectOptionE');
+      unregisterHandler('selectOptionF');
+      unregisterHandler('selectOptionG');
+      unregisterHandler('selectOptionH');
       unregisterHandler('markReview');
       unregisterHandler('clearResponse');
       unregisterHandler('saveResponse');
@@ -696,16 +772,13 @@ export const ActiveExamPage = () => {
       unregisterHandler('ttsPauseResume');
       unregisterHandler('ttsStop');
       unregisterHandler('ttsRepeat');
-
-      for (let i = 1; i <= 9; i++) {
-        unregisterHandler(`jumpQuestion${i}`);
-      }
     };
   }, [
     registerHandler,
     unregisterHandler,
     handleSaveAndNext,
     handlePrevious,
+    handleSelectOptionByIndex,
     handleToggleReview,
     handleClearResponse,
     handleManualSave,

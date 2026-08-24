@@ -1,0 +1,14 @@
+#!/bin/bash
+# TeioOS Screen Reader Toggle Helper Script
+# Allows candidate / invigilator to toggle Orca screen reader on/off via Alt+Super+S hotkey.
+
+if pgrep -x orca > /dev/null; then
+    pkill -x orca
+    # Brief audio feedback via espeak-ng if available
+    if command -v espeak-ng > /dev/null 2>&1; then
+        espeak-ng "Orca screen reader stopped" 2>/dev/null &
+    fi
+else
+    # Launch orca replacing any stale instances with speech-dispatcher backend
+    orca --replace &
+fi

@@ -16,12 +16,23 @@ export const Card = ({
 
   const isClickable = Boolean(onClick);
 
+  const handleKeyDown = (e) => {
+    if (isClickable && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onClick(e);
+    }
+  };
+
   return (
     <div
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? (tabIndex ?? 0) : tabIndex}
       className={`rounded-xl overflow-hidden transition-all duration-normal ease-in-out ${variants[variant] || variants.default} ${
-        isClickable ? 'cursor-pointer hover:border-navy-primary' : ''
+        isClickable
+          ? 'cursor-pointer hover:border-navy-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2'
+          : ''
       } ${className}`}
       {...props}
     >

@@ -37,18 +37,16 @@ export const RadioGroup = ({
   };
 
   return (
-    <div
+    <fieldset
       ref={containerRef}
-      role="radiogroup"
-      aria-labelledby={label ? `${groupId}-label` : undefined}
       aria-invalid={Boolean(error)}
       aria-describedby={error ? errorId : undefined}
-      className={`flex flex-col gap-2 ${className}`}
+      className={`border-0 p-0 m-0 flex flex-col gap-2 ${className}`}
     >
       {label && (
-        <span id={`${groupId}-label`} className="text-sm font-semibold text-text-main">
+        <legend className="text-sm font-semibold text-text-main mb-1.5 p-0">
           {label}
-        </span>
+        </legend>
       )}
 
       <div
@@ -107,7 +105,7 @@ export const RadioGroup = ({
           {error}
         </p>
       )}
-    </div>
+    </fieldset>
   );
 };
 

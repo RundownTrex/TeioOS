@@ -73,7 +73,7 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
               disabled={isTranscribing}
               leftIcon={
                 isTranscribing ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
                 ) : isListening ? (
                   <MicOff className="w-3.5 h-3.5 animate-pulse" aria-hidden="true" />
                 ) : (
@@ -97,7 +97,7 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
                 variant="secondary"
                 size="sm"
                 onClick={pauseDictation}
-                leftIcon={<Pause className="w-3 h-3" />}
+                leftIcon={<Pause className="w-3 h-3" aria-hidden="true" />}
               >
                 Pause
               </Button>
@@ -108,7 +108,7 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
                 variant="outline"
                 size="sm"
                 onClick={() => resumeDictation(handleStart)}
-                leftIcon={<Play className="w-3 h-3 text-navy-primary" />}
+                leftIcon={<Play className="w-3 h-3 text-navy-primary" aria-hidden="true" />}
               >
                 Resume
               </Button>
@@ -120,7 +120,7 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
             {/* Real-time Mic Level Indicator for Audio Dictation Mode */}
             {isListening && dictationMode === 'audio_recorder' && (
               <div className="hidden sm:flex items-center gap-1 text-[11px] font-mono text-text-muted" title="Microphone Input Volume Level">
-                <Radio className="w-3 h-3 text-red-600 animate-pulse" />
+                <Radio className="w-3 h-3 text-red-600 animate-pulse" aria-hidden="true" />
                 <div className="w-12 h-2 bg-surface rounded-full overflow-hidden border border-border-main">
                   <div
                     className="h-full bg-red-600 transition-all duration-75"

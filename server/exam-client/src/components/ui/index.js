@@ -24,3 +24,4 @@ export { Divider } from './Divider';
 export { Progress } from './Progress';
 export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
+export { Tabs, TabList, Tab, TabPanel } from './Tabs';

@@ -9,6 +9,7 @@ import { Alert } from '../components/ui/Alert';
 import { UserCheck, Lock, Shield } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
+import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 export const LoginPage = () => {
   const [rollNumber, setRollNumber] = useState('');
@@ -35,6 +36,9 @@ export const LoginPage = () => {
       errors.passcode = 'Examination Passcode is required.';
     }
     setFieldErrors(errors);
+    if (errors.rollNumber || errors.passcode) {
+      announceToScreenReader(errors.rollNumber || errors.passcode, 'assertive');
+    }
     return Object.keys(errors).length === 0;
   };
 
@@ -48,11 +52,12 @@ export const LoginPage = () => {
 
     try {
       await login(rollNumber.trim(), passcode);
+      announceToScreenReader('Sign in successful. Redirecting to student dashboard...', 'assertive');
       navigate(from, { replace: true });
     } catch (err) {
-      setServerError(
-        err.message || 'Invalid Roll Number or Examination Passcode. Please check your credentials.'
-      );
+      const msg = err.message || 'Invalid Roll Number or Examination Passcode. Please check your credentials.';
+      setServerError(msg);
+      announceToScreenReader(msg, 'assertive');
     } finally {
       setIsSubmitting(false);
     }
@@ -98,7 +103,6 @@ export const LoginPage = () => {
             }}
             placeholder="e.g. STU-2026-8941"
             isRequired={true}
-            autoFocus={true}
             error={fieldErrors.rollNumber}
             leftIcon={<UserCheck className="w-4 h-4" />}
           />

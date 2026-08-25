@@ -265,7 +265,35 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
 ```
 
-## Running the Backend
+## Running Development Services
+
+### Quick Start with tmux (All Services)
+
+To launch the FastAPI backend (with its virtual environment), Admin Dashboard, and Student Exam Client concurrently in a split `tmux` workspace from the repository root:
+
+```bash
+chmod +x dev.sh
+./dev.sh
+```
+
+**Panel Navigation (No prefix needed):**
+- `Alt + <Arrow Keys>` : Switch pane directly (Left / Right / Up / Down).
+- `Ctrl + Tab` : Cycle forward between panels.
+
+**Closing / Stopping All Services:**
+- `Alt + q` : Close all services and quit tmux immediately (No prefix needed!).
+- `Ctrl+b` then `k` : Close all services and quit tmux.
+- `./dev.sh stop` : Stop all services from regular terminal.
+
+**Other useful tmux keybindings:**
+- `Ctrl+b d` : Detach from session (services remain active in background).
+- `Ctrl+b z` : Toggle full-screen zoom on the focused pane.
+
+---
+
+### Running Services Manually
+
+#### Running the Backend
 
 To start the FastAPI backend server manually:
 

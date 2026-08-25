@@ -311,6 +311,10 @@ header "TeioOS Setup Completed Successfully!"
 cat << EOF
 ${GREEN}${BOLD}Next steps to run TeioOS components locally:${NC}
 
+${BOLD}Quick Start (All Services in tmux):${NC}
+   ${CYAN}./dev.sh${NC}
+
+${BOLD}Or start services individually:${NC}
 1. ${BOLD}Start TeioOS FastAPI Backend:${NC}
    ${CYAN}cd server/backend${NC}
    ${CYAN}source .venv/bin/activate${NC}

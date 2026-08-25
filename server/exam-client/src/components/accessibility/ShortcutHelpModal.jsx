@@ -7,23 +7,31 @@ import { Command, Volume2, Square, RotateCcw } from 'lucide-react';
 
 export const AUDIO_SHORTCUTS_TOUR = `TeioOS Examination Keyboard and Audio Navigation Guide.
 
-Here is how you can take your entire examination using fast single-chord keyboard shortcuts without repetitive tabbing:
+Here is how you can operate the entire platform and take your examination using fast single-chord keyboard shortcuts without repetitive tabbing:
 
-One. Question Navigation:
+One. Portal and Dashboard:
+On your Student Dashboard, press Enter or Alt + S to immediately start or resume your active exam.
+Press Alt + 1, Alt + 2, or Alt + 3 to jump directly to Current Examination, Upcoming Exams, or Completed Papers.
+Press Alt + U to jump to your Student Profile.
+Press Alt + R to refresh your assigned exam list.
+Press Alt + L to sign out.
+On the Instructions page, press Enter to agree and start immediately, or Alt + R to hear all rules.
+
+Two. Question Navigation in Active Exam:
 Press Alt + N to save and move to the Next Question.
 Press Alt + P to return to the Previous Question.
 
-Two. Multiple Choice Option Selection:
+Three. Multiple Choice Option Selection:
 On any multiple choice question with any number of options, you do not need to tab through buttons.
 Press Alt + 1 through Alt + 8, or simply press number keys 1 through 8, or letters A through H, to choose options A through H directly.
 Your selection is confirmed with immediate audio feedback.
 
-Three. Question Actions:
+Four. Question Actions:
 Press Alt + M to Mark or Unmark the current question for review.
 Press Alt + C to Clear your selected answer.
 Press Alt + S to manually save your response to the server.
 
-Four. Spoken Reading Controls:
+Five. Spoken Reading Controls:
 Press Alt + R to read the current question stem.
 Press Alt + O to read all available options sequentially.
 Press Alt + V to verify what answer you currently have selected.
@@ -31,20 +39,23 @@ Press Alt + K to pause or resume speech.
 Press Alt + X to stop speech immediately.
 Press Alt + E to repeat the last spoken sentence.
 
-Five. Speech-to-Text Voice Dictation:
+Six. Speech-to-Text Voice Dictation:
 On descriptive essay questions, press Alt + D to turn your microphone on or off to dictate answers hands-free.
 
-Six. Spatial Navigation and Status:
+Seven. Spatial Navigation and Status:
 Press Alt + Q to jump directly into the Question Palette. Then use the Arrow keys to move between question tiles.
 Press Alt + T to hear the remaining examination time.
 Press Control + Enter to open the final exam submission confirmation dialog.
 
-Seven. System and Help:
+Eight. Paper Review:
+On the paper review screen, press Alt + N and Alt + P to step through reviewed questions, Alt + R to re-read question details, and Alt + F to cycle filters.
+
+Nine. System and Help:
 Press Alt + A to open Accessibility Preferences such as high contrast themes and font scaling.
 Press Alt + H to reopen this Shortcuts Help dialog.
 Press Alt + I to replay this complete audio tour.
 
-Press Escape now to close this help dialog and return to your examination.`;
+Press Escape now to close this help dialog and return to your screen.`;
 
 export const ShortcutHelpModal = () => {
   const { isHelpOpen, closeHelp, shortcuts } = useShortcuts();
@@ -63,6 +74,7 @@ export const ShortcutHelpModal = () => {
 
   // Group shortcuts by category
   const categories = {
+    'Portal Navigation': [],
     'Exam Navigation': [],
     'MCQ Option Selection': [],
     'Question Actions': [],

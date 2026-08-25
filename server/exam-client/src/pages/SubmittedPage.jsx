@@ -9,6 +9,9 @@ import { useExam } from '../hooks/useExam';
 import { CheckCircle2, ShieldCheck, ArrowRight, Home, LogOut } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
+import { useShortcuts } from '../hooks/useShortcuts';
+import { useTTS } from '../hooks/useTTS';
+import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 /**
  * Screen 8: Post-Submission Terminal State Screen
@@ -21,6 +24,8 @@ export const SubmittedPage = () => {
   const navigate = useNavigate();
   const { userProfile, logout } = useAuth();
   const { clearExamSession } = useExam();
+  const { registerHandler, unregisterHandler } = useShortcuts();
+  const { speakText } = useTTS();
 
   useDocumentTitle('Paper Submitted');
   const pageHeadingRef = useFocusOnMount();
@@ -50,6 +55,59 @@ export const SubmittedPage = () => {
   useEffect(() => {
     clearExamSession();
   }, [clearExamSession]);
+
+  // Register Shortcuts for Post-Submission Navigation
+  useEffect(() => {
+    registerHandler('dashboardStartExam', () => navigate(`/exam/${scheduleId}/results`));
+    registerHandler('navDashboard', () => navigate('/dashboard'));
+    registerHandler('logout', () => {
+      logout();
+      navigate('/login', { replace: true });
+    });
+
+    return () => {
+      unregisterHandler('dashboardStartExam');
+      unregisterHandler('navDashboard');
+      unregisterHandler('logout');
+    };
+  }, [registerHandler, unregisterHandler, scheduleId, navigate, logout]);
+
+  // Global Key Listener for zero-tab actions
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const isInputElem =
+        e.target &&
+        (e.target.tagName === 'INPUT' ||
+          e.target.tagName === 'TEXTAREA' ||
+          e.target.isContentEditable);
+
+      if (isInputElem) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+      const key = e.key.toUpperCase();
+
+      if (e.key === 'Enter' || e.key === ' ' || key === 'P' || key === 'R') {
+        e.preventDefault();
+        navigate(`/exam/${scheduleId}/results`);
+      } else if (e.key === 'Escape' || key === 'D') {
+        e.preventDefault();
+        navigate('/dashboard');
+      } else if (key === 'L') {
+        e.preventDefault();
+        logout();
+        navigate('/login', { replace: true });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [scheduleId, navigate, logout]);
+
+  // Auditory Orientation on Mount
+  useEffect(() => {
+    const prompt = `Examination submitted successfully. Press Enter to view your Performance Report, Alt+D for Dashboard, or Alt+L to Sign Out.`;
+    announceToScreenReader(prompt, 'polite');
+  }, []);
 
   return (
     <ExamLayout paperTitle="EXAMINATION COMPLETE" sectionTitle="Paper Submitted">
@@ -144,14 +202,16 @@ export const SubmittedPage = () => {
                   Dashboard
                 </Button>
                 <Button
+                  id="performance-report-btn"
                   variant="primary"
                   size="md"
+                  autoFocus={true}
                   onClick={() => navigate(`/exam/${scheduleId}/results`)}
                   rightIcon={<ArrowRight className="w-4 h-4" />}
                   className="w-full sm:w-auto"
                   ariaLabel="View Performance Report"
                 >
-                  Performance Report
+                  Performance Report (Enter)
                 </Button>
               </div>
             </div>

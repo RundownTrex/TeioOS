@@ -12,6 +12,8 @@ import { restoreLocalAnswers, restoreWorkbenchState } from '../utils/resilienceM
 import { formatDuration } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
+import { useShortcuts } from '../hooks/useShortcuts';
+import { useTTS } from '../hooks/useTTS';
 import { announceToScreenReader } from '../utils/ariaAnnounce';
 import { EXAM_SESSION_STATUS } from '../utils/constants';
 
@@ -25,8 +27,10 @@ export const ResumeExamPage = () => {
   const { scheduleId = 'cs-401' } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { userProfile, token: baseToken } = useAuth();
+  const { userProfile, token: baseToken, logout } = useAuth();
   const { initExamSession } = useExam();
+  const { registerHandler, unregisterHandler } = useShortcuts();
+  const { speakText } = useTTS();
 
   const { data: sessionSnapshot, isLoading } = useExamSession(scheduleId);
 
@@ -133,6 +137,59 @@ export const ResumeExamPage = () => {
     }
   };
 
+  // Register Resume Page Shortcuts
+  useEffect(() => {
+    registerHandler('dashboardStartExam', handleResume);
+    registerHandler('navDashboard', () => navigate('/dashboard'));
+    registerHandler('logout', () => {
+      logout();
+      navigate('/login', { replace: true });
+    });
+
+    return () => {
+      unregisterHandler('dashboardStartExam');
+      unregisterHandler('navDashboard');
+      unregisterHandler('logout');
+    };
+  }, [registerHandler, unregisterHandler, handleResume, navigate, logout]);
+
+  // Global Key Listener for Enter / Space / R / Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const isInputElem =
+        e.target &&
+        (e.target.tagName === 'INPUT' ||
+          e.target.tagName === 'TEXTAREA' ||
+          e.target.isContentEditable);
+
+      if (isInputElem) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+      const key = e.key.toUpperCase();
+
+      if (e.key === 'Enter' || e.key === ' ' || key === 'R') {
+        if (!isLoading && !isResuming) {
+          e.preventDefault();
+          handleResume();
+        }
+      } else if (e.key === 'Escape' || key === 'D') {
+        e.preventDefault();
+        navigate('/dashboard');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLoading, isResuming, handleResume, navigate]);
+
+  // Auditory Orientation on Mount
+  useEffect(() => {
+    if (!isLoading && sessionSnapshot) {
+      const prompt = `Resume Examination Session for ${studentName}. ${savedCount} cached answers detected. Press Enter to resume the examination workbench immediately.`;
+      announceToScreenReader(prompt, 'polite');
+    }
+  }, [isLoading, sessionSnapshot, studentName, savedCount]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-canvas text-text-main p-4 select-none">
       <Card className="max-w-[540px] w-full border-border-main bg-surface shadow-md">
@@ -204,15 +261,17 @@ export const ResumeExamPage = () => {
           </p>
 
           <Button
+            id="resume-exam-btn"
             variant="primary"
             size="lg"
             fullWidth={true}
+            autoFocus={true}
             isLoading={isResuming}
             isDisabled={isLoading || isResuming}
             onClick={handleResume}
             ariaLabel="Resume Examination Workbench"
           >
-            RESUME EXAMINATION WORKBENCH
+            RESUME EXAMINATION WORKBENCH (Enter)
           </Button>
         </CardBody>
       </Card>

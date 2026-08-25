@@ -25,6 +25,18 @@ export const DEFAULT_SHORTCUTS = {
   focusPalette: { key: 'Q', alt: true, ctrl: false, shift: false, label: 'Focus Question Palette Grid', category: 'Quick Focus' },
   focusTimer: { key: 'T', alt: true, ctrl: false, shift: false, label: 'Announce Remaining Time', category: 'Quick Focus' },
   submitExam: { key: 'Enter', alt: false, ctrl: true, shift: false, label: 'Submit Examination', category: 'Question Actions' },
+
+  // Portal & Dashboard Navigation
+  dashboardStartExam: { key: 'S', alt: true, ctrl: false, shift: false, label: 'Start / Resume Active Exam (Dashboard)', category: 'Portal Navigation' },
+  dashboardSection1: { key: '1', alt: true, ctrl: false, shift: false, label: 'Jump to Current Exam (Dashboard)', category: 'Portal Navigation' },
+  dashboardSection2: { key: '2', alt: true, ctrl: false, shift: false, label: 'Jump to Upcoming Exams (Dashboard)', category: 'Portal Navigation' },
+  dashboardSection3: { key: '3', alt: true, ctrl: false, shift: false, label: 'Jump to Completed Papers (Dashboard)', category: 'Portal Navigation' },
+  dashboardProfile: { key: 'U', alt: true, ctrl: false, shift: false, label: 'Jump to Student Profile (Dashboard)', category: 'Portal Navigation' },
+  dashboardRefresh: { key: 'R', alt: true, ctrl: false, shift: false, label: 'Refresh Examination Schedules (Dashboard)', category: 'Portal Navigation' },
+  navDashboard: { key: 'D', alt: true, ctrl: false, shift: false, label: 'Return to Dashboard', category: 'Portal Navigation' },
+  logout: { key: 'L', alt: true, ctrl: false, shift: false, label: 'Sign Out / Log Out', category: 'Portal Navigation' },
+
+  // System & Accessibility
   accessibility: { key: 'A', alt: true, ctrl: false, shift: false, label: 'Accessibility Preferences', category: 'System' },
   showHelp: { key: 'H', alt: true, ctrl: false, shift: false, label: 'Keyboard Shortcuts Help', category: 'System' },
   audioTour: { key: 'I', alt: true, ctrl: false, shift: false, label: 'Play Spoken Audio Navigation Guide', category: 'Audio & Speech' },
@@ -44,7 +56,9 @@ export const DEFAULT_SHORTCUTS = {
 export const ShortcutProvider = ({ children }) => {
   const [shortcuts, setShortcuts] = useState(() => {
     const saved = getItem(STORAGE_KEYS.SHORTCUT_SETTINGS, localStorage);
-    return saved ? { ...DEFAULT_SHORTCUTS, ...saved } : DEFAULT_SHORTCUTS;
+    return saved && typeof saved === 'object' && !Array.isArray(saved)
+      ? { ...DEFAULT_SHORTCUTS, ...saved }
+      : DEFAULT_SHORTCUTS;
   });
 
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -102,6 +116,8 @@ export const ShortcutProvider = ({ children }) => {
   // Global Central Keydown Handler with Collision & Textarea Protection
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (!e || !e.key) return;
+
       const isInputElem =
         e.target &&
         (e.target.tagName === 'INPUT' ||
@@ -110,9 +126,9 @@ export const ShortcutProvider = ({ children }) => {
 
       // Match event against shortcut configurations
       const pressedKey = e.key.toUpperCase();
-      const isAlt = e.altKey;
-      const isCtrl = e.ctrlKey || e.metaKey;
-      const isShift = e.shiftKey;
+      const isAlt = Boolean(e.altKey);
+      const isCtrl = Boolean(e.ctrlKey || e.metaKey);
+      const isShift = Boolean(e.shiftKey);
 
       // Special Check for Help Modal Shortcut (Alt+H)
       if (isAlt && pressedKey === 'H') {
@@ -122,7 +138,9 @@ export const ShortcutProvider = ({ children }) => {
       }
 
       // Check registered shortcut actions
-      for (const [actionName, config] of Object.entries(shortcuts)) {
+      for (const [actionName, config] of Object.entries(shortcuts || {})) {
+        if (!config || typeof config !== 'object' || !config.key) continue;
+
         const keyMatch = config.key.toUpperCase() === pressedKey;
         const altMatch = Boolean(config.alt) === isAlt;
         const ctrlMatch = Boolean(config.ctrl) === isCtrl;

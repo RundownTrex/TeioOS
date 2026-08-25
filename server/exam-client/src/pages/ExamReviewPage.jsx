@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ExamLayout } from '../layouts/ExamLayout';
 import { Badge } from '../components/ui/Badge';
@@ -10,6 +10,9 @@ import { useAuth } from '../hooks/useAuth';
 import { formatDateTime } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
+import { useShortcuts } from '../hooks/useShortcuts';
+import { useTTS } from '../hooks/useTTS';
+import { announceToScreenReader } from '../utils/ariaAnnounce';
 import {
   Award,
   ArrowLeft,
@@ -21,9 +24,12 @@ import {
 export const ExamReviewPage = () => {
   const { scheduleId } = useParams();
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const { userProfile, logout } = useAuth();
+  const { registerHandler, unregisterHandler } = useShortcuts();
+  const { speakText } = useTTS();
   const { data: reviewData, isLoading, isError, error, refetch } = useExamReview(scheduleId);
   const [filter, setFilter] = useState('ALL'); // ALL, CORRECT, INCORRECT, UNANSWERED, DESCRIPTIVE
+  const [activeReviewIdx, setActiveReviewIdx] = useState(0);
 
   useDocumentTitle('Exam Paper Review');
   const pageHeadingRef = useFocusOnMount();
@@ -90,15 +96,169 @@ export const ExamReviewPage = () => {
     (q) => q.question_type === 'DESCRIPTIVE' || String(q.question_type) === 'DESCRIPTIVE'
   ).length;
 
-  const scrollToQuestion = (questionId, index) => {
-    const el = document.getElementById(`review-question-${questionId || index}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      el.focus?.();
-    }
-  };
+  const speakReviewQuestion = useCallback(
+    (q, idx, total) => {
+      if (!q) return;
+      const isMcq = q.question_type === 'MCQ' || String(q.question_type) === 'MCQ';
+      let answerDetail = '';
+      if (isMcq && q.options) {
+        const userOpt = q.options.find((o) => o.is_selected);
+        const correctOpt = q.options.find((o) => o.is_correct);
+        answerDetail = `Your answer was ${userOpt ? userOpt.option_text : 'Not Answered'}. ${
+          q.status === 'CORRECT'
+            ? 'Correct.'
+            : `Correct answer is: ${correctOpt ? correctOpt.option_text : 'N/A'}.`
+        }`;
+      } else {
+        answerDetail = `Your submitted answer: ${
+          q.saved_answer_text || 'No response'
+        }. Evaluator feedback: ${q.evaluator_feedback || 'No comments provided'}.`;
+      }
+      const text = `Question ${idx + 1} of ${total}. Status: ${q.status}. Score: ${
+        q.obtained_marks
+      } out of ${q.marks} marks. ${q.question_text}. ${answerDetail}`;
+      announceToScreenReader(text);
+      speakText(text, `Question ${idx + 1} Review`);
+    },
+    [speakText]
+  );
 
-  // Sidebar Controls & Palette (Always accessible at top)
+  const scrollToQuestion = useCallback(
+    (questionId, index) => {
+      setActiveReviewIdx(index);
+      const el = document.getElementById(`review-question-${questionId || index}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.focus?.();
+      }
+      if (filteredQuestions[index]) {
+        speakReviewQuestion(filteredQuestions[index], index, filteredQuestions.length);
+      }
+    },
+    [filteredQuestions, speakReviewQuestion]
+  );
+
+  const handleNextReviewQ = useCallback(() => {
+    if (filteredQuestions.length === 0) return;
+    const nextIdx = Math.min(filteredQuestions.length - 1, activeReviewIdx + 1);
+    scrollToQuestion(filteredQuestions[nextIdx]?.question_id, nextIdx);
+  }, [filteredQuestions, activeReviewIdx, scrollToQuestion]);
+
+  const handlePrevReviewQ = useCallback(() => {
+    if (filteredQuestions.length === 0) return;
+    const prevIdx = Math.max(0, activeReviewIdx - 1);
+    scrollToQuestion(filteredQuestions[prevIdx]?.question_id, prevIdx);
+  }, [filteredQuestions, activeReviewIdx, scrollToQuestion]);
+
+  const handleCycleFilter = useCallback(() => {
+    const filters = ['ALL', 'CORRECT', 'INCORRECT', 'UNANSWERED', 'DESCRIPTIVE'];
+    const currIdx = filters.indexOf(filter);
+    const nextFilter = filters[(currIdx + 1) % filters.length];
+    setFilter(nextFilter);
+    setActiveReviewIdx(0);
+    const msg = `Filter changed to ${nextFilter}`;
+    announceToScreenReader(msg);
+    speakText(msg, 'Filter Changed');
+  }, [filter, speakText]);
+
+  // Register Shortcuts for Paper Review
+  useEffect(() => {
+    registerHandler('nextQuestion', handleNextReviewQ);
+    registerHandler('prevQuestion', handlePrevReviewQ);
+    registerHandler('ttsReadQuestion', () => {
+      if (filteredQuestions[activeReviewIdx]) {
+        speakReviewQuestion(
+          filteredQuestions[activeReviewIdx],
+          activeReviewIdx,
+          filteredQuestions.length
+        );
+      }
+    });
+    registerHandler('clearResponse', handleCycleFilter);
+    registerHandler('navDashboard', () => navigate('/dashboard'));
+    registerHandler('logout', () => {
+      logout();
+      navigate('/login', { replace: true });
+    });
+
+    return () => {
+      unregisterHandler('nextQuestion');
+      unregisterHandler('prevQuestion');
+      unregisterHandler('ttsReadQuestion');
+      unregisterHandler('clearResponse');
+      unregisterHandler('navDashboard');
+      unregisterHandler('logout');
+    };
+  }, [
+    registerHandler,
+    unregisterHandler,
+    handleNextReviewQ,
+    handlePrevReviewQ,
+    handleCycleFilter,
+    filteredQuestions,
+    activeReviewIdx,
+    speakReviewQuestion,
+    navigate,
+    logout,
+  ]);
+
+  // Global Key Listener for Zero-Tab Review Navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const isInputElem =
+        e.target &&
+        (e.target.tagName === 'INPUT' ||
+          e.target.tagName === 'TEXTAREA' ||
+          e.target.isContentEditable);
+
+      if (isInputElem) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+      const key = e.key.toUpperCase();
+
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || key === 'J' || key === 'N') {
+        e.preventDefault();
+        handleNextReviewQ();
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || key === 'K' || key === 'P') {
+        e.preventDefault();
+        handlePrevReviewQ();
+      } else if (key === 'F') {
+        e.preventDefault();
+        handleCycleFilter();
+      } else if (key === 'R') {
+        e.preventDefault();
+        if (filteredQuestions[activeReviewIdx]) {
+          speakReviewQuestion(
+            filteredQuestions[activeReviewIdx],
+            activeReviewIdx,
+            filteredQuestions.length
+          );
+        }
+      } else if (e.key === 'Escape' || key === 'D') {
+        e.preventDefault();
+        navigate('/dashboard');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    handleNextReviewQ,
+    handlePrevReviewQ,
+    handleCycleFilter,
+    filteredQuestions,
+    activeReviewIdx,
+    speakReviewQuestion,
+    navigate,
+  ]);
+
+  // Auditory Welcome on Mount
+  useEffect(() => {
+    if (!isLoading && !isError && reviewData) {
+      const prompt = `Exam Paper Review for ${reviewData.subject_name}. Score: ${reviewData.obtained_marks} of ${reviewData.total_marks} marks, Grade ${reviewData.grade || 'P'}. Press Alt+N and Alt+P to step through questions, Alt+R to read details, Alt+F to cycle filters, or Alt+D to return to Dashboard.`;
+      announceToScreenReader(prompt, 'polite');
+    }
+  }, [isLoading, isError, reviewData]);
   const sidebarContent = (
     <div className="space-y-5">
       {/* Return to Dashboard Button placed at the VERY TOP for instant access */}

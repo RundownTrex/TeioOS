@@ -7,8 +7,12 @@ import { Button } from '../components/ui/Button';
 import { Alert } from '../components/ui/Alert';
 import { useAuth } from '../hooks/useAuth';
 import { Clock, ArrowLeft, Award, FileText } from 'lucide-react';
+import { formatDateTime } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
+import { useShortcuts } from '../hooks/useShortcuts';
+import { useTTS } from '../hooks/useTTS';
+import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 const MOCK_RESULTS = {
   mixed: {
@@ -69,7 +73,9 @@ const MOCK_RESULTS = {
 export const ResultsPage = () => {
   const { scheduleId = 'cs-401' } = useParams();
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const { userProfile, logout } = useAuth();
+  const { registerHandler, unregisterHandler } = useShortcuts();
+  const { speakText } = useTTS();
 
   // Interactive toggle to switch mock view between Mixed paper and MCQ-only paper
   const [selectedType, setSelectedType] = useState('mixed');
@@ -82,6 +88,66 @@ export const ResultsPage = () => {
 
   useDocumentTitle('Performance Report');
   const pageHeadingRef = useFocusOnMount();
+
+  const handleReadScoreAloud = () => {
+    const text = isMixed
+      ? `Performance Report for ${data.subjectName}. Objective score: ${data.objectiveMarksObtained} out of ${data.objectiveMaxMarks} marks. Descriptive evaluation is pending. Total evaluated so far: ${data.objectiveMarksObtained} out of ${data.totalMarks} marks.`
+      : `Performance Report for ${data.subjectName}. Final Score: ${data.objectiveMarksObtained} out of ${data.totalMarks} marks. All questions evaluated and finalized.`;
+    speakText(text, 'Performance Report Summary');
+  };
+
+  // Register Shortcuts for Results Page
+  useEffect(() => {
+    registerHandler('ttsReadQuestion', handleReadScoreAloud);
+    registerHandler('navDashboard', () => navigate('/dashboard'));
+    registerHandler('logout', () => {
+      logout();
+      navigate('/login', { replace: true });
+    });
+
+    return () => {
+      unregisterHandler('ttsReadQuestion');
+      unregisterHandler('navDashboard');
+      unregisterHandler('logout');
+    };
+  }, [registerHandler, unregisterHandler, data, isMixed, navigate, logout]);
+
+  // Global Key Listener for zero-tab actions
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const isInputElem =
+        e.target &&
+        (e.target.tagName === 'INPUT' ||
+          e.target.tagName === 'TEXTAREA' ||
+          e.target.isContentEditable);
+
+      if (isInputElem) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+      const key = e.key.toUpperCase();
+
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape' || key === 'D') {
+        e.preventDefault();
+        navigate('/dashboard');
+      } else if (key === 'R') {
+        e.preventDefault();
+        handleReadScoreAloud();
+      } else if (key === 'L') {
+        e.preventDefault();
+        logout();
+        navigate('/login', { replace: true });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleReadScoreAloud, logout, navigate]);
+
+  // Initial Auditory Announcement on Mount
+  useEffect(() => {
+    const prompt = `Performance Report for ${data.subjectName}. Press R to hear score summary, or press Enter to return to the Dashboard.`;
+    announceToScreenReader(prompt, 'polite');
+  }, [data.subjectName]);
 
   return (
     <ExamLayout paperTitle={data.subjectCode} sectionTitle="Performance Report">
@@ -253,13 +319,15 @@ export const ResultsPage = () => {
             {/* CTA Navigation Button */}
             <div className="pt-4 border-t border-border-main flex justify-end">
               <Button
+                id="return-dashboard-btn"
                 variant="primary"
                 size="md"
+                autoFocus={true}
                 onClick={() => navigate('/dashboard')}
                 leftIcon={<ArrowLeft className="w-4 h-4" />}
                 ariaLabel="Return to Student Dashboard"
               >
-                Return to Dashboard
+                Return to Dashboard (Enter)
               </Button>
             </div>
           </CardBody>

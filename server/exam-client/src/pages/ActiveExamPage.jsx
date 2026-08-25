@@ -610,22 +610,123 @@ export const ActiveExamPage = () => {
     );
   }, [currentIndex, currentQuestion, totalQuestions]);
 
-  // Single-key Direct Option Selection (Keys 1..8 and A..H when not typing in textarea)
+  const handleReadQuestion = useCallback(() => {
+    if (currentQuestion?.stem) {
+      speakText(`Question ${currentIndex + 1}: ${currentQuestion.stem}`, 'Current Question Stem');
+    }
+  }, [currentIndex, currentQuestion?.stem, speakText]);
+
+  const handleReadOptions = useCallback(() => {
+    if (currentQuestion?.type === 'MCQ' && currentQuestion?.options?.length > 0) {
+      const optionsText = currentQuestion.options
+        .map((opt, i) => {
+          const prefix = opt.prefix || String.fromCharCode(65 + i);
+          const text = opt.text || opt.option_text || '';
+          return `Option ${prefix}: ${text}`;
+        })
+        .join('. ');
+      speakText(`Question ${currentIndex + 1} options: ${optionsText}`, 'All Options');
+    } else {
+      speakText(
+        `Question ${currentIndex + 1} is a descriptive essay question. Shortcuts: Alt+R reads question stem, Alt+V reads your typed response.`,
+        'Descriptive Question Notice'
+      );
+    }
+  }, [currentIndex, currentQuestion, speakText]);
+
+  const handleReadSelected = useCallback(() => {
+    const val = answersMap[currentIndex];
+    if (currentQuestion?.type === 'MCQ') {
+      const selected = currentQuestion?.options?.find((opt) => String(opt.id) === String(val));
+      if (selected) {
+        const selectedIdx = currentQuestion.options.findIndex((opt) => String(opt.id) === String(val));
+        const prefix = selected.prefix || String.fromCharCode(65 + selectedIdx);
+        const text = selected.text || selected.option_text || '';
+        speakText(`Selected answer for Question ${currentIndex + 1} is Option ${prefix}: ${text}`, 'Selected Option');
+      } else {
+        speakText(`No option currently selected for Question ${currentIndex + 1}.`, 'No Selection');
+      }
+    } else {
+      if (val && val.trim()) {
+        const wordCount = val.trim().split(/\s+/).length;
+        speakText(`Your descriptive answer for Question ${currentIndex + 1} is: ${val}. Word count: ${wordCount} words.`, 'Descriptive Response');
+      } else {
+        speakText(`No descriptive answer typed yet for Question ${currentIndex + 1}.`, 'No Answer');
+      }
+    }
+  }, [currentIndex, currentQuestion, answersMap, speakText]);
+
+  const handleReadTimer = useCallback(() => {
+    const timerElem = document.getElementById('timer-display');
+    if (timerElem) timerElem.focus();
+    announceToScreenReader(`Remaining examination time: ${formatDuration(secondsRemaining)}`);
+    speakText(`Remaining examination time: ${formatDuration(secondsRemaining)}`, 'Remaining Time');
+  }, [secondsRemaining, speakText]);
+
+  const handleFocusPalette = useCallback(() => {
+    const grid = document.getElementById('palette-grid-container');
+    if (grid) {
+      const firstTile = grid.querySelector('button');
+      if (firstTile) firstTile.focus();
+    }
+    announceToScreenReader(`Question palette focused. ${totalQuestions} questions available.`);
+    speakText(`Question palette focused. ${totalQuestions} questions available. Use arrow keys to navigate.`, 'Palette Focused');
+  }, [totalQuestions, speakText]);
+
+  // Single-key Direct Workbench Navigation & Action Keys (when not typing in textarea)
   useEffect(() => {
-    const handleDirectOptionKey = (e) => {
+    const handleWorkbenchKeys = (e) => {
       const isInputElem =
         e.target &&
         (e.target.tagName === 'INPUT' ||
           e.target.tagName === 'TEXTAREA' ||
           e.target.isContentEditable);
 
+      // If candidate presses Escape inside a text field, blur it to return to command navigation
+      if (isInputElem && e.key === 'Escape') {
+        e.target.blur();
+        announceToScreenReader('Exited response field. Workbench keyboard navigation active.');
+        return;
+      }
+
       if (isInputElem) return;
       if (e.altKey || e.ctrlKey || e.metaKey) return;
 
-      if (currentQuestion?.type === 'MCQ' && currentQuestion?.options?.length > 0) {
-        const key = e.key.toUpperCase();
-        let idx = -1;
+      const key = e.key.toUpperCase();
 
+      // Arrow keys for Next / Previous question
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === 'Enter') {
+        e.preventDefault();
+        handleSaveAndNext();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        handlePrevious();
+      } else if (key === 'M') {
+        e.preventDefault();
+        handleToggleReview();
+      } else if (key === 'C') {
+        e.preventDefault();
+        handleClearResponse();
+      } else if (key === 'S') {
+        e.preventDefault();
+        handleManualSave();
+      } else if (key === 'R') {
+        e.preventDefault();
+        handleReadQuestion();
+      } else if (key === 'O') {
+        e.preventDefault();
+        handleReadOptions();
+      } else if (key === 'V') {
+        e.preventDefault();
+        handleReadSelected();
+      } else if (key === 'T') {
+        e.preventDefault();
+        handleReadTimer();
+      } else if (key === 'Q') {
+        e.preventDefault();
+        handleFocusPalette();
+      } else if (currentQuestion?.type === 'MCQ' && currentQuestion?.options?.length > 0) {
+        let idx = -1;
         if (/^[1-9]$/.test(key)) {
           idx = parseInt(key, 10) - 1;
         } else if (/^[A-Z]$/.test(key)) {
@@ -639,9 +740,22 @@ export const ActiveExamPage = () => {
       }
     };
 
-    window.addEventListener('keydown', handleDirectOptionKey);
-    return () => window.removeEventListener('keydown', handleDirectOptionKey);
-  }, [currentQuestion, handleSelectOptionByIndex]);
+    window.addEventListener('keydown', handleWorkbenchKeys);
+    return () => window.removeEventListener('keydown', handleWorkbenchKeys);
+  }, [
+    currentQuestion,
+    handleSelectOptionByIndex,
+    handleSaveAndNext,
+    handlePrevious,
+    handleToggleReview,
+    handleClearResponse,
+    handleManualSave,
+    handleReadQuestion,
+    handleReadOptions,
+    handleReadSelected,
+    handleReadTimer,
+    handleFocusPalette,
+  ]);
 
   // Register Global Keyboard Shortcuts & Web Speech API TTS/STT Handlers
   useEffect(() => {
@@ -667,22 +781,8 @@ export const ActiveExamPage = () => {
       speakText('Opened final submission confirmation dialog', 'Submit Dialog Opened');
     });
 
-    registerHandler('focusPalette', () => {
-      const grid = document.getElementById('palette-grid-container');
-      if (grid) {
-        const firstTile = grid.querySelector('button');
-        if (firstTile) firstTile.focus();
-      }
-      announceToScreenReader(`Question palette focused. ${totalQuestions} questions available.`);
-      speakText(`Question palette focused. ${totalQuestions} questions available. Use arrow keys to navigate.`, 'Palette Focused');
-    });
-
-    registerHandler('focusTimer', () => {
-      const timerElem = document.getElementById('timer-display');
-      if (timerElem) timerElem.focus();
-      announceToScreenReader(`Remaining examination time: ${formatDuration(secondsRemaining)}`);
-      speakText(`Remaining examination time: ${formatDuration(secondsRemaining)}`, 'Remaining Time');
-    });
+    registerHandler('focusPalette', handleFocusPalette);
+    registerHandler('focusTimer', handleReadTimer);
 
     // STT Dictation Shortcut (Alt+D) - Enabled ONLY for Descriptive Questions
     registerHandler('sttToggle', () => {
@@ -699,49 +799,9 @@ export const ActiveExamPage = () => {
     });
 
     // TTS Web Speech API Handlers
-    registerHandler('ttsReadQuestion', () => {
-      if (currentQuestion?.stem) {
-        speakText(`Question ${currentIndex + 1}: ${currentQuestion.stem}`, 'Current Question Stem');
-      }
-    });
-
-    registerHandler('ttsReadOptions', () => {
-      if (currentQuestion?.type === 'MCQ' && currentQuestion?.options?.length > 0) {
-        const optionsText = currentQuestion.options
-          .map((opt, i) => {
-            const prefix = opt.prefix || String.fromCharCode(65 + i);
-            const text = opt.text || opt.option_text || '';
-            return `Option ${prefix}: ${text}`;
-          })
-          .join('. ');
-        speakText(`Question ${currentIndex + 1} options: ${optionsText}`, 'All Options');
-      } else {
-        speakText(`Question ${currentIndex + 1} is a descriptive essay question. Shortcuts: Alt+R reads question stem, Alt+V reads your typed response.`, 'Descriptive Question Notice');
-      }
-    });
-
-    registerHandler('ttsReadSelected', () => {
-      const val = answersMap[currentIndex];
-      if (currentQuestion?.type === 'MCQ') {
-        const selected = currentQuestion?.options?.find((opt) => String(opt.id) === String(val));
-        if (selected) {
-          const selectedIdx = currentQuestion.options.findIndex((opt) => String(opt.id) === String(val));
-          const prefix = selected.prefix || String.fromCharCode(65 + selectedIdx);
-          const text = selected.text || selected.option_text || '';
-          speakText(`Selected answer for Question ${currentIndex + 1} is Option ${prefix}: ${text}`, 'Selected Option');
-        } else {
-          speakText(`No option currently selected for Question ${currentIndex + 1}.`, 'No Selection');
-        }
-      } else {
-        if (val && val.trim()) {
-          const wordCount = val.trim().split(/\s+/).length;
-          speakText(`Your descriptive answer for Question ${currentIndex + 1} is: ${val}. Word count: ${wordCount} words.`, 'Descriptive Response');
-        } else {
-          speakText(`No descriptive answer typed yet for Question ${currentIndex + 1}.`, 'No Answer');
-        }
-      }
-    });
-
+    registerHandler('ttsReadQuestion', handleReadQuestion);
+    registerHandler('ttsReadOptions', handleReadOptions);
+    registerHandler('ttsReadSelected', handleReadSelected);
     registerHandler('ttsPauseResume', togglePauseResume);
     registerHandler('ttsStop', stopSpeech);
     registerHandler('ttsRepeat', repeatSpeech);

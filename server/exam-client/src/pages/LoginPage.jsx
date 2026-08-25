@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
@@ -19,13 +19,39 @@ export const LoginPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useDocumentTitle('Student Sign In');
-  const pageHeadingRef = useFocusOnMount();
 
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
 
   const from = location.state?.from?.pathname || '/dashboard';
+
+  // Immediate auto-focus onto the rollNumber input on mount
+  useEffect(() => {
+    const input = document.getElementById('rollNumber');
+    if (input) {
+      input.focus();
+    }
+    announceToScreenReader(
+      'Student Examination Portal. Focused on Roll Number. Type your Roll Number, press Enter to enter your Passcode, then press Enter to sign in.',
+      'polite'
+    );
+  }, []);
+
+  // Keyboard navigation between fields
+  const handleRollKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      document.getElementById('passcode')?.focus();
+    }
+  };
+
+  const handlePassKeyDown = (e) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      document.getElementById('rollNumber')?.focus();
+    }
+  };
 
   const validateForm = () => {
     const errors = {};
@@ -43,7 +69,7 @@ export const LoginPage = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
     setServerError('');
 
     if (!validateForm()) return;
@@ -70,7 +96,6 @@ export const LoginPage = () => {
           <Shield className="w-8 h-8" aria-hidden="true" />
         </div>
         <h1
-          ref={pageHeadingRef}
           tabIndex={-1}
           className="text-lg font-extrabold text-text-main tracking-tight uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
         >
@@ -101,8 +126,10 @@ export const LoginPage = () => {
                 setFieldErrors((prev) => ({ ...prev, rollNumber: null }));
               }
             }}
+            onKeyDown={handleRollKeyDown}
             placeholder="e.g. STU-2026-8941"
             isRequired={true}
+            autoFocus={true}
             error={fieldErrors.rollNumber}
             leftIcon={<UserCheck className="w-4 h-4" />}
           />
@@ -118,6 +145,7 @@ export const LoginPage = () => {
                 setFieldErrors((prev) => ({ ...prev, passcode: null }));
               }
             }}
+            onKeyDown={handlePassKeyDown}
             placeholder="Enter your assigned passcode"
             isRequired={true}
             error={fieldErrors.passcode}
@@ -132,7 +160,7 @@ export const LoginPage = () => {
             isLoading={isSubmitting}
             className="pt-1"
           >
-            Sign In
+            Sign In (Enter)
           </Button>
         </form>
       </CardBody>

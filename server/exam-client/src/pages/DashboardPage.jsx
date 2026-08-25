@@ -13,11 +13,16 @@ import { ArrowRight, User, Clock, Lock, RotateCcw, RefreshCw } from 'lucide-reac
 import { formatDateTime } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
+import { useShortcuts } from '../hooks/useShortcuts';
+import { useTTS } from '../hooks/useTTS';
+import { announceToScreenReader } from '../utils/ariaAnnounce';
 import { EXAM_SESSION_STATUS } from '../utils/constants';
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const { userProfile, logout } = useAuth();
+  const { registerHandler, unregisterHandler } = useShortcuts();
+  const { speakText } = useTTS();
   const { data: assignedExams, isLoading, isError, error, refetch } = useAssignedExams();
   const [now, setNow] = useState(() => Date.now());
 
@@ -72,6 +77,127 @@ export const DashboardPage = () => {
   // The primary active paper is the first in-progress or available exam
   const primaryExam = activeExams[0];
   const upcomingExams = activeExams.slice(1);
+
+  const handleStartPrimaryExam = () => {
+    if (!primaryExam) return;
+    const resumeActive = isInProgress(primaryExam);
+    if (resumeActive) {
+      navigate(`/exam/${primaryExam.schedule_id}/resume`);
+    } else {
+      navigate(`/exam/${primaryExam.schedule_id}/instructions`);
+    }
+  };
+
+  const handleJumpSection = (sectionId, label) => {
+    const elem = document.getElementById(sectionId);
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      elem.focus?.();
+    }
+    announceToScreenReader(`Focused ${label} section.`);
+    speakText(`Focused ${label} section.`, label);
+  };
+
+  // Register Dashboard Specific Shortcuts
+  useEffect(() => {
+    registerHandler('dashboardStartExam', handleStartPrimaryExam);
+    registerHandler('dashboardSection1', () => handleJumpSection('current-exam', 'Current Examination'));
+    registerHandler('dashboardSection2', () => handleJumpSection('upcoming-exams', 'Upcoming Examinations'));
+    registerHandler('dashboardSection3', () => handleJumpSection('completed-exams', 'Completed Papers'));
+    registerHandler('dashboardProfile', () => handleJumpSection('student-profile', 'Student Profile'));
+    registerHandler('dashboardRefresh', () => {
+      refetch();
+      const count = activeExams.length;
+      const msg = `Examination schedules refreshed. ${count} active ${count === 1 ? 'paper' : 'papers'} available.`;
+      announceToScreenReader(msg);
+      speakText(msg, 'Schedules Refreshed');
+    });
+    registerHandler('logout', () => {
+      logout();
+      navigate('/login', { replace: true });
+    });
+
+    return () => {
+      unregisterHandler('dashboardStartExam');
+      unregisterHandler('dashboardSection1');
+      unregisterHandler('dashboardSection2');
+      unregisterHandler('dashboardSection3');
+      unregisterHandler('dashboardProfile');
+      unregisterHandler('dashboardRefresh');
+      unregisterHandler('logout');
+    };
+  }, [
+    registerHandler,
+    unregisterHandler,
+    primaryExam,
+    activeExams,
+    refetch,
+    logout,
+    navigate,
+    speakText,
+  ]);
+
+  // Auto-focus the primary exam action button on mount once data is loaded
+  useEffect(() => {
+    if (!isLoading && primaryExam) {
+      const btn = document.getElementById('primary-exam-btn');
+      if (btn) {
+        btn.focus();
+      }
+    }
+  }, [isLoading, primaryExam]);
+
+  // Global Key Listener for zero-tab dashboard navigation
+  useEffect(() => {
+    const handleDashboardKeys = (e) => {
+      const isInputElem =
+        e.target &&
+        (e.target.tagName === 'INPUT' ||
+          e.target.tagName === 'TEXTAREA' ||
+          e.target.isContentEditable);
+
+      if (isInputElem) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+      const key = e.key.toUpperCase();
+
+      if (e.key === 'Enter' || e.key === ' ' || key === 'S') {
+        if (primaryExam && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
+          e.preventDefault();
+          handleStartPrimaryExam();
+        }
+      } else if (key === '1') {
+        e.preventDefault();
+        handleJumpSection('current-exam', 'Current Examination');
+      } else if (key === '2') {
+        e.preventDefault();
+        handleJumpSection('upcoming-exams', 'Upcoming Examinations');
+      } else if (key === '3') {
+        e.preventDefault();
+        handleJumpSection('completed-exams', 'Completed Papers');
+      } else if (key === 'R') {
+        e.preventDefault();
+        refetch();
+        announceToScreenReader('Refreshed examination schedules.');
+      }
+    };
+
+    window.addEventListener('keydown', handleDashboardKeys);
+    return () => window.removeEventListener('keydown', handleDashboardKeys);
+  }, [primaryExam, refetch]);
+
+  // Initial Auditory Cue when landing on Dashboard
+  useEffect(() => {
+    if (!isLoading && !isError) {
+      const activeCount = activeExams.length;
+      const paperName = primaryExam ? primaryExam.subject_name : 'No active exams';
+      const prompt =
+        activeCount > 0
+          ? `Student Dashboard. Candidate ${student.name}. Active paper: ${paperName}. Focused on Proceed button. Press Enter or Space to begin, 1 to 3 to navigate sections, or R to refresh.`
+          : `Student Dashboard. Candidate ${student.name}. No active examinations assigned at this time. Press Alt+H for shortcuts.`;
+      announceToScreenReader(prompt, 'polite');
+    }
+  }, [isLoading, isError, activeExams.length, primaryExam, student.name]);
 
   if (isLoading) {
     return (
@@ -160,25 +286,29 @@ export const DashboardPage = () => {
                     <div className="pt-2">
                       {resumeActive ? (
                         <Button
+                          id="primary-exam-btn"
                           variant="primary"
                           size="lg"
                           fullWidth={true}
+                          autoFocus={true}
                           onClick={() => navigate(`/exam/${primaryExam.schedule_id}/resume`)}
                           rightIcon={<RotateCcw className="w-4 h-4" />}
                           ariaLabel={`Resume active examination for ${primaryExam.subject_name}`}
                         >
-                          Resume Examination
+                          Resume Examination (Enter)
                         </Button>
                       ) : (
                         <Button
+                          id="primary-exam-btn"
                           variant={isUpcoming ? 'secondary' : 'primary'}
                           size="lg"
                           fullWidth={true}
+                          autoFocus={true}
                           onClick={() => navigate(`/exam/${primaryExam.schedule_id}/instructions`)}
                           rightIcon={isUpcoming ? <Lock className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                           ariaLabel={`Proceed to Examination Instructions for ${primaryExam.subject_name}`}
                         >
-                          {isUpcoming ? 'Read Instructions (Exam Scheduled)' : 'Proceed to Examination Instructions'}
+                          {isUpcoming ? 'Read Instructions (Exam Scheduled)' : 'Proceed to Instructions (Enter)'}
                         </Button>
                       )}
                     </div>

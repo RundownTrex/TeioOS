@@ -26,7 +26,9 @@ const DEFAULT_SETTINGS = {
 export const AccessibilityProvider = ({ children }) => {
   const [settings, setSettings] = useState(() => {
     const saved = getItem(STORAGE_KEYS.ACCESSIBILITY_SETTINGS, localStorage);
-    return saved ? { ...DEFAULT_SETTINGS, ...saved } : DEFAULT_SETTINGS;
+    return saved && typeof saved === 'object' && !Array.isArray(saved)
+      ? { ...DEFAULT_SETTINGS, ...saved }
+      : DEFAULT_SETTINGS;
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);

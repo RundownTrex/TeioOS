@@ -16,6 +16,9 @@ import { ShieldCheck, Info, ArrowRight, ArrowLeft, Clock, Lock, CheckCircle2, Fi
 import { formatDateTime } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
+import { useShortcuts } from '../hooks/useShortcuts';
+import { useTTS } from '../hooks/useTTS';
+import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 const STANDARD_CONDUCT_RULES = [
   'Ensure you remain seated at your designated computer terminal throughout the examination.',
@@ -41,6 +44,8 @@ export const InstructionsPage = () => {
   const [now, setNow] = useState(() => Date.now());
   const { initExamSession } = useExam();
   const { token: baseToken } = useAuth();
+  const { registerHandler, unregisterHandler } = useShortcuts();
+  const { speakText } = useTTS();
 
   useDocumentTitle('Examination Instructions');
   const pageHeadingRef = useFocusOnMount();
@@ -166,6 +171,79 @@ export const InstructionsPage = () => {
       setIsStarting(false);
     }
   };
+
+  const handleReadRulesAloud = () => {
+    const rulesText = STANDARD_CONDUCT_RULES.map((r, i) => `Rule ${i + 1}: ${r}`).join('. ');
+    const customText = data.customInstructions ? `Special Instructions: ${data.customInstructions}. ` : '';
+    const text = `Examination instructions for ${data.subjectName}. Duration: ${data.durationMinutes} minutes. Total marks: ${data.totalMarks}. Total questions: ${data.totalQuestions}. ${customText} Conduct Rules: ${rulesText}. Press Enter to begin examination.`;
+    speakText(text, 'Examination Rules');
+  };
+
+  const handleToggleAgreement = () => {
+    setHasAgreed((prev) => {
+      const next = !prev;
+      announceToScreenReader(next ? 'Agreed to examination rules' : 'Unchecked agreement box');
+      speakText(next ? 'Agreed to examination rules' : 'Unchecked agreement box', 'Agreement');
+      return next;
+    });
+  };
+
+  // Register Instructions Page Keyboard Shortcuts
+  useEffect(() => {
+    registerHandler('ttsReadQuestion', handleReadRulesAloud);
+    registerHandler('clearResponse', handleToggleAgreement);
+    registerHandler('navDashboard', () => navigate('/dashboard'));
+
+    return () => {
+      unregisterHandler('ttsReadQuestion');
+      unregisterHandler('clearResponse');
+      unregisterHandler('navDashboard');
+    };
+  }, [registerHandler, unregisterHandler, data, hasAgreed, navigate]);
+
+  // Global Key Listener: Auto-agrees and begins examination instantly on Enter/Space/B
+  useEffect(() => {
+    const handleGlobalKeys = (e) => {
+      const isInputElem =
+        e.target &&
+        (e.target.tagName === 'INPUT' ||
+          e.target.tagName === 'TEXTAREA' ||
+          e.target.isContentEditable);
+
+      if (isInputElem) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+      const key = e.key.toUpperCase();
+
+      if (e.key === 'Enter' || e.key === ' ' || key === 'B') {
+        if (!isUpcoming && !isStarting) {
+          e.preventDefault();
+          if (!hasAgreed) setHasAgreed(true);
+          handleBeginExam();
+        }
+      } else if (key === 'R') {
+        e.preventDefault();
+        handleReadRulesAloud();
+      } else if (key === 'C' || key === 'A') {
+        e.preventDefault();
+        handleToggleAgreement();
+      } else if (e.key === 'Escape' || key === 'D') {
+        e.preventDefault();
+        navigate('/dashboard');
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeys);
+    return () => window.removeEventListener('keydown', handleGlobalKeys);
+  }, [isUpcoming, isStarting, hasAgreed, handleBeginExam, handleReadRulesAloud, handleToggleAgreement, navigate]);
+
+  // Initial Auditory Cue on Instructions Page Mount
+  useEffect(() => {
+    if (!isLoading && !isError) {
+      const prompt = `Examination Instructions for ${data.subjectName}. Duration: ${data.durationMinutes} minutes. Press Alt+R to hear all rules, or press Enter to agree and begin the examination immediately.`;
+      announceToScreenReader(prompt, 'polite');
+    }
+  }, [isLoading, isError, data.subjectName, data.durationMinutes]);
 
   if (isLoading) {
     return (
@@ -306,9 +384,11 @@ export const InstructionsPage = () => {
             {/* CTA Action Button */}
             <div className="pt-2">
               <Button
+                id="begin-exam-btn"
                 variant={isUpcoming ? 'secondary' : 'primary'}
                 size="lg"
                 fullWidth={true}
+                autoFocus={true}
                 isDisabled={!hasAgreed || isUpcoming || isStarting}
                 isLoading={isStarting}
                 onClick={handleBeginExam}
@@ -317,7 +397,7 @@ export const InstructionsPage = () => {
               >
                 {isUpcoming
                   ? `Examination Locked (Unlocks at ${formatDateTime(data.startTime)})`
-                  : 'Begin Examination'}
+                  : 'Begin Examination (Enter)'}
               </Button>
             </div>
           </CardBody>

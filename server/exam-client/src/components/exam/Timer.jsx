@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Clock } from 'lucide-react';
 import { formatDuration } from '../../utils/formatters';
-import { announceToScreenReader } from '../../utils/ariaAnnounce';
+import { useTTS } from '../../hooks/useTTS';
 
 export const Timer = ({
   secondsRemaining = 0,
@@ -11,8 +11,9 @@ export const Timer = ({
   const isCritical = secondsRemaining > 0 && secondsRemaining <= 300; // < 5 minutes
   const formatted = formatDuration(secondsRemaining);
   const announcedMilestonesRef = useRef(new Set());
+  const { speakText } = useTTS();
 
-  // Task 4: Announce timer milestones (30m, 15m, 5m, 1m) without second-by-second screen reader chatter
+  // Announce timer milestones (30m, 15m, 5m, 1m) aloud via Web Speech TTS and ARIA live regions
   useEffect(() => {
     if (secondsRemaining <= 0) return;
 
@@ -30,10 +31,10 @@ export const Timer = ({
         !announcedMilestonesRef.current.has(seconds)
       ) {
         announcedMilestonesRef.current.add(seconds);
-        announceToScreenReader(text, priority);
+        speakText(text, 'Timer Alert');
       }
     });
-  }, [secondsRemaining]);
+  }, [secondsRemaining, speakText]);
 
   return (
     <div

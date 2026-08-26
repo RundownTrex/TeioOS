@@ -47,9 +47,6 @@
     <keybind key="C-d">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
-    <keybind key="A-d">
-      <action name="Execute"><command>/bin/true</command></action>
-    </keybind>
     <keybind key="F6">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
@@ -157,12 +154,6 @@
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
     <!-- Block settings / menus / help -->
-    <keybind key="A-e">
-      <action name="Execute"><command>/bin/true</command></action>
-    </keybind>
-    <keybind key="A-f">
-      <action name="Execute"><command>/bin/true</command></action>
-    </keybind>
     <keybind key="F1">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
@@ -176,9 +167,9 @@
     <keybind key="S-Escape">
       <action name="Execute"><command>/bin/true</command></action>
     </keybind>
-    <!-- Toggle Orca Screen Reader (Alt+Super+S) -->
+    <!-- Block unused modifier shortcuts -->
     <keybind key="A-W-s">
-      <action name="Execute"><command>/usr/local/bin/teioos-toggle-orca</command></action>
+      <action name="Execute"><command>/bin/true</command></action>
     </keybind>
   </keyboard>
   <mouse>

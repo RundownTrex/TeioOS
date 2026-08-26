@@ -3,9 +3,9 @@
 # TeioOS Kiosk X Session Initialization (.xinitrc)
 # ============================================================================
 # This script runs as examuser after startx is invoked from .bash_profile.
-# It configures the accessibility stack (D-Bus, AT-SPI2, Orca, PulseAudio),
+# It configures the audio & accessibility stack (D-Bus, PulseAudio, Speech Dispatcher),
 # launches the Openbox window manager, and opens Chromium in kiosk mode
-# pointed at the TeioOS exam server.
+# with in-browser speech synthesis enabled for the TeioOS exam client.
 # ============================================================================
 
 # ── 1. Disable Screen Blanking & Power Management ──
@@ -71,33 +71,17 @@ sleep 1
 
 # ── 7. Openbox Window Manager ──
 # Start the minimal window manager. It provides the keybinding layer
-# (rc.xml) that blocks dangerous shortcuts and maps the Orca toggle.
+# (rc.xml) that blocks dangerous shortcuts.
 openbox --config-file /etc/xdg/openbox/rc.xml &
 
 # ── 8. Hide Mouse Cursor When Idle ──
 unclutter -idle 1 &
 
-# ── 9. Orca Screen Reader (Enabled by Default) ──
-# Orca is launched automatically so blind candidates hear speech output
-# from the moment the kiosk boots without requiring sighted assistance.
-# Sighted candidates or invigilators can toggle it off at any time with
-# Alt+Super+S (mapped in Openbox rc.xml -> teioos-toggle-orca).
-if command -v orca >/dev/null 2>&1; then
-    orca --replace &
-fi
-
-# Brief pause to let Orca initialize before launching the browser
-sleep 1
-
-# ── 10. Chromium Kiosk Browser ──
-# Launch Chromium in fullscreen kiosk mode with accessibility flags:
-#   --force-renderer-accessibility : Forces the accessibility tree to be
-#       built even without a detected screen reader, ensuring AT-SPI2
-#       works reliably with Orca from the first page load.
-#   --enable-speech-dispatcher : Enables speech-dispatcher integration
-#       for Web Speech API voices on Linux.
-#   --autoplay-policy=no-user-gesture-required : Allows TTS utterances
-#       and audio feedback without requiring a user click first.
+# ── 9. Chromium Kiosk Browser ──
+# Launch Chromium in fullscreen kiosk mode with speech & accessibility flags:
+#   --enable-speech-dispatcher : Connects browser Web Speech API to speech-dispatcher / espeak-ng.
+#   --autoplay-policy=no-user-gesture-required : Allows immediate spoken TTS orientation on mount.
+#   --force-renderer-accessibility : Forces accessibility tree creation.
 exec chromium \
     --kiosk "http://teioos-server.local:8080/exam/login/" \
     --noerrdialogs \

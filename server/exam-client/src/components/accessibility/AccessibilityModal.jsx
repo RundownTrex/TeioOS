@@ -70,7 +70,7 @@ export const AccessibilityModal = () => {
 
   const profileOptions = [
     { value: 'default', label: 'Default Baseline', description: 'Standard academic light theme and normal typography' },
-    { value: 'screenreader', label: 'Screen Reader Profile (Orca / NVDA)', description: 'Optimized for blind candidates. Suppresses browser TTS and maximizes semantic ARIA landmarks' },
+    { value: 'screenreader', label: 'Full Audio / Blind Candidate Profile', description: 'Engineered for blind candidates. In-browser spoken audio narrator for all screens, questions, options, and actions with High Contrast AAA theme' },
     { value: 'vision', label: 'High Vision Profile', description: 'WCAG AAA High Contrast dark, 150% font scale & wide spacing' },
     { value: 'motor', label: 'Motor Accessibility Profile', description: '125% font scale, relaxed spacing & reduced animations' },
     { value: 'cognitive', label: 'Cognitive & Dyslexia Profile', description: 'Lexend legibility font, loose 2.0x line height & wide tracking' },
@@ -284,43 +284,29 @@ export const AccessibilityModal = () => {
 
         {/* ── TAB 3: SPEECH & AUDIO ── */}
         <TabPanel value="speech" className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-          {/* Screen Reader Mode Banner */}
+          {/* Audio Navigation Banner */}
           <div className="p-3.5 bg-surface border border-border-strong rounded-xl space-y-2 shadow-xs">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-navy-primary uppercase tracking-wider flex items-center gap-1.5">
                 <Volume2 className="w-4 h-4" aria-hidden="true" />
-                Screen Reader Compatibility
+                In-Browser Audio Narrator
               </span>
             </div>
             <Switch
-              id="screen-reader-mode-switch"
-              label="Desktop Screen Reader Mode (Orca / NVDA / VoiceOver)"
-              checked={screenReaderMode}
-              onChange={toggleScreenReaderMode}
+              id="tts-enable-switch"
+              label="Enable In-Browser Voice Reader (Web Speech TTS)"
+              checked={ttsEnabled}
+              onChange={toggleTTS}
             />
             <p className="text-[11px] text-text-muted leading-relaxed">
-              When active, browser synthetic speech is muted to prevent audio collision with your desktop screen reader. All updates are routed to native ARIA live regions.
+              Provides complete spoken audio feedback for blind and low-vision candidates, reading questions, options, orientation guides, and real-time exam notifications.
             </p>
           </div>
 
           {/* In-browser TTS settings */}
-          <div className="p-4 border border-border-main bg-subtle/40 rounded-xl space-y-4">
-            <Switch
-              id="tts-enable-switch"
-              label="Enable In-Browser Voice Reader (Web Speech TTS)"
-              checked={ttsEnabled && !screenReaderMode}
-              disabled={screenReaderMode}
-              onChange={toggleTTS}
-            />
-
-            {screenReaderMode && (
-              <p className="text-xs text-amber-700 dark:text-amber-300 font-medium">
-                Note: In-browser voice reader is paused because Desktop Screen Reader Mode is currently active.
-              </p>
-            )}
-
-            {ttsEnabled && !screenReaderMode && (
-              <div className="space-y-4 pt-3 border-t border-border-main text-xs">
+          {ttsEnabled && (
+            <div className="p-4 border border-border-main bg-subtle/40 rounded-xl space-y-4">
+              <div className="space-y-4 text-xs">
                 {/* Voice Selection */}
                 {voices.length > 0 && (
                   <Select

@@ -9,13 +9,14 @@ xserver-xorg-input-all
 xinit
 openbox
 chromium
-orca
 at-spi2-core
 pulseaudio
 pulseaudio-utils
 alsa-utils
 speech-dispatcher
 speech-dispatcher-espeak-ng
+speech-dispatcher-pico
+libttspico-utils
 espeak-ng
 libespeak-ng1
 unclutter

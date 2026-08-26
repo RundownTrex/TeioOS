@@ -60,6 +60,12 @@ export const examsApi = {
     });
   },
 
+  getExamResult: async (scheduleId, baseToken) => {
+    return axiosClient.get(API_ENDPOINTS.RESULT(scheduleId), {
+      headers: baseToken ? { Authorization: `Bearer ${baseToken}` } : {},
+    });
+  },
+
   pauseExam: (scheduleId, baseToken) => {
     return fetch(`${baseURL}${API_ENDPOINTS.PAUSE_EXAM(scheduleId)}`, {
       method: 'POST',

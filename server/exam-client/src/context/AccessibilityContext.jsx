@@ -50,8 +50,12 @@ export const AccessibilityProvider = ({ children }) => {
         const voiceExists = availableVoices.some((v) => v.voiceURI === prev.ttsVoiceURI);
 
         if (!prev.ttsVoiceURI || !voiceExists) {
-          // Priority fallback: Default English voice -> Any English voice -> First available voice
+          // Priority fallback: High-quality natural voice (Pico, Piper, Natural) -> Default English -> Any English -> First available
+          const naturalVoice = availableVoices.find(
+            (v) => v.lang.startsWith('en') && !v.name.toLowerCase().includes('espeak')
+          );
           const defaultVoice =
+            naturalVoice ||
             availableVoices.find((v) => v.default && v.lang.startsWith('en')) ||
             availableVoices.find((v) => v.lang.startsWith('en')) ||
             availableVoices[0];
@@ -142,8 +146,8 @@ export const AccessibilityProvider = ({ children }) => {
       const next = !prev.screenReaderMode;
       announceToScreenReader(
         next
-          ? 'Screen reader mode enabled. Browser text-to-speech is muted to avoid conflicting with your desktop screen reader.'
-          : 'Screen reader mode disabled. Browser text-to-speech is available.'
+          ? 'Screen reader accessibility mode enabled.'
+          : 'Screen reader accessibility mode disabled.'
       );
       return { ...prev, screenReaderMode: next };
     });
@@ -155,8 +159,8 @@ export const AccessibilityProvider = ({ children }) => {
       if (prev.screenReaderMode === next) return prev;
       announceToScreenReader(
         next
-          ? 'Screen reader mode enabled. Browser text-to-speech is muted to avoid conflicting with your desktop screen reader.'
-          : 'Screen reader mode disabled. Browser text-to-speech is available.'
+          ? 'Screen reader accessibility mode enabled.'
+          : 'Screen reader accessibility mode disabled.'
       );
       return { ...prev, screenReaderMode: next };
     });
@@ -215,10 +219,11 @@ export const AccessibilityProvider = ({ children }) => {
           fontScale: 150,
           lineHeight: 'relaxed',
           letterSpacing: 'wide',
-          ttsEnabled: false,
+          ttsEnabled: true,
+          ttsSpeed: 0.9,
           reducedMotion: true,
         }));
-        announceToScreenReader('Applied Screen Reader Accessibility Profile. Desktop screen reader mode active.');
+        announceToScreenReader('Applied Screen Reader Accessibility Profile.');
         break;
       case 'vision':
         setSettings((prev) => ({

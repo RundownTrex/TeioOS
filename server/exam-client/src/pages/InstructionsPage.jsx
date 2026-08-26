@@ -18,7 +18,6 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useTTS } from '../hooks/useTTS';
-import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 const STANDARD_CONDUCT_RULES = [
   'Ensure you remain seated at your designated computer terminal throughout the examination.',
@@ -159,15 +158,20 @@ export const InstructionsPage = () => {
           }
 
           setStartError(errorMsg);
+          speakText(errorMsg, 'Exam Start Error');
           setIsStarting(false);
           return;
         }
       } else {
-        setStartError('Authentication token missing. Please log in again.');
+        const errorMsg = 'Authentication token missing. Please log in again.';
+        setStartError(errorMsg);
+        speakText(errorMsg, 'Authentication Error');
         setIsStarting(false);
       }
     } catch (err) {
-      setStartError('Failed to initialize examination session. Please try again.');
+      const errorMsg = 'Failed to initialize examination session. Please try again.';
+      setStartError(errorMsg);
+      speakText(errorMsg, 'Session Error');
       setIsStarting(false);
     }
   };
@@ -182,7 +186,6 @@ export const InstructionsPage = () => {
   const handleToggleAgreement = () => {
     setHasAgreed((prev) => {
       const next = !prev;
-      announceToScreenReader(next ? 'Agreed to examination rules' : 'Unchecked agreement box');
       speakText(next ? 'Agreed to examination rules' : 'Unchecked agreement box', 'Agreement');
       return next;
     });
@@ -219,6 +222,7 @@ export const InstructionsPage = () => {
         if (!isUpcoming && !isStarting) {
           e.preventDefault();
           if (!hasAgreed) setHasAgreed(true);
+          speakText('Starting examination, loading questions...', 'Start Exam');
           handleBeginExam();
         }
       } else if (key === 'R') {
@@ -235,15 +239,20 @@ export const InstructionsPage = () => {
 
     window.addEventListener('keydown', handleGlobalKeys);
     return () => window.removeEventListener('keydown', handleGlobalKeys);
-  }, [isUpcoming, isStarting, hasAgreed, handleBeginExam, handleReadRulesAloud, handleToggleAgreement, navigate]);
+  }, [isUpcoming, isStarting, hasAgreed, handleBeginExam, handleReadRulesAloud, handleToggleAgreement, navigate, speakText]);
 
   // Initial Auditory Cue on Instructions Page Mount
   useEffect(() => {
     if (!isLoading && !isError) {
-      const prompt = `Examination Instructions for ${data.subjectName}. Duration: ${data.durationMinutes} minutes. Press Alt+R to hear all rules, or press Enter to agree and begin the examination immediately.`;
-      announceToScreenReader(prompt, 'polite');
+      const prompt = `Examination instructions for ${data.subjectName}. ${data.durationMinutes} minutes, ${data.totalQuestions} questions. Press R to hear rules, or Enter to begin.`;
+      
+      const timer = setTimeout(() => {
+        speakText(prompt, 'Instructions Orientation');
+      }, 600);
+
+      return () => clearTimeout(timer);
     }
-  }, [isLoading, isError, data.subjectName, data.durationMinutes]);
+  }, [isLoading, isError, data.subjectName, data.durationMinutes, data.totalQuestions, speakText]);
 
   if (isLoading) {
     return (

@@ -9,8 +9,8 @@ import { Alert } from '../components/ui/Alert';
 import { UserCheck, Lock, Shield } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
+import { useShortcuts } from '../hooks/useShortcuts';
 import { useTTS } from '../hooks/useTTS';
-import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 export const LoginPage = () => {
   const [rollNumber, setRollNumber] = useState('');
@@ -44,15 +44,12 @@ export const LoginPage = () => {
       'Welcome to TeioOS Student Examination Portal. ' +
       'Focus is on the Roll Number field. ' +
       'Type your assigned Roll Number, then press Enter or Down Arrow to move to the Passcode field. ' +
-      'Type your Passcode and press Enter to sign in. ' +
-      'Press Alt+H at any time for keyboard shortcuts. ' +
-      'Press Alt+I to hear the complete spoken audio guide.';
+      'Type your Passcode and press Enter to sign in.';
 
-    // Slight delay so the ARIA live region is mounted and Orca has settled
+    // Slight delay so the ARIA live region is mounted and voice engine is ready
     const timer = setTimeout(() => {
-      announceToScreenReader(welcomePrompt, 'polite');
       speakText(welcomePrompt, 'Sign In Orientation');
-    }, 800);
+    }, 600);
 
     return () => clearTimeout(timer);
   }, [speakText]);
@@ -62,7 +59,7 @@ export const LoginPage = () => {
     if (e.key === 'Enter' || e.key === 'ArrowDown') {
       e.preventDefault();
       document.getElementById('passcode')?.focus();
-      announceToScreenReader('Moved to Examination Passcode field.');
+      speakText('Moved to Examination Passcode field.', 'Navigation');
     }
   };
 
@@ -70,21 +67,22 @@ export const LoginPage = () => {
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       document.getElementById('rollNumber')?.focus();
-      announceToScreenReader('Moved to Roll Number field.');
+      speakText('Moved to Roll Number field.', 'Navigation');
     }
   };
 
   const validateForm = () => {
     const errors = {};
     if (!rollNumber.trim()) {
-      errors.rollNumber = 'Roll Number / Student ID is required.';
+      errors.rollNumber = 'Roll Number or Student ID is required.';
     }
     if (!passcode.trim()) {
       errors.passcode = 'Examination Passcode is required.';
     }
     setFieldErrors(errors);
     if (errors.rollNumber || errors.passcode) {
-      announceToScreenReader(errors.rollNumber || errors.passcode, 'assertive');
+      const errMsg = errors.rollNumber || errors.passcode;
+      speakText(errMsg, 'Validation Notice');
     }
     return Object.keys(errors).length === 0;
   };
@@ -96,15 +94,16 @@ export const LoginPage = () => {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    speakText('Signing in to examination portal...', 'Sign In');
 
     try {
       await login(rollNumber.trim(), passcode);
-      announceToScreenReader('Sign in successful. Redirecting to student dashboard...', 'assertive');
+      speakText('Sign in successful. Welcome to your examination dashboard.', 'Sign In Success');
       navigate(from, { replace: true });
     } catch (err) {
       const msg = err.message || 'Invalid Roll Number or Examination Passcode. Please check your credentials.';
       setServerError(msg);
-      announceToScreenReader(msg, 'assertive');
+      speakText(msg, 'Sign In Error');
     } finally {
       setIsSubmitting(false);
     }
@@ -148,7 +147,7 @@ export const LoginPage = () => {
               }
             }}
             onKeyDown={handleRollKeyDown}
-            placeholder="e.g. STU-2026-8941"
+            placeholder="Enter your assigned roll number"
             isRequired={true}
             autoFocus={true}
             error={fieldErrors.rollNumber}

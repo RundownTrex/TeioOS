@@ -14,25 +14,13 @@ export const RootLayout = () => {
   const { isModalOpen, toggleModal } = useAccessibility();
   const { speakText, stopSpeech, isSpeaking } = useTTS();
 
-  // Initial auditory orientation cue when candidate loads the exam platform
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      announceToScreenReader(
-        'Welcome to TeioOS Examination Platform. Press Alt+H for keyboard shortcuts, Alt+I to hear the complete spoken audio tour, or Tab to navigate.',
-        'polite'
-      );
-    }, 600);
-    return () => clearTimeout(timer);
-  }, []);
-
   // Register global accessibility (Alt+A) and audio tour (Alt+I) shortcuts
   useEffect(() => {
     registerHandler('accessibility', () => {
       const willOpen = !isModalOpen;
       toggleModal();
-      announceToScreenReader(
-        willOpen ? 'Opened Accessibility Preferences Dialog' : 'Closed Accessibility Preferences Dialog'
-      );
+      const msg = willOpen ? 'Opened Accessibility Preferences' : 'Closed Accessibility Preferences';
+      speakText(msg, 'Accessibility');
     });
 
     registerHandler('audioTour', () => {

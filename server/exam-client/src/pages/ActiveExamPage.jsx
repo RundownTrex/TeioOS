@@ -21,7 +21,6 @@ import { ErrorState } from '../components/ui/ErrorState';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { SYNC_STATUS, SESSION_SYNC_INTERVAL_MS, EXAM_SESSION_STATUS, STORAGE_KEYS } from '../utils/constants';
-import { announceToScreenReader } from '../utils/ariaAnnounce';
 import { formatDuration } from '../utils/formatters';
 import { getItem } from '../utils/storage';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -36,73 +35,8 @@ import {
   mergeAnswersWithConflictResolution,
 } from '../utils/resilienceManager';
 
-const MOCK_QUESTIONS = [
-  {
-    id: 'q-1',
-    type: 'MCQ',
-    section: 'SEC A: MCQs',
-    marks: 3,
-    negativeMarks: 1,
-    stem: 'A train traveling at a constant speed of 72 km/h passes a stationary platform in 24 seconds. If the length of the train is 180 meters, what is the length of the platform in meters?',
-    options: [
-      { id: 'opt-1-a', prefix: 'A', text: '240 meters' },
-      { id: 'opt-1-b', prefix: 'B', text: '300 meters' },
-      { id: 'opt-1-c', prefix: 'C', text: '360 meters' },
-      { id: 'opt-1-d', prefix: 'D', text: '400 meters' },
-    ],
-  },
-  {
-    id: 'q-2',
-    type: 'DESCRIPTIVE',
-    section: 'SEC B: Essay Questions',
-    marks: 10,
-    negativeMarks: 0,
-    maxWords: 500,
-    maxLength: 2500,
-    stem: "Explain Dijkstra's shortest path algorithm for a weighted directed graph with non-negative edge weights. Include its algorithmic steps, time complexity analysis with a min-priority queue, and pseudocode.",
-  },
-  {
-    id: 'q-3',
-    type: 'MCQ',
-    section: 'SEC A: MCQs',
-    marks: 2,
-    negativeMarks: 0.5,
-    stem: 'What is the worst-case time complexity of searching for an element in an unbalanced Binary Search Tree (BST) containing N nodes?',
-    options: [
-      { id: 'opt-2-a', prefix: 'A', text: 'O(1)' },
-      { id: 'opt-2-b', prefix: 'B', text: 'O(log N)' },
-      { id: 'opt-2-c', prefix: 'C', text: 'O(N)' },
-      { id: 'opt-2-d', prefix: 'D', text: 'O(N log N)' },
-    ],
-  },
-  {
-    id: 'q-4',
-    type: 'DESCRIPTIVE',
-    section: 'SEC B: Essay Questions',
-    marks: 15,
-    negativeMarks: 0,
-    maxWords: 1000,
-    maxLength: 5000,
-    stem: 'Formulate the 0/1 Knapsack Problem using Dynamic Programming. Write down the recurrence relation, state representation matrix, space-optimized 1D array approach, and trace a numerical example with 4 items.',
-  },
-  {
-    id: 'q-5',
-    type: 'MCQ',
-    section: 'SEC A: MCQs',
-    marks: 4,
-    negativeMarks: 1,
-    stem: 'Which of the following greedy algorithm design paradigms guarantees finding a Minimum Spanning Tree (MST) in a connected, undirected weighted graph?',
-    options: [
-      { id: 'opt-4-a', prefix: 'A', text: "Kruskal's Algorithm" },
-      { id: 'opt-4-b', prefix: 'B', text: "Bellman-Ford Algorithm" },
-      { id: 'opt-4-c', prefix: 'C', text: "Floyd-Warshall Algorithm" },
-      { id: 'opt-4-d', prefix: 'D', text: 'Depth-First Search (DFS)' },
-    ],
-  },
-];
-
 export const ActiveExamPage = () => {
-  const { scheduleId = 'cs-401' } = useParams();
+  const { scheduleId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { session, elevatedToken, syncExamSession } = useExam();
@@ -186,7 +120,7 @@ export const ActiveExamPage = () => {
         savedAnswerText: q.saved_answer_text,
       }));
     }
-    return MOCK_QUESTIONS;
+    return [];
   }, [apiQuestionsData]);
 
   // Restore answers, review flags and visited set immediately from the local
@@ -271,7 +205,7 @@ export const ActiveExamPage = () => {
     const handleOnline = async () => {
       setIsConnected(true);
       setSyncStatus(SYNC_STATUS.RECOVERY);
-      announceToScreenReader('Network connection restored. Syncing offline answers to server...', 'assertive');
+      speakText('Network connection restored. Syncing answers to server.', 'Online');
       try {
         await flushOfflineQueue(elevatedToken);
         await flushSubmissionQueue(elevatedToken);
@@ -286,7 +220,7 @@ export const ActiveExamPage = () => {
     const handleOffline = () => {
       setIsConnected(false);
       setSyncStatus(SYNC_STATUS.OFFLINE);
-      announceToScreenReader('Network connection lost. Switched to offline resilience mode. Your answers are safe locally.', 'assertive');
+      speakText('Network connection lost. Switched to offline mode. Responses are safe locally.', 'Offline');
     };
 
     window.addEventListener('online', handleOnline);
@@ -296,7 +230,7 @@ export const ActiveExamPage = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [elevatedToken, refetchSession]);
+  }, [elevatedToken, refetchSession, speakText]);
 
   // Session state is absent or not started: route to the resume/instructions flow
   useEffect(() => {
@@ -310,7 +244,7 @@ export const ActiveExamPage = () => {
   const currentAnswer = answersMap[currentIndex] || '';
   const isCurrentFlagged = flaggedSet.has(currentIndex);
 
-  // Track visited questions and announce full question & options readout for blind candidates
+  // Track visited questions and announce question readout for blind candidates
   useEffect(() => {
     setVisitedSet((prev) => {
       if (!prev.has(currentIndex)) {
@@ -322,48 +256,39 @@ export const ActiveExamPage = () => {
     });
 
     const questionNumText = `Question ${currentIndex + 1} of ${totalQuestions}`;
-    const typeText = currentQuestion?.type === 'MCQ' ? 'Multiple Choice' : 'Descriptive Essay';
-    const isAnswered = Boolean(answersMap[currentIndex]);
-    const statusText = isAnswered ? 'Answered' : 'Unanswered';
-    const reviewText = isCurrentFlagged ? '. Marked for review' : '';
-    const sectionText = currentQuestion?.section ? `. ${currentQuestion.section}` : '';
+    const sectionText = currentQuestion?.section ? `, ${currentQuestion.section}` : '';
 
-    // Centralized live region announcement for blind screen-reader users
-    announceToScreenReader(
-      `${questionNumText}${sectionText}. ${typeText}. ${statusText}${reviewText}.`
-    );
+    let speechText = `${questionNumText}${sectionText}. ${currentQuestion?.stem || ''}`;
 
-    let speechText = `${questionNumText}${sectionText}. Marks: ${currentQuestion?.marks || 1}. Stem: ${currentQuestion?.stem || ''}`;
-    
     if (currentQuestion?.type === 'MCQ' && currentQuestion?.options?.length > 0) {
       const optsText = currentQuestion.options
-        .map((opt) => `Option ${opt.prefix}: ${opt.text || opt.option_text}`)
+        .map((opt) => `${opt.prefix}: ${opt.text || opt.option_text}`)
         .join('. ');
       speechText += `. Options: ${optsText}`;
     } else if (currentQuestion?.type === 'DESCRIPTIVE') {
       const ansText = answersMap[currentIndex] || '';
-      speechText += `. Descriptive question. ${ansText ? `Your current saved answer: ${ansText}` : 'No answer entered yet.'}`;
+      const wordCount = ansText.trim() ? ansText.trim().split(/\s+/).length : 0;
+      speechText += `. Descriptive question.${wordCount > 0 ? ` ${wordCount} words saved.` : ''}`;
     }
 
     speakText(speechText, `Question ${currentIndex + 1}`);
 
     // Programmatically move keyboard focus to the question card heading on navigation
-    // Ensures screen reader and keyboard users land on the question stem
     requestAnimationFrame(() => {
       questionHeadingRef.current?.focus({ preventScroll: true });
     });
-  }, [currentIndex, totalQuestions, currentQuestion]);
+  }, [currentIndex, totalQuestions, currentQuestion, speakText]);
 
   // Task 3: Announce exam resumption to screen reader users when arriving from Resume flow
   useEffect(() => {
     if (location.state?.isResumed) {
       const durationStr = formatDuration(secondsRemaining);
-      announceToScreenReader(
+      speakText(
         `Exam resumed. Question ${currentIndex + 1} of ${totalQuestions}. Time remaining: ${durationStr}`,
-        'assertive'
+        'Exam Resumed'
       );
     }
-  }, [location.state, currentIndex, totalQuestions, secondsRemaining]);
+  }, [location.state, currentIndex, totalQuestions, secondsRemaining, speakText]);
 
   // Synchronize authoritative session + clock offset from periodic snapshot
   useEffect(() => {
@@ -477,7 +402,6 @@ export const ActiveExamPage = () => {
     if (currentQuestion?.id) {
       persistAnswerToBackend(currentQuestion.id, null, null);
     }
-    announceToScreenReader(`Cleared response for question ${currentIndex + 1}`);
     speakText(`Response cleared for Question ${currentIndex + 1}`, 'Response Cleared');
   };
 
@@ -487,11 +411,9 @@ export const ActiveExamPage = () => {
       const isMarking = !next.has(currentIndex);
       if (isMarking) {
         next.add(currentIndex);
-        announceToScreenReader(`Question ${currentIndex + 1} marked for review`);
         speakText(`Question ${currentIndex + 1} marked for review`, 'Review Marked');
       } else {
         next.delete(currentIndex);
-        announceToScreenReader(`Question ${currentIndex + 1} review mark removed`);
         speakText(`Question ${currentIndex + 1} review mark removed`, 'Review Unmarked');
       }
       // Synchronous persist so the flag survives a power loss mid-session
@@ -513,15 +435,27 @@ export const ActiveExamPage = () => {
       const optId = currentQuestion.type === 'MCQ' ? val : null;
       const textVal = currentQuestion.type === 'DESCRIPTIVE' ? val : null;
       persistAnswerToBackend(currentQuestion.id, optId, textVal);
-      announceToScreenReader(`Response for question ${currentIndex + 1} manually saved`);
-      speakText(`Response for Question ${currentIndex + 1} manually saved to server`, 'Response Saved');
+      speakText(`Question ${currentIndex + 1} response saved`, 'Response Saved');
     }
   };
 
+  const handleOpenSubmitModal = useCallback(() => {
+    setIsSubmitModalOpen(true);
+    const ansCount = Object.keys(answersMap).filter((key) => Boolean(answersMap[key])).length;
+    const unansCount = totalQuestions - ansCount;
+    const revCount = flaggedSet.size;
+    const summaryMsg = `Submit confirmation. ${ansCount} answered, ${unansCount} unanswered, ${revCount} marked for review. Press Enter to submit or Escape to cancel.`;
+    speakText(summaryMsg, 'Submit Confirmation');
+  }, [answersMap, totalQuestions, flaggedSet, speakText]);
+
+  const handleCloseSubmitModal = useCallback(() => {
+    setIsSubmitModalOpen(false);
+    speakText('Returned to exam.', 'Exam Resumed');
+  }, [speakText]);
+
   const handleConfirmSubmit = async () => {
     setIsSubmittingPaper(true);
-    announceToScreenReader('Submitting examination paper to server...', 'assertive');
-    speakText('Submitting examination paper to server...', 'Submitting Exam');
+    speakText('Submitting examination paper...', 'Submitting');
 
     try {
       if (navigator.onLine && elevatedToken && scheduleId) {
@@ -551,8 +485,7 @@ export const ActiveExamPage = () => {
       return;
     }
 
-    announceToScreenReader('Examination time expired. Submitting answers automatically...', 'assertive');
-    speakText('Examination time expired. Submitting answers automatically...', 'Auto Submitting Exam');
+    speakText('Time expired. Submitting answers automatically.', 'Auto Submit');
 
     // Final synchronization: refresh the authoritative session snapshot before submitting
     try {
@@ -594,21 +527,11 @@ export const ActiveExamPage = () => {
       handleSelectOption(selectedOpt.id);
       const prefix = selectedOpt.prefix || String.fromCharCode(65 + optionIndex);
       const text = selectedOpt.text || selectedOpt.option_text || '';
-      announceToScreenReader(`Selected Option ${prefix}: ${text}`);
-      speakText(`Selected Option ${prefix}: ${text}`, 'Option Selected');
+      speakText(`Selected ${prefix}: ${text}`, 'Option Selected');
     },
     [hasExpired, currentQuestion, handleSelectOption, speakText]
   );
 
-  // Spoken Question Transition Announcement whenever current question changes
-  useEffect(() => {
-    if (!currentQuestion || totalQuestions === 0) return;
-    const qType = currentQuestion.type === 'MCQ' ? 'Multiple Choice Question' : 'Descriptive Essay Question';
-    const marks = currentQuestion.marks || 1;
-    announceToScreenReader(
-      `Question ${currentIndex + 1} of ${totalQuestions}. ${qType}, ${marks} ${marks === 1 ? 'mark' : 'marks'}. ${currentQuestion.stem || ''}`
-    );
-  }, [currentIndex, currentQuestion, totalQuestions]);
 
   const handleReadQuestion = useCallback(() => {
     if (currentQuestion?.stem) {
@@ -659,7 +582,6 @@ export const ActiveExamPage = () => {
   const handleReadTimer = useCallback(() => {
     const timerElem = document.getElementById('timer-display');
     if (timerElem) timerElem.focus();
-    announceToScreenReader(`Remaining examination time: ${formatDuration(secondsRemaining)}`);
     speakText(`Remaining examination time: ${formatDuration(secondsRemaining)}`, 'Remaining Time');
   }, [secondsRemaining, speakText]);
 
@@ -669,7 +591,6 @@ export const ActiveExamPage = () => {
       const firstTile = grid.querySelector('button');
       if (firstTile) firstTile.focus();
     }
-    announceToScreenReader(`Question palette focused. ${totalQuestions} questions available.`);
     speakText(`Question palette focused. ${totalQuestions} questions available. Use arrow keys to navigate.`, 'Palette Focused');
   }, [totalQuestions, speakText]);
 
@@ -685,7 +606,7 @@ export const ActiveExamPage = () => {
       // If candidate presses Escape inside a text field, blur it to return to command navigation
       if (isInputElem && e.key === 'Escape') {
         e.target.blur();
-        announceToScreenReader('Exited response field. Workbench keyboard navigation active.');
+        speakText('Exited response field. Workbench navigation active.', 'Workbench Navigation');
         return;
       }
 
@@ -755,6 +676,7 @@ export const ActiveExamPage = () => {
     handleReadSelected,
     handleReadTimer,
     handleFocusPalette,
+    speakText,
   ]);
 
   // Register Global Keyboard Shortcuts & Web Speech API TTS/STT Handlers
@@ -775,11 +697,7 @@ export const ActiveExamPage = () => {
     registerHandler('markReview', handleToggleReview);
     registerHandler('clearResponse', handleClearResponse);
     registerHandler('saveResponse', handleManualSave);
-    registerHandler('submitExam', () => {
-      setIsSubmitModalOpen(true);
-      announceToScreenReader('Opened final submission confirmation dialog', 'assertive');
-      speakText('Opened final submission confirmation dialog', 'Submit Dialog Opened');
-    });
+    registerHandler('submitExam', handleOpenSubmitModal);
 
     registerHandler('focusPalette', handleFocusPalette);
     registerHandler('focusTimer', handleReadTimer);
@@ -793,7 +711,6 @@ export const ActiveExamPage = () => {
           }
         });
       } else {
-        announceToScreenReader('Speech to Text dictation is only available for descriptive essay questions.');
         speakText('Speech to Text dictation is only available for descriptive essay questions.', 'STT Notice');
       }
     });
@@ -886,8 +803,8 @@ export const ActiveExamPage = () => {
 
   return (
     <ExamLayout
-      paperTitle="CS-401"
-      sectionTitle={currentQuestion.section}
+      paperTitle={apiQuestionsData?.subject_code || 'EXAM'}
+      sectionTitle={currentQuestion?.section || 'Questions'}
       timerSlot={<Timer secondsRemaining={secondsRemaining} />}
       hideFooter={false}
       footerSlot={<ExamStatusBar syncStatus={syncStatus} isConnected={isConnected} />}
@@ -900,7 +817,7 @@ export const ActiveExamPage = () => {
           visitedSet={visitedSet}
           questions={questions}
           onSelectQuestion={(idx) => setCurrentIndex(idx)}
-          onSubmitExam={() => setIsSubmitModalOpen(true)}
+          onSubmitExam={handleOpenSubmitModal}
           isSubmitting={isSubmittingPaper}
         />
       }
@@ -945,12 +862,12 @@ export const ActiveExamPage = () => {
       {/* Screen 7: Submit Confirmation Modal Dialog */}
       <Modal
         isOpen={isSubmitModalOpen}
-        onClose={() => setIsSubmitModalOpen(false)}
+        onClose={handleCloseSubmitModal}
         title="CONFIRM FINAL SUBMISSION"
         size="sm"
         footer={
           <div className="flex items-center justify-end gap-3 w-full">
-            <Button variant="outline" size="md" onClick={() => setIsSubmitModalOpen(false)}>
+            <Button variant="outline" size="md" onClick={handleCloseSubmitModal}>
               Return to Exam
             </Button>
             <Button

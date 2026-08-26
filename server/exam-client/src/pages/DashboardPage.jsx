@@ -15,7 +15,6 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useTTS } from '../hooks/useTTS';
-import { announceToScreenReader } from '../utils/ariaAnnounce';
 import { EXAM_SESSION_STATUS } from '../utils/constants';
 
 export const DashboardPage = () => {
@@ -82,8 +81,10 @@ export const DashboardPage = () => {
     if (!primaryExam) return;
     const resumeActive = isInProgress(primaryExam);
     if (resumeActive) {
+      speakText(`Resuming active examination for ${primaryExam.subject_name}...`, 'Resume Exam');
       navigate(`/exam/${primaryExam.schedule_id}/resume`);
     } else {
+      speakText(`Opening examination instructions for ${primaryExam.subject_name}...`, 'Start Exam');
       navigate(`/exam/${primaryExam.schedule_id}/instructions`);
     }
   };
@@ -94,7 +95,6 @@ export const DashboardPage = () => {
       elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
       elem.focus?.();
     }
-    announceToScreenReader(`Focused ${label} section.`);
     speakText(`Focused ${label} section.`, label);
   };
 
@@ -109,10 +109,10 @@ export const DashboardPage = () => {
       refetch();
       const count = activeExams.length;
       const msg = `Examination schedules refreshed. ${count} active ${count === 1 ? 'paper' : 'papers'} available.`;
-      announceToScreenReader(msg);
       speakText(msg, 'Schedules Refreshed');
     });
     registerHandler('logout', () => {
+      speakText('Logging out of examination portal.', 'Logout');
       logout();
       navigate('/login', { replace: true });
     });
@@ -178,13 +178,13 @@ export const DashboardPage = () => {
       } else if (key === 'R') {
         e.preventDefault();
         refetch();
-        announceToScreenReader('Refreshed examination schedules.');
+        speakText('Refreshed examination schedules.', 'Schedules Refreshed');
       }
     };
 
     window.addEventListener('keydown', handleDashboardKeys);
     return () => window.removeEventListener('keydown', handleDashboardKeys);
-  }, [primaryExam, refetch]);
+  }, [primaryExam, refetch, speakText]);
 
   // Initial Auditory Cue when landing on Dashboard
   useEffect(() => {
@@ -193,11 +193,16 @@ export const DashboardPage = () => {
       const paperName = primaryExam ? primaryExam.subject_name : 'No active exams';
       const prompt =
         activeCount > 0
-          ? `Student Dashboard. Candidate ${student.name}. Active paper: ${paperName}. Focused on Proceed button. Press Enter or Space to begin, 1 to 3 to navigate sections, or R to refresh.`
-          : `Student Dashboard. Candidate ${student.name}. No active examinations assigned at this time. Press Alt+H for shortcuts.`;
-      announceToScreenReader(prompt, 'polite');
+          ? `Student Dashboard. Welcome ${student.name}. Active paper: ${paperName}. Press Enter to begin.`
+          : `Student Dashboard. Welcome ${student.name}. No active examinations at this time.`;
+      
+      const timer = setTimeout(() => {
+        speakText(prompt, 'Dashboard Orientation');
+      }, 600);
+
+      return () => clearTimeout(timer);
     }
-  }, [isLoading, isError, activeExams.length, primaryExam, student.name]);
+  }, [isLoading, isError, activeExams.length, primaryExam, student.name, speakText]);
 
   if (isLoading) {
     return (

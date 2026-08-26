@@ -14,7 +14,6 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useTTS } from '../hooks/useTTS';
-import { announceToScreenReader } from '../utils/ariaAnnounce';
 import { EXAM_SESSION_STATUS } from '../utils/constants';
 
 /**
@@ -24,7 +23,7 @@ import { EXAM_SESSION_STATUS } from '../utils/constants';
  * Restores cached answers, verifies server synchronization, and allows seamless resumption.
  */
 export const ResumeExamPage = () => {
-  const { scheduleId = 'cs-401' } = useParams();
+  const { scheduleId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { userProfile, token: baseToken, logout } = useAuth();
@@ -36,8 +35,8 @@ export const ResumeExamPage = () => {
 
   const [isResuming, setIsResuming] = useState(false);
 
-  const studentName = userProfile?.name || 'Alex Smith';
-  const rollNumber = userProfile?.roll_number || 'STU-2026-8941';
+  const studentName = userProfile?.name || userProfile?.full_name || 'Candidate';
+  const rollNumber = userProfile?.roll_number || '';
 
   useDocumentTitle('Resume Examination');
   const pageHeadingRef = useFocusOnMount();
@@ -68,15 +67,15 @@ export const ResumeExamPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, session, status, scheduleId, navigate]);
 
-  // Announce the paused state to screen-reader users on arrival
+  // Announce the paused state to candidate on arrival
   useEffect(() => {
     if (isPaused) {
-      announceToScreenReader(
-        'Your examination timer was paused while you were away. Examination time is not counted while paused. Click resume to continue your examination.',
-        'assertive'
+      speakText(
+        'Your examination timer was paused while you were away. Time is not counted while paused. Press Enter to resume.',
+        'Timer Paused'
       );
     }
-  }, [isPaused]);
+  }, [isPaused, speakText]);
 
   // Compute restored draft count from local resilience cache
   const restoredAnswers = useMemo(() => restoreLocalAnswers(scheduleId), [scheduleId]);
@@ -185,10 +184,13 @@ export const ResumeExamPage = () => {
   // Auditory Orientation on Mount
   useEffect(() => {
     if (!isLoading && sessionSnapshot) {
-      const prompt = `Resume Examination Session for ${studentName}. ${savedCount} cached answers detected. Press Enter to resume the examination workbench immediately.`;
-      announceToScreenReader(prompt, 'polite');
+      const prompt = `Resume exam session for ${studentName}. ${savedCount} saved answers found. Press Enter to resume.`;
+      const timer = setTimeout(() => {
+        speakText(prompt, 'Resume Exam Orientation');
+      }, 600);
+      return () => clearTimeout(timer);
     }
-  }, [isLoading, sessionSnapshot, studentName, savedCount]);
+  }, [isLoading, sessionSnapshot, studentName, savedCount, speakText]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-canvas text-text-main p-4 select-none">

@@ -11,7 +11,6 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useTTS } from '../hooks/useTTS';
-import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 /**
  * Screen 8: Post-Submission Terminal State Screen
@@ -20,7 +19,7 @@ import { announceToScreenReader } from '../utils/ariaAnnounce';
  * as the terminal state of the examination, handing control to the real-world hall invigilator.
  */
 export const SubmittedPage = () => {
-  const { scheduleId = 'cs-401' } = useParams();
+  const { scheduleId } = useParams();
   const navigate = useNavigate();
   const { userProfile, logout } = useAuth();
   const { clearExamSession } = useExam();
@@ -33,7 +32,7 @@ export const SubmittedPage = () => {
   // Generate deterministic details from student profile and timestamp
   const submissionData = useMemo(() => {
     const now = new Date();
-    const rollNumber = userProfile?.roll_number || 'STU-2026-8941';
+    const rollNumber = userProfile?.roll_number || '';
 
     return {
       candidateName: userProfile?.name || userProfile?.full_name || 'Candidate',
@@ -105,9 +104,12 @@ export const SubmittedPage = () => {
 
   // Auditory Orientation on Mount
   useEffect(() => {
-    const prompt = `Examination submitted successfully. Press Enter to view your Performance Report, Alt+D for Dashboard, or Alt+L to Sign Out.`;
-    announceToScreenReader(prompt, 'polite');
-  }, []);
+    const prompt = 'Examination submitted successfully. Press Enter for your Performance Report, or press D for Dashboard.';
+    const timer = setTimeout(() => {
+      speakText(prompt, 'Submission Confirmation');
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [speakText]);
 
   return (
     <ExamLayout paperTitle="EXAMINATION COMPLETE" sectionTitle="Paper Submitted">

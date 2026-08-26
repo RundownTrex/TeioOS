@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { WifiOff, RefreshCw, HardDrive, Clock, CheckCircle } from 'lucide-react';
-import { announceToScreenReader } from '../utils/ariaAnnounce';
+import { useTTS } from '../hooks/useTTS';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 /**
@@ -13,12 +13,14 @@ export const OfflinePage = () => {
   const navigate = useNavigate();
   const [retrySeconds, setRetrySeconds] = useState(5);
   const [isRetrying, setIsRetrying] = useState(false);
+  const { speakText } = useTTS();
 
   useDocumentTitle('Server Disconnected');
 
   useEffect(() => {
-    announceToScreenReader('Server connection interrupted. Working in local cache mode.', 'assertive');
-  }, []);
+    const prompt = 'Server connection interrupted. Working in local cache mode. All responses are safe on this terminal.';
+    speakText(prompt, 'Offline Notice');
+  }, [speakText]);
 
   // Auto-retry ticker (5 seconds countdown)
   useEffect(() => {
@@ -35,7 +37,7 @@ export const OfflinePage = () => {
 
   const handleManualRetry = () => {
     setIsRetrying(true);
-    announceToScreenReader('Retrying connection to backend server...');
+    speakText('Retrying server connection...', 'Retry');
     setTimeout(() => {
       setIsRetrying(false);
       navigate(-1); // Return to previous active exam page

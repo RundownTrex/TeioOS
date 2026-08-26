@@ -12,7 +12,6 @@ export const TTSProvider = ({ children }) => {
     ttsVolume,
     ttsVoiceURI,
     voices,
-    screenReaderMode,
     isMicActive,
   } = useAccessibility();
 
@@ -22,21 +21,54 @@ export const TTSProvider = ({ children }) => {
   const [isSupported, setIsSupported] = useState(true);
   const lastSpokenTextRef = useRef('');
   const activeUtteranceRef = useRef(null);
+  const keepAliveIntervalRef = useRef(null);
 
+  // Clean up any ongoing speech synthesis on unmount
   useEffect(() => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       setIsSupported(false);
     }
 
     return () => {
+      if (keepAliveIntervalRef.current) {
+        clearInterval(keepAliveIntervalRef.current);
+      }
       if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+        try {
+          window.speechSynthesis.cancel();
+        } catch (e) {
+          // ignore
+        }
       }
     };
   }, []);
 
+  // Chrome Web Speech Keepalive: Chromium engines on Linux have a known issue
+  // where long speech utterances freeze after ~15s without user interaction.
+  // Periodically pulsing pause/resume keeps the audio stream active.
+  const startKeepAlive = useCallback(() => {
+    if (keepAliveIntervalRef.current) {
+      clearInterval(keepAliveIntervalRef.current);
+    }
+    keepAliveIntervalRef.current = setInterval(() => {
+      if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }
+    }, 10000);
+  }, []);
+
+  const stopKeepAlive = useCallback(() => {
+    if (keepAliveIntervalRef.current) {
+      clearInterval(keepAliveIntervalRef.current);
+      keepAliveIntervalRef.current = null;
+    }
+  }, []);
+
   const speakText = useCallback(
-    (text, label = '') => {
+    (text, label = '', options = {}) => {
+      const { interrupt = true } = options;
+
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
         setIsSupported(false);
         announceToScreenReader('Text-to-speech engine is not supported in this browser.');
@@ -48,45 +80,34 @@ export const TTSProvider = ({ children }) => {
       const cleanText = text.trim();
       lastSpokenTextRef.current = cleanText;
 
-      // Rule 1: Desktop Screen Reader Mode (e.g. Orca on Linux).
-      // Suppress browser Web Speech synthesis and route output exclusively to ARIA live regions
-      // to avoid dual-voice collision.
-      if (screenReaderMode) {
-        if (label) {
-          announceToScreenReader(`${label}: ${cleanText}`);
-        } else {
-          announceToScreenReader(cleanText);
-        }
-        return;
-      }
+      // Mirror output to ARIA live regions for assistive tools
+      announceToScreenReader(cleanText);
 
-      // Rule 2: Speech-to-Text Microphone Mutual Exclusion.
+      // Speech-to-Text Microphone Mutual Exclusion:
       // If the candidate is currently dictating into the microphone, suppress speaker audio
       // to avoid acoustic feedback loops into the mic.
       if (isMicActive) {
-        if (label) {
-          announceToScreenReader(label);
-        }
         return;
       }
 
       if (!ttsEnabled) {
-        announceToScreenReader('Text-to-speech is currently disabled in accessibility settings.');
         return;
       }
 
-      // Cancel ongoing synthesis cleanly
-      try {
-        window.speechSynthesis.cancel();
-      } catch (e) {
-        // ignore
+      // Interrupt previous speech if requested (default behavior for responsive navigation)
+      if (interrupt) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch (e) {
+          // ignore
+        }
       }
 
       setIsSpeaking(false);
       setIsPaused(false);
       const utterance = new SpeechSynthesisUtterance(cleanText);
 
-      // Clamp speed and pitch to safe bounds to avoid Linux system voice distortion in Firefox
+      // Clamp speed and pitch to safe bounds
       const safeSpeed = Math.min(Math.max(ttsSpeed || 1.0, 0.5), 2.0);
       const safePitch = Math.min(Math.max(ttsPitch || 1.0, 0.8), 1.2);
 
@@ -94,12 +115,16 @@ export const TTSProvider = ({ children }) => {
       utterance.pitch = safePitch;
       utterance.volume = Math.min(Math.max(ttsVolume !== undefined ? ttsVolume : 1.0, 0.0), 1.0);
 
-      // Smart voice resolution fallback for Firefox & cross-browser compatibility
+      // Select chosen voice or fallback gracefully
       if (voices && voices.length > 0) {
         let selectedVoice = ttsVoiceURI ? voices.find((v) => v.voiceURI === ttsVoiceURI) : null;
 
         if (!selectedVoice) {
+          const naturalVoice = voices.find(
+            (v) => v.lang.startsWith('en') && !v.name.toLowerCase().includes('espeak')
+          );
           selectedVoice =
+            naturalVoice ||
             voices.find((v) => v.default && v.lang.startsWith('en')) ||
             voices.find((v) => v.lang.startsWith('en')) ||
             voices[0];
@@ -115,6 +140,7 @@ export const TTSProvider = ({ children }) => {
         setIsPaused(false);
         setCurrentText(cleanText);
         lastSpokenTextRef.current = cleanText;
+        startKeepAlive();
       };
 
       utterance.onend = () => {
@@ -123,6 +149,7 @@ export const TTSProvider = ({ children }) => {
         setCurrentText('');
         activeUtteranceRef.current = null;
         if (typeof window !== 'undefined') window._activeTTSUtterance = null;
+        stopKeepAlive();
       };
 
       utterance.onerror = (e) => {
@@ -134,6 +161,7 @@ export const TTSProvider = ({ children }) => {
         setCurrentText('');
         activeUtteranceRef.current = null;
         if (typeof window !== 'undefined') window._activeTTSUtterance = null;
+        stopKeepAlive();
       };
 
       utterance.onpause = () => {
@@ -145,28 +173,22 @@ export const TTSProvider = ({ children }) => {
       };
 
       activeUtteranceRef.current = utterance;
-      // Retain strong reference on window object to prevent Firefox Gecko garbage-collecting utterance mid-speech
+      // Retain strong reference on window object to prevent Gecko/V8 garbage collection mid-speech
       if (typeof window !== 'undefined') {
         window._activeTTSUtterance = utterance;
       }
 
-      if (label) {
-        announceToScreenReader(`Reading aloud: ${label}`);
-      }
-
-      // Micro-delay after cancel() prevents Firefox Gecko engine dropping speak() calls
+      // Micro-delay prevents browser dropping speak() calls after cancel()
       setTimeout(() => {
         try {
           window.speechSynthesis.speak(utterance);
         } catch (err) {
           console.warn('SpeechSynthesis speak failed:', err);
-          announceToScreenReader('Speech synthesis failed to play.');
         }
-      }, 50);
+      }, 40);
     },
-    [ttsEnabled, ttsSpeed, ttsPitch, ttsVolume, ttsVoiceURI, voices, screenReaderMode, isMicActive]
+    [ttsEnabled, ttsSpeed, ttsPitch, ttsVolume, ttsVoiceURI, voices, isMicActive, startKeepAlive, stopKeepAlive]
   );
-
 
   const pauseSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -189,10 +211,6 @@ export const TTSProvider = ({ children }) => {
   }, []);
 
   const togglePauseResume = useCallback(() => {
-    if (screenReaderMode) {
-      announceToScreenReader('Screen reader mode is active. Browser voice reader is muted.');
-      return;
-    }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       if (window.speechSynthesis.paused) {
         resumeSpeech();
@@ -200,17 +218,18 @@ export const TTSProvider = ({ children }) => {
         pauseSpeech();
       }
     }
-  }, [screenReaderMode, pauseSpeech, resumeSpeech]);
+  }, [pauseSpeech, resumeSpeech]);
 
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
+      stopKeepAlive();
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
       setIsPaused(false);
       setCurrentText('');
       announceToScreenReader('Speech stopped');
     }
-  }, []);
+  }, [stopKeepAlive]);
 
   const repeatSpeech = useCallback(() => {
     if (lastSpokenTextRef.current) {

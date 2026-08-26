@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTTS } from '../../hooks/useTTS';
 
 export const MCQRenderer = ({
   questionName = 'mcq-options',
@@ -9,13 +8,11 @@ export const MCQRenderer = ({
   isDisabled = false,
   className = '',
 }) => {
-  const { speakText } = useTTS();
   const getPrefix = (option, index) => option?.prefix || String.fromCharCode(65 + index);
 
-  const handleOptionSelect = (optionId, prefix, text) => {
+  const handleOptionSelect = (optionId) => {
     if (isDisabled) return;
     if (onSelectOption) onSelectOption(optionId);
-    speakText(`Selected Option ${prefix}: ${text}`, 'Selection Confirmed');
   };
 
   return (
@@ -47,7 +44,7 @@ export const MCQRenderer = ({
                 value={option.id}
                 checked={isSelected}
                 disabled={isDisabled}
-                onChange={() => handleOptionSelect(option.id, prefix, text)}
+                onChange={() => handleOptionSelect(option.id)}
                 aria-label={`Option ${prefix}: ${text}`}
                 className="peer sr-only"
               />

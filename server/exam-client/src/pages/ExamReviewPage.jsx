@@ -12,7 +12,6 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useTTS } from '../hooks/useTTS';
-import { announceToScreenReader } from '../utils/ariaAnnounce';
 import {
   Award,
   ArrowLeft,
@@ -117,7 +116,6 @@ export const ExamReviewPage = () => {
       const text = `Question ${idx + 1} of ${total}. Status: ${q.status}. Score: ${
         q.obtained_marks
       } out of ${q.marks} marks. ${q.question_text}. ${answerDetail}`;
-      announceToScreenReader(text);
       speakText(text, `Question ${idx + 1} Review`);
     },
     [speakText]
@@ -157,7 +155,6 @@ export const ExamReviewPage = () => {
     setFilter(nextFilter);
     setActiveReviewIdx(0);
     const msg = `Filter changed to ${nextFilter}`;
-    announceToScreenReader(msg);
     speakText(msg, 'Filter Changed');
   }, [filter, speakText]);
 
@@ -255,10 +252,13 @@ export const ExamReviewPage = () => {
   // Auditory Welcome on Mount
   useEffect(() => {
     if (!isLoading && !isError && reviewData) {
-      const prompt = `Exam Paper Review for ${reviewData.subject_name}. Score: ${reviewData.obtained_marks} of ${reviewData.total_marks} marks, Grade ${reviewData.grade || 'P'}. Press Alt+N and Alt+P to step through questions, Alt+R to read details, Alt+F to cycle filters, or Alt+D to return to Dashboard.`;
-      announceToScreenReader(prompt, 'polite');
+      const prompt = `Paper review for ${reviewData.subject_name}. Score: ${reviewData.obtained_marks} of ${reviewData.total_marks}. Press N and P to step through questions.`;
+      const timer = setTimeout(() => {
+        speakText(prompt, 'Paper Review Orientation');
+      }, 600);
+      return () => clearTimeout(timer);
     }
-  }, [isLoading, isError, reviewData]);
+  }, [isLoading, isError, reviewData, speakText]);
   const sidebarContent = (
     <div className="space-y-5">
       {/* Return to Dashboard Button placed at the VERY TOP for instant access */}

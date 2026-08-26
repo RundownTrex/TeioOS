@@ -1,20 +1,2 @@
-#!/bin/bash
-# ============================================================================
-# TeioOS Screen Reader Toggle Helper Script
-# ============================================================================
-# Bound to Alt+Super+S in Openbox rc.xml.
-# Allows candidates or invigilators to toggle Orca on/off at any time.
-# Provides auditory feedback via espeak-ng so the candidate knows the state.
-# ============================================================================
-
-if pgrep -x orca > /dev/null; then
-    pkill -x orca
-    if command -v espeak-ng > /dev/null 2>&1; then
-        espeak-ng "Orca screen reader stopped" 2>/dev/null &
-    fi
-else
-    if command -v espeak-ng > /dev/null 2>&1; then
-        espeak-ng "Starting Orca screen reader" 2>/dev/null &
-    fi
-    orca --replace &
-fi
+#!/bin/sh
+exit 0

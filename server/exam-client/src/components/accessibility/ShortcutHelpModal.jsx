@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useShortcuts } from '../../hooks/useShortcuts';
 import { useTTS } from '../../hooks/useTTS';
 import { Modal } from '../ui/Modal';
@@ -50,8 +50,7 @@ Press Control + Enter to open the final exam submission confirmation dialog.
 Eight. Paper Review:
 On the paper review screen, press Alt + N and Alt + P to step through reviewed questions, Alt + R to re-read question details, and Alt + F to cycle filters.
 
-Nine. System and Help:
-Press Alt + A to open Accessibility Preferences such as high contrast themes and font scaling.
+Nine. Help:
 Press Alt + H to reopen this Shortcuts Help dialog.
 Press Alt + I to replay this complete audio tour.
 
@@ -60,6 +59,13 @@ Press Escape now to close this help dialog and return to your screen.`;
 export const ShortcutHelpModal = () => {
   const { isHelpOpen, closeHelp, shortcuts } = useShortcuts();
   const { isSpeaking, speakText, stopSpeech } = useTTS();
+
+  useEffect(() => {
+    if (isHelpOpen) {
+      const prompt = 'Keyboard Shortcuts Help Dialog. Press Alt+I to hear the complete spoken guide, or Escape to close.';
+      speakText(prompt, 'Shortcuts Help');
+    }
+  }, [isHelpOpen, speakText]);
 
   // Format shortcut object into accessible visual badge text (e.g., Alt + N)
   const formatCombo = (config) => {

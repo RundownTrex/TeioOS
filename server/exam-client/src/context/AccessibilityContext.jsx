@@ -40,10 +40,10 @@ export const AccessibilityProvider = ({ children }) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
     const loadVoices = () => {
-      const availableVoices = window.speechSynthesis.getVoices();
-      if (!availableVoices || availableVoices.length === 0) return;
-
-      setVoices(availableVoices);
+      // Filter available voices to English so candidate isn't overwhelmed by 80+ foreign variants
+      const englishVoices = availableVoices.filter((v) => v.lang.startsWith('en'));
+      const displayVoices = englishVoices.length > 0 ? englishVoices : availableVoices;
+      setVoices(displayVoices);
 
       setSettings((prev) => {
         // Verify if saved ttsVoiceURI exists in current browser's voice list

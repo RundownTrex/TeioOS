@@ -111,10 +111,16 @@ export const AccessibilityModal = () => {
     { value: 'de-DE', label: 'German (Germany)' },
   ];
 
-  const voiceSelectOptions = voices.map((v) => ({
-    value: v.voiceURI,
-    label: `${v.name} (${v.lang})`,
-  }));
+  const voiceSelectOptions = voices.map((v) => {
+    let cleanName = v.name;
+    if (cleanName.toLowerCase().startsWith('espeak-')) {
+      cleanName = `eSpeak ${cleanName.replace('espeak-', '').toUpperCase()}`;
+    }
+    return {
+      value: v.voiceURI,
+      label: `${cleanName} (${v.lang})`,
+    };
+  });
 
   const handleTestVoice = () => {
     speakText(
@@ -453,8 +459,8 @@ export const AccessibilityModal = () => {
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </TabPanel>
 
         {/* ── TAB 4: SPEECH DICTATION (STT) ── */}

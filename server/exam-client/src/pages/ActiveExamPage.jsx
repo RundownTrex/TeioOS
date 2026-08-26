@@ -279,16 +279,6 @@ export const ActiveExamPage = () => {
     });
   }, [currentIndex, totalQuestions, currentQuestion, speakText]);
 
-  // Task 3: Announce exam resumption to screen reader users when arriving from Resume flow
-  useEffect(() => {
-    if (location.state?.isResumed) {
-      const durationStr = formatDuration(secondsRemaining);
-      speakText(
-        `Exam resumed. Question ${currentIndex + 1} of ${totalQuestions}. Time remaining: ${durationStr}`,
-        'Exam Resumed'
-      );
-    }
-  }, [location.state, currentIndex, totalQuestions, secondsRemaining, speakText]);
 
   // Synchronize authoritative session + clock offset from periodic snapshot
   useEffect(() => {

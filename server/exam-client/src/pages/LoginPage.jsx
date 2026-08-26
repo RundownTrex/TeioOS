@@ -9,6 +9,7 @@ import { Alert } from '../components/ui/Alert';
 import { UserCheck, Lock, Shield } from 'lucide-react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
+import { useTTS } from '../hooks/useTTS';
 import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 export const LoginPage = () => {
@@ -26,23 +27,42 @@ export const LoginPage = () => {
 
   const from = location.state?.from?.pathname || '/dashboard';
 
-  // Immediate auto-focus onto the rollNumber input on mount
+  const { speakText } = useTTS();
+
+  // Spoken welcome orientation on mount — dual-channel delivery:
+  // 1. announceToScreenReader() → ARIA live region → picked up by Orca via AT-SPI2
+  // 2. speakText() → Web Speech API → browser voice for low-vision users without Orca
+  // TTSContext automatically suppresses Web Speech when screenReaderMode is active,
+  // so both calls can coexist without dual-voice collision.
   useEffect(() => {
     const input = document.getElementById('rollNumber');
     if (input) {
       input.focus();
     }
-    announceToScreenReader(
-      'Student Examination Portal. Focused on Roll Number. Type your Roll Number, press Enter to enter your Passcode, then press Enter to sign in.',
-      'polite'
-    );
-  }, []);
 
-  // Keyboard navigation between fields
+    const welcomePrompt =
+      'Welcome to TeioOS Student Examination Portal. ' +
+      'Focus is on the Roll Number field. ' +
+      'Type your assigned Roll Number, then press Enter or Down Arrow to move to the Passcode field. ' +
+      'Type your Passcode and press Enter to sign in. ' +
+      'Press Alt+H at any time for keyboard shortcuts. ' +
+      'Press Alt+I to hear the complete spoken audio guide.';
+
+    // Slight delay so the ARIA live region is mounted and Orca has settled
+    const timer = setTimeout(() => {
+      announceToScreenReader(welcomePrompt, 'polite');
+      speakText(welcomePrompt, 'Sign In Orientation');
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [speakText]);
+
+  // Keyboard navigation between fields with spoken feedback
   const handleRollKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === 'ArrowDown') {
       e.preventDefault();
       document.getElementById('passcode')?.focus();
+      announceToScreenReader('Moved to Examination Passcode field.');
     }
   };
 
@@ -50,6 +70,7 @@ export const LoginPage = () => {
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       document.getElementById('rollNumber')?.focus();
+      announceToScreenReader('Moved to Roll Number field.');
     }
   };
 

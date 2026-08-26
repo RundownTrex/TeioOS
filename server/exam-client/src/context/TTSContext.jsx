@@ -4,6 +4,19 @@ import { announceToScreenReader } from '../utils/ariaAnnounce';
 
 export const TTSContext = createContext(null);
 
+export const sanitizeSpeechText = (text) => {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .replace(/<\/?[^>]+(>|$)/g, ' ') // Strip all XML/HTML/SSML tags (<speak>, </speak>, <mark.../>, etc.)
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 export const TTSProvider = ({ children }) => {
   const {
     ttsEnabled,
@@ -19,9 +32,29 @@ export const TTSProvider = ({ children }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [currentText, setCurrentText] = useState('');
   const [isSupported, setIsSupported] = useState(true);
+
+  // Synchronized refs for mutable settings to guarantee a stable speakText reference
+  const ttsEnabledRef = useRef(ttsEnabled);
+  const ttsSpeedRef = useRef(ttsSpeed);
+  const ttsPitchRef = useRef(ttsPitch);
+  const ttsVolumeRef = useRef(ttsVolume);
+  const ttsVoiceURIRef = useRef(ttsVoiceURI);
+  const voicesRef = useRef(voices);
+  const isMicActiveRef = useRef(isMicActive);
+
+  useEffect(() => { ttsEnabledRef.current = ttsEnabled; }, [ttsEnabled]);
+  useEffect(() => { ttsSpeedRef.current = ttsSpeed; }, [ttsSpeed]);
+  useEffect(() => { ttsPitchRef.current = ttsPitch; }, [ttsPitch]);
+  useEffect(() => { ttsVolumeRef.current = ttsVolume; }, [ttsVolume]);
+  useEffect(() => { ttsVoiceURIRef.current = ttsVoiceURI; }, [ttsVoiceURI]);
+  useEffect(() => { voicesRef.current = voices; }, [voices]);
+  useEffect(() => { isMicActiveRef.current = isMicActive; }, [isMicActive]);
+
   const lastSpokenTextRef = useRef('');
+  const lastSpeakTimeRef = useRef(0);
   const activeUtteranceRef = useRef(null);
   const keepAliveIntervalRef = useRef(null);
+  const speakTimeoutRef = useRef(null);
 
   // Clean up any ongoing speech synthesis on unmount
   useEffect(() => {
@@ -30,8 +63,13 @@ export const TTSProvider = ({ children }) => {
     }
 
     return () => {
+      if (speakTimeoutRef.current) {
+        clearTimeout(speakTimeoutRef.current);
+        speakTimeoutRef.current = null;
+      }
       if (keepAliveIntervalRef.current) {
         clearInterval(keepAliveIntervalRef.current);
+        keepAliveIntervalRef.current = null;
       }
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         try {
@@ -51,7 +89,12 @@ export const TTSProvider = ({ children }) => {
       clearInterval(keepAliveIntervalRef.current);
     }
     keepAliveIntervalRef.current = setInterval(() => {
-      if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+      if (
+        typeof window !== 'undefined' &&
+        window.speechSynthesis &&
+        window.speechSynthesis.speaking &&
+        !window.speechSynthesis.paused
+      ) {
         window.speechSynthesis.pause();
         window.speechSynthesis.resume();
       }
@@ -67,7 +110,7 @@ export const TTSProvider = ({ children }) => {
 
   const speakText = useCallback(
     (text, label = '', options = {}) => {
-      const { interrupt = true } = options;
+      const { interrupt = true, force = false } = options;
 
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
         setIsSupported(false);
@@ -75,10 +118,18 @@ export const TTSProvider = ({ children }) => {
         return;
       }
 
-      if (!text || !text.trim()) return;
+      if (!text || (typeof text === 'string' && !text.trim())) return;
 
-      const cleanText = text.trim();
+      const cleanText = sanitizeSpeechText(String(text));
+      if (!cleanText) return;
+
+      const now = Date.now();
+      // Deduplicate identical calls fired within 400ms (e.g. from React effect double-runs or re-renders)
+      if (!force && cleanText === lastSpokenTextRef.current && (now - lastSpeakTimeRef.current < 400)) {
+        return;
+      }
       lastSpokenTextRef.current = cleanText;
+      lastSpeakTimeRef.current = now;
 
       // Mirror output to ARIA live regions for assistive tools
       announceToScreenReader(cleanText);
@@ -86,12 +137,18 @@ export const TTSProvider = ({ children }) => {
       // Speech-to-Text Microphone Mutual Exclusion:
       // If the candidate is currently dictating into the microphone, suppress speaker audio
       // to avoid acoustic feedback loops into the mic.
-      if (isMicActive) {
+      if (isMicActiveRef.current) {
         return;
       }
 
-      if (!ttsEnabled) {
+      if (!ttsEnabledRef.current) {
         return;
+      }
+
+      // Clear any pending queued speak timeout before setting up a new one
+      if (speakTimeoutRef.current) {
+        clearTimeout(speakTimeoutRef.current);
+        speakTimeoutRef.current = null;
       }
 
       // Interrupt previous speech if requested (default behavior for responsive navigation)
@@ -108,26 +165,34 @@ export const TTSProvider = ({ children }) => {
       const utterance = new SpeechSynthesisUtterance(cleanText);
 
       // Clamp speed and pitch to safe bounds
-      const safeSpeed = Math.min(Math.max(ttsSpeed || 1.0, 0.5), 2.0);
-      const safePitch = Math.min(Math.max(ttsPitch || 1.0, 0.8), 1.2);
+      const safeSpeed = Math.min(Math.max(ttsSpeedRef.current || 1.0, 0.5), 2.0);
+      const safePitch = Math.min(Math.max(ttsPitchRef.current || 1.0, 0.8), 1.2);
 
       utterance.rate = safeSpeed;
       utterance.pitch = safePitch;
-      utterance.volume = Math.min(Math.max(ttsVolume !== undefined ? ttsVolume : 1.0, 0.0), 1.0);
+      utterance.volume = Math.min(
+        Math.max(ttsVolumeRef.current !== undefined ? ttsVolumeRef.current : 1.0, 0.0),
+        1.0
+      );
 
       // Select chosen voice or fallback gracefully
-      if (voices && voices.length > 0) {
-        let selectedVoice = ttsVoiceURI ? voices.find((v) => v.voiceURI === ttsVoiceURI) : null;
+      const currentVoices = voicesRef.current;
+      const currentVoiceURI = ttsVoiceURIRef.current;
+
+      if (currentVoices && currentVoices.length > 0) {
+        let selectedVoice = currentVoiceURI
+          ? currentVoices.find((v) => v.voiceURI === currentVoiceURI)
+          : null;
 
         if (!selectedVoice) {
-          const naturalVoice = voices.find(
+          const naturalVoice = currentVoices.find(
             (v) => v.lang.startsWith('en') && !v.name.toLowerCase().includes('espeak')
           );
           selectedVoice =
             naturalVoice ||
-            voices.find((v) => v.default && v.lang.startsWith('en')) ||
-            voices.find((v) => v.lang.startsWith('en')) ||
-            voices[0];
+            currentVoices.find((v) => v.default && v.lang.startsWith('en')) ||
+            currentVoices.find((v) => v.lang.startsWith('en')) ||
+            currentVoices[0];
         }
 
         if (selectedVoice) {
@@ -179,15 +244,16 @@ export const TTSProvider = ({ children }) => {
       }
 
       // Micro-delay prevents browser dropping speak() calls after cancel()
-      setTimeout(() => {
+      speakTimeoutRef.current = setTimeout(() => {
         try {
           window.speechSynthesis.speak(utterance);
         } catch (err) {
           console.warn('SpeechSynthesis speak failed:', err);
         }
+        speakTimeoutRef.current = null;
       }, 40);
     },
-    [ttsEnabled, ttsSpeed, ttsPitch, ttsVolume, ttsVoiceURI, voices, isMicActive, startKeepAlive, stopKeepAlive]
+    [startKeepAlive, stopKeepAlive]
   );
 
   const pauseSpeech = useCallback(() => {
@@ -222,6 +288,10 @@ export const TTSProvider = ({ children }) => {
 
   const stopSpeech = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
+      if (speakTimeoutRef.current) {
+        clearTimeout(speakTimeoutRef.current);
+        speakTimeoutRef.current = null;
+      }
       stopKeepAlive();
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
@@ -233,7 +303,7 @@ export const TTSProvider = ({ children }) => {
 
   const repeatSpeech = useCallback(() => {
     if (lastSpokenTextRef.current) {
-      speakText(lastSpokenTextRef.current, 'Repeating last text');
+      speakText(lastSpokenTextRef.current, 'Repeating last text', { force: true });
     } else {
       announceToScreenReader('No previous text to repeat');
     }

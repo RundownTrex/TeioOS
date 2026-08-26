@@ -66,6 +66,7 @@ export const ActiveExamPage = () => {
   const debounceTimerRef = useRef(null);
   const autoSubmitRef = useRef(null);
   const questionHeadingRef = useRef(null);
+  const lastAnnouncedQuestionRef = useRef(null);
 
   // True when the server has frozen the individual timer because the candidate
   // left the exam (page closed/hidden or inactivity fallback). While paused,
@@ -246,6 +247,8 @@ export const ActiveExamPage = () => {
 
   // Track visited questions and announce question readout for blind candidates
   useEffect(() => {
+    if (!currentQuestion?.id) return;
+
     setVisitedSet((prev) => {
       if (!prev.has(currentIndex)) {
         const next = new Set(prev);
@@ -254,6 +257,12 @@ export const ActiveExamPage = () => {
       }
       return prev;
     });
+
+    const questionKey = `${currentIndex}-${currentQuestion.id}`;
+    if (lastAnnouncedQuestionRef.current === questionKey) {
+      return;
+    }
+    lastAnnouncedQuestionRef.current = questionKey;
 
     const questionNumText = `Question ${currentIndex + 1} of ${totalQuestions}`;
     const sectionText = currentQuestion?.section ? `, ${currentQuestion.section}` : '';
@@ -277,7 +286,7 @@ export const ActiveExamPage = () => {
     requestAnimationFrame(() => {
       questionHeadingRef.current?.focus({ preventScroll: true });
     });
-  }, [currentIndex, totalQuestions, currentQuestion, speakText]);
+  }, [currentIndex, totalQuestions, currentQuestion?.id, currentQuestion?.section, currentQuestion?.stem, currentQuestion?.type, speakText]);
 
 
   // Synchronize authoritative session + clock offset from periodic snapshot
@@ -525,7 +534,7 @@ export const ActiveExamPage = () => {
 
   const handleReadQuestion = useCallback(() => {
     if (currentQuestion?.stem) {
-      speakText(`Question ${currentIndex + 1}: ${currentQuestion.stem}`, 'Current Question Stem');
+      speakText(`Question ${currentIndex + 1}: ${currentQuestion.stem}`, 'Current Question Stem', { force: true });
     }
   }, [currentIndex, currentQuestion?.stem, speakText]);
 
@@ -538,11 +547,12 @@ export const ActiveExamPage = () => {
           return `Option ${prefix}: ${text}`;
         })
         .join('. ');
-      speakText(`Question ${currentIndex + 1} options: ${optionsText}`, 'All Options');
+      speakText(`Question ${currentIndex + 1} options: ${optionsText}`, 'All Options', { force: true });
     } else {
       speakText(
         `Question ${currentIndex + 1} is a descriptive essay question. Shortcuts: Alt+R reads question stem, Alt+V reads your typed response.`,
-        'Descriptive Question Notice'
+        'Descriptive Question Notice',
+        { force: true }
       );
     }
   }, [currentIndex, currentQuestion, speakText]);
@@ -555,16 +565,16 @@ export const ActiveExamPage = () => {
         const selectedIdx = currentQuestion.options.findIndex((opt) => String(opt.id) === String(val));
         const prefix = selected.prefix || String.fromCharCode(65 + selectedIdx);
         const text = selected.text || selected.option_text || '';
-        speakText(`Selected answer for Question ${currentIndex + 1} is Option ${prefix}: ${text}`, 'Selected Option');
+        speakText(`Selected answer for Question ${currentIndex + 1} is Option ${prefix}: ${text}`, 'Selected Option', { force: true });
       } else {
-        speakText(`No option currently selected for Question ${currentIndex + 1}.`, 'No Selection');
+        speakText(`No option currently selected for Question ${currentIndex + 1}.`, 'No Selection', { force: true });
       }
     } else {
       if (val && val.trim()) {
         const wordCount = val.trim().split(/\s+/).length;
-        speakText(`Your descriptive answer for Question ${currentIndex + 1} is: ${val}. Word count: ${wordCount} words.`, 'Descriptive Response');
+        speakText(`Your descriptive answer for Question ${currentIndex + 1} is: ${val}. Word count: ${wordCount} words.`, 'Descriptive Response', { force: true });
       } else {
-        speakText(`No descriptive answer typed yet for Question ${currentIndex + 1}.`, 'No Answer');
+        speakText(`No descriptive answer typed yet for Question ${currentIndex + 1}.`, 'No Answer', { force: true });
       }
     }
   }, [currentIndex, currentQuestion, answersMap, speakText]);
@@ -572,7 +582,7 @@ export const ActiveExamPage = () => {
   const handleReadTimer = useCallback(() => {
     const timerElem = document.getElementById('timer-display');
     if (timerElem) timerElem.focus();
-    speakText(`Remaining examination time: ${formatDuration(secondsRemaining)}`, 'Remaining Time');
+    speakText(`Remaining examination time: ${formatDuration(secondsRemaining)}`, 'Remaining Time', { force: true });
   }, [secondsRemaining, speakText]);
 
   const handleFocusPalette = useCallback(() => {

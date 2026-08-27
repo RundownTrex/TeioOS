@@ -12,3 +12,4 @@ cp /etc/skel/.bash_profile /home/examuser/.bash_profile
 cp /etc/xdg/openbox/rc.xml /home/examuser/.config/openbox/rc.xml
 chown -R examuser:examuser /home/examuser
 chmod +x /home/examuser/.xinitrc
+chmod 755 /usr/local/bin/teioos-* 2>/dev/null || true

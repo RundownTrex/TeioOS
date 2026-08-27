@@ -124,8 +124,8 @@ export const TTSProvider = ({ children }) => {
       if (!cleanText) return;
 
       const now = Date.now();
-      // Deduplicate identical calls fired within 400ms (e.g. from React effect double-runs or re-renders)
-      if (!force && cleanText === lastSpokenTextRef.current && (now - lastSpeakTimeRef.current < 400)) {
+      // Deduplicate identical speech requests fired within 3000ms to prevent duplicate queuing
+      if (!force && cleanText === lastSpokenTextRef.current && (now - lastSpeakTimeRef.current < 3000)) {
         return;
       }
       lastSpokenTextRef.current = cleanText;

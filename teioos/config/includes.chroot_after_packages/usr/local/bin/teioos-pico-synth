@@ -1,0 +1,27 @@
+#!/bin/sh
+# ============================================================================
+# TeioOS SVOX Pico Speech Synthesizer Filter & Audio Pipeline
+# ============================================================================
+# Strips Chromium SSML markup tags (<speak>, </speak>, <mark.../>) and entities
+# before synthesis so SVOX Pico produces clean, natural human voice output
+# without vocalizing XML markup tags ("Less than speak greater than").
+# Uses PulseAudio (paplay) for stutter-free audio output.
+# ============================================================================
+
+VOICE="${1:-en-US}"
+shift
+RAW_TEXT="$*"
+
+# Strip any SSML/XML tags (<speak>, </speak>, <mark .../>, <...>) and decode basic entities
+CLEAN_TEXT=$(printf '%s' "$RAW_TEXT" | sed -E 's/<[^>]+>//g' | sed 's/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g; s/&quot;/"/g; s/&#39;/'\''/g' | tr -s ' ' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+if [ -z "$CLEAN_TEXT" ]; then
+    exit 0
+fi
+
+TMPWAV=$(mktemp /tmp/pico_XXXXXX.wav)
+pico2wave -w "$TMPWAV" -l "$VOICE" "$CLEAN_TEXT" 2>/dev/null
+if [ -s "$TMPWAV" ]; then
+    paplay "$TMPWAV" 2>/dev/null || aplay -q "$TMPWAV" 2>/dev/null
+fi
+rm -f "$TMPWAV"

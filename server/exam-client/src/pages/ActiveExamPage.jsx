@@ -66,7 +66,7 @@ export const ActiveExamPage = () => {
   const debounceTimerRef = useRef(null);
   const autoSubmitRef = useRef(null);
   const questionHeadingRef = useRef(null);
-  const lastAnnouncedQuestionRef = useRef(null);
+  const lastAnnouncedIndexRef = useRef(null);
 
   // True when the server has frozen the individual timer because the candidate
   // left the exam (page closed/hidden or inactivity fallback). While paused,
@@ -258,11 +258,10 @@ export const ActiveExamPage = () => {
       return prev;
     });
 
-    const questionKey = `${currentIndex}-${currentQuestion.id}`;
-    if (lastAnnouncedQuestionRef.current === questionKey) {
+    if (lastAnnouncedIndexRef.current === currentIndex) {
       return;
     }
-    lastAnnouncedQuestionRef.current = questionKey;
+    lastAnnouncedIndexRef.current = currentIndex;
 
     const questionNumText = `Question ${currentIndex + 1} of ${totalQuestions}`;
     const sectionText = currentQuestion?.section ? `, ${currentQuestion.section}` : '';

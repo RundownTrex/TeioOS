@@ -113,8 +113,11 @@ export const AccessibilityModal = () => {
 
   const voiceSelectOptions = voices.map((v) => {
     let cleanName = v.name;
-    if (cleanName.toLowerCase().startsWith('espeak-')) {
+    const lower = cleanName.toLowerCase();
+    if (lower.startsWith('espeak-')) {
       cleanName = `eSpeak ${cleanName.replace('espeak-', '').toUpperCase()}`;
+    } else if (['samantha', 'serena', 'sabrina', 'isabel', 'virginie', 'silvia'].includes(lower)) {
+      cleanName = `Pico ${cleanName.charAt(0).toUpperCase() + cleanName.slice(1)}`;
     }
     return {
       value: v.voiceURI,

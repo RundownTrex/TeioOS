@@ -14,11 +14,10 @@ pulseaudio
 pulseaudio-utils
 alsa-utils
 speech-dispatcher
-speech-dispatcher-espeak-ng
 speech-dispatcher-pico
 libttspico-utils
-espeak-ng
-libespeak-ng1
+libttspico0
+libttspico-data
 unclutter
 x11-xserver-utils
 avahi-daemon

@@ -63,7 +63,7 @@ amixer sset Mic unmute 2>/dev/null || true
 amixer sset Mic 100% 2>/dev/null || true
 
 # ── 6. Speech Dispatcher Daemon ──
-# Provides the speech synthesis backend (espeak-ng) used by Orca.
+# Provides the speech synthesis backend (SVOX Pico via sd_pico).
 speech-dispatcher -d 2>/dev/null || true
 
 # Brief pause to let PulseAudio, AT-SPI2, and speech-dispatcher settle
@@ -79,7 +79,7 @@ unclutter -idle 1 &
 
 # ── 9. Chromium Kiosk Browser ──
 # Launch Chromium in fullscreen kiosk mode with speech & accessibility flags:
-#   --enable-speech-dispatcher : Connects browser Web Speech API to speech-dispatcher / espeak-ng.
+#   --enable-speech-dispatcher : Connects browser Web Speech API to speech-dispatcher / SVOX Pico.
 #   --autoplay-policy=no-user-gesture-required : Allows immediate spoken TTS orientation on mount.
 #   --force-renderer-accessibility : Forces accessibility tree creation.
 exec chromium \

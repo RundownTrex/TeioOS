@@ -6,7 +6,7 @@ import { TTSSpeaker } from '../accessibility/TTSSpeaker';
 export const QuestionHeader = ({
   currentIndex = 0,
   totalQuestions = 1,
-  sectionTitle = 'Section A',
+  questionType = 'MCQ',
   marks = 1,
   negativeMarks = 0,
   isMarkedForReview = false,
@@ -16,6 +16,8 @@ export const QuestionHeader = ({
 }) => {
   const displayIndex = String(currentIndex + 1).padStart(2, '0');
   const displayTotal = String(totalQuestions).padStart(2, '0');
+  const isMcq = questionType === 'MCQ' || questionType === 'OBJECTIVE' || questionType === 'SINGLE_SELECT';
+  const typeLabel = isMcq ? 'Multiple Choice' : 'Descriptive Essay';
 
   return (
     <div className={`flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border-main select-none ${className}`}>
@@ -27,11 +29,9 @@ export const QuestionHeader = ({
         >
           QUESTION {displayIndex} OF {displayTotal}
         </h2>
-        {sectionTitle && (
-          <span className="text-xs font-semibold text-text-muted px-2 py-0.5 rounded bg-subtle border border-border-main">
-            {sectionTitle}
-          </span>
-        )}
+        <span className="text-xs font-semibold text-text-muted px-2.5 py-1 rounded bg-subtle border border-border-main">
+          {typeLabel}
+        </span>
         <ReviewBadge isReview={isMarkedForReview} />
       </div>
 

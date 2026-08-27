@@ -1,5 +1,4 @@
 import React from 'react';
-import { Shield } from 'lucide-react';
 import { AccessibilityTrigger } from './AccessibilityTrigger';
 import { ShortcutTrigger } from './ShortcutTrigger';
 import { useAccessibility } from '../../hooks/useAccessibility';
@@ -20,9 +19,6 @@ export const Header = ({
       <div className="w-full mx-auto flex items-center justify-between gap-4">
         {/* Left System Title */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="p-1.5 bg-navy-primary text-text-inverse rounded-md">
-            <Shield className="w-5 h-5" aria-hidden="true" />
-          </div>
           <div>
             <h1 className="text-base font-bold tracking-tight text-text-main leading-none">
               {title}

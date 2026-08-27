@@ -6,7 +6,6 @@ import { QuestionRenderer } from './QuestionRenderer';
 export const QuestionCard = ({
   currentIndex = 0,
   totalQuestions = 1,
-  sectionTitle,
   questionId,
   questionText = '',
   questionType = 'MCQ',
@@ -30,7 +29,7 @@ export const QuestionCard = ({
         <QuestionHeader
           currentIndex={currentIndex}
           totalQuestions={totalQuestions}
-          sectionTitle={sectionTitle}
+          questionType={questionType}
           marks={marks}
           negativeMarks={negativeMarks}
           isMarkedForReview={isMarkedForReview}

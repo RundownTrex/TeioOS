@@ -106,9 +106,8 @@ export const ActiveExamPage = () => {
       return apiQuestionsData.questions.map((q, idx) => ({
         id: q.id,
         type: q.question_type || 'MCQ',
-        section: (q.question_type || 'MCQ') === 'MCQ' ? 'SEC A: MCQs' : 'SEC B: Essay Questions',
-        marks: q.marks || 1,
-        negativeMarks: q.negative_marks || 0,
+        marks: q.marks !== undefined && q.marks !== null ? Number(q.marks) : 1,
+        negativeMarks: q.negative_marks !== undefined && q.negative_marks !== null ? Number(q.negative_marks) : 0,
         maxWords: q.max_characters ? Math.floor(q.max_characters / 5) : 500,
         maxLength: q.max_characters || 2500,
         stem: q.question_text,
@@ -263,21 +262,38 @@ export const ActiveExamPage = () => {
     }
     lastAnnouncedIndexRef.current = currentIndex;
 
-    const questionNumText = `Question ${currentIndex + 1} of ${totalQuestions}`;
-    const sectionText = currentQuestion?.section ? `, ${currentQuestion.section}` : '';
+    const qNumText = `Question ${currentIndex + 1} of ${totalQuestions}.`;
+    const isMcq = currentQuestion?.type === 'MCQ' || currentQuestion?.type === 'OBJECTIVE' || currentQuestion?.type === 'SINGLE_SELECT';
+    const qTypeText = isMcq ? 'Multiple choice question.' : 'Descriptive essay question.';
 
-    let speechText = `${questionNumText}${sectionText}. ${currentQuestion?.stem || ''}`;
+    const marksVal = Number(currentQuestion?.marks) || 1;
+    const marksText = `${marksVal} ${marksVal === 1 ? 'mark' : 'marks'}.`;
 
-    if (currentQuestion?.type === 'MCQ' && currentQuestion?.options?.length > 0) {
+    const negVal = Number(currentQuestion?.negativeMarks) || 0;
+    const negText = negVal > 0 ? `Negative marks: ${negVal} ${negVal === 1 ? 'mark' : 'marks'}.` : 'No negative marks.';
+
+    const stemText = currentQuestion?.stem || '';
+
+    let contentText = '';
+    if (isMcq && currentQuestion?.options?.length > 0) {
       const optsText = currentQuestion.options
-        .map((opt) => `${opt.prefix}: ${opt.text || opt.option_text}`)
+        .map((opt, i) => {
+          const prefix = opt.prefix || String.fromCharCode(65 + i);
+          const text = opt.text || opt.option_text || '';
+          return `Option ${prefix}: ${text}`;
+        })
         .join('. ');
-      speechText += `. Options: ${optsText}`;
-    } else if (currentQuestion?.type === 'DESCRIPTIVE') {
-      const ansText = answersMap[currentIndex] || '';
-      const wordCount = ansText.trim() ? ansText.trim().split(/\s+/).length : 0;
-      speechText += `. Descriptive question.${wordCount > 0 ? ` ${wordCount} words saved.` : ''}`;
+      contentText = `Options: ${optsText}.`;
+    } else {
+      const typedAnswer = typeof currentAnswer === 'string' ? currentAnswer.trim() : '';
+      if (typedAnswer) {
+        contentText = `Your current answer is: ${typedAnswer}.`;
+      } else {
+        contentText = 'No answer typed yet.';
+      }
     }
+
+    const speechText = `${qNumText} ${qTypeText} ${marksText} ${negText} ${stemText}. ${contentText}`;
 
     speakText(speechText, `Question ${currentIndex + 1}`);
 
@@ -285,7 +301,7 @@ export const ActiveExamPage = () => {
     requestAnimationFrame(() => {
       questionHeadingRef.current?.focus({ preventScroll: true });
     });
-  }, [currentIndex, totalQuestions, currentQuestion?.id, currentQuestion?.section, currentQuestion?.stem, currentQuestion?.type, speakText]);
+  }, [currentIndex, totalQuestions, currentQuestion?.id, currentQuestion?.stem, currentQuestion?.type, currentQuestion?.marks, currentQuestion?.negativeMarks, currentAnswer, speakText]);
 
 
   // Synchronize authoritative session + clock offset from periodic snapshot
@@ -532,10 +548,20 @@ export const ActiveExamPage = () => {
 
 
   const handleReadQuestion = useCallback(() => {
-    if (currentQuestion?.stem) {
-      speakText(`Question ${currentIndex + 1}: ${currentQuestion.stem}`, 'Current Question Stem', { force: true });
-    }
-  }, [currentIndex, currentQuestion?.stem, speakText]);
+    if (!currentQuestion) return;
+    const isMcq = currentQuestion?.type === 'MCQ' || currentQuestion?.type === 'OBJECTIVE' || currentQuestion?.type === 'SINGLE_SELECT';
+    const qType = isMcq ? 'Multiple choice question.' : 'Descriptive essay question.';
+    const marksVal = Number(currentQuestion?.marks) || 1;
+    const marksText = `${marksVal} ${marksVal === 1 ? 'mark' : 'marks'}.`;
+    const negVal = Number(currentQuestion?.negativeMarks) || 0;
+    const negText = negVal > 0 ? `Negative marks: ${negVal} ${negVal === 1 ? 'mark' : 'marks'}.` : 'No negative marks.';
+
+    speakText(
+      `Question ${currentIndex + 1}: ${currentQuestion.stem || ''}. ${qType} ${marksText} ${negText}`,
+      'Current Question Stem',
+      { force: true }
+    );
+  }, [currentIndex, currentQuestion, speakText]);
 
   const handleReadOptions = useCallback(() => {
     if (currentQuestion?.type === 'MCQ' && currentQuestion?.options?.length > 0) {
@@ -548,13 +574,23 @@ export const ActiveExamPage = () => {
         .join('. ');
       speakText(`Question ${currentIndex + 1} options: ${optionsText}`, 'All Options', { force: true });
     } else {
-      speakText(
-        `Question ${currentIndex + 1} is a descriptive essay question. Shortcuts: Alt+R reads question stem, Alt+V reads your typed response.`,
-        'Descriptive Question Notice',
-        { force: true }
-      );
+      const val = answersMap[currentIndex];
+      const typed = typeof val === 'string' ? val.trim() : '';
+      if (typed) {
+        speakText(
+          `Question ${currentIndex + 1} is a descriptive essay question. Your current answer is: ${typed}`,
+          'Descriptive Answer',
+          { force: true }
+        );
+      } else {
+        speakText(
+          `Question ${currentIndex + 1} is a descriptive essay question. No answer typed yet.`,
+          'Descriptive Answer',
+          { force: true }
+        );
+      }
     }
-  }, [currentIndex, currentQuestion, speakText]);
+  }, [currentIndex, currentQuestion, answersMap, speakText]);
 
   const handleReadSelected = useCallback(() => {
     const val = answersMap[currentIndex];
@@ -569,9 +605,9 @@ export const ActiveExamPage = () => {
         speakText(`No option currently selected for Question ${currentIndex + 1}.`, 'No Selection', { force: true });
       }
     } else {
-      if (val && val.trim()) {
-        const wordCount = val.trim().split(/\s+/).length;
-        speakText(`Your descriptive answer for Question ${currentIndex + 1} is: ${val}. Word count: ${wordCount} words.`, 'Descriptive Response', { force: true });
+      const typed = typeof val === 'string' ? val.trim() : '';
+      if (typed) {
+        speakText(`Your descriptive answer for Question ${currentIndex + 1} is: ${typed}`, 'Descriptive Response', { force: true });
       } else {
         speakText(`No descriptive answer typed yet for Question ${currentIndex + 1}.`, 'No Answer', { force: true });
       }
@@ -803,7 +839,6 @@ export const ActiveExamPage = () => {
   return (
     <ExamLayout
       paperTitle={apiQuestionsData?.subject_code || 'EXAM'}
-      sectionTitle={currentQuestion?.section || 'Questions'}
       timerSlot={<Timer secondsRemaining={secondsRemaining} />}
       hideFooter={false}
       footerSlot={<ExamStatusBar syncStatus={syncStatus} isConnected={isConnected} />}
@@ -827,7 +862,6 @@ export const ActiveExamPage = () => {
           <QuestionCard
             currentIndex={currentIndex}
             totalQuestions={totalQuestions}
-            sectionTitle={currentQuestion.section}
             questionId={currentQuestion.id}
             marks={currentQuestion.marks}
             negativeMarks={currentQuestion.negativeMarks}

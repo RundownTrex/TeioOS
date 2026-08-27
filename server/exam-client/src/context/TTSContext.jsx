@@ -81,32 +81,9 @@ export const TTSProvider = ({ children }) => {
     };
   }, []);
 
-  // Chrome Web Speech Keepalive: Chromium engines on Linux have a known issue
-  // where long speech utterances freeze after ~15s without user interaction.
-  // Periodically pulsing pause/resume keeps the audio stream active.
-  const startKeepAlive = useCallback(() => {
-    if (keepAliveIntervalRef.current) {
-      clearInterval(keepAliveIntervalRef.current);
-    }
-    keepAliveIntervalRef.current = setInterval(() => {
-      if (
-        typeof window !== 'undefined' &&
-        window.speechSynthesis &&
-        window.speechSynthesis.speaking &&
-        !window.speechSynthesis.paused
-      ) {
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-      }
-    }, 10000);
-  }, []);
-
-  const stopKeepAlive = useCallback(() => {
-    if (keepAliveIntervalRef.current) {
-      clearInterval(keepAliveIntervalRef.current);
-      keepAliveIntervalRef.current = null;
-    }
-  }, []);
+  // Stable references for speak management
+  const startKeepAlive = useCallback(() => {}, []);
+  const stopKeepAlive = useCallback(() => {}, []);
 
   const speakText = useCallback(
     (text, label = '', options = {}) => {

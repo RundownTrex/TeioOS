@@ -110,18 +110,18 @@ export const LoginPage = () => {
   };
 
   return (
-    <Card className="shadow-md border border-border-main select-none">
+    <Card className="border border-border-main select-none">
       <CardHeader className="text-center py-6 bg-subtle/30">
-        <div className="inline-flex p-3 bg-navy-primary text-text-inverse rounded-2xl shadow-xs mb-3">
+        <div className="inline-flex p-3 bg-navy-primary text-text-inverse rounded mb-3">
           <Shield className="w-8 h-8" aria-hidden="true" />
         </div>
         <h1
           tabIndex={-1}
-          className="text-lg font-extrabold text-text-main tracking-tight uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+          className="font-serif text-h1 font-semibold text-text-main focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
         >
-          TEIOOS STUDENT EXAMINATION PORTAL
+          TeioOS Student Examination Portal
         </h1>
-        <p className="text-xs text-text-muted mt-1">
+        <p className="text-caption text-text-muted mt-1.5 leading-relaxed">
           Please enter your assigned credentials to access your paper.
         </p>
       </CardHeader>

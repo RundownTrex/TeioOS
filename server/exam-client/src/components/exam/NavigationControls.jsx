@@ -57,7 +57,7 @@ export const NavigationControls = ({
             size="sm"
             onClick={handleToggle}
             isDisabled={isDisabled}
-            leftIcon={<Bookmark className={`w-3.5 h-3.5 ${isFlagged ? 'fill-current text-purple-700' : ''}`} />}
+            leftIcon={<Bookmark className={`w-3.5 h-3.5 ${isFlagged ? 'fill-current text-status-review' : ''}`} />}
             ariaLabel="Mark for Review (Keyboard shortcut Alt+M)"
             aria-pressed={isFlagged ? 'true' : 'false'}
           >

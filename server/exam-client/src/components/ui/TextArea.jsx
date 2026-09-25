@@ -50,10 +50,10 @@ export const TextArea = forwardRef(({
   return (
     <div className={`w-full flex flex-col gap-1.5 ${className}`}>
       {label && (
-        <div className="flex items-center justify-between text-xs font-bold text-text-main uppercase tracking-wider mb-1">
+        <div className="flex items-center justify-between text-xs font-semibold text-text-main mb-1">
           <label htmlFor={textAreaId} className="flex items-center gap-1">
             <span>{label}</span>
-            {isRequired && <span className="text-red-600" aria-hidden="true">*</span>}
+            {isRequired && <span className="text-status-danger" aria-hidden="true">*</span>}
           </label>
 
           {showWordCount && (
@@ -63,9 +63,9 @@ export const TextArea = forwardRef(({
                 <span
                   className={`${
                     isAtLimit
-                      ? 'text-red-600 font-bold'
+                      ? 'text-status-danger font-bold'
                       : isNearLimit
-                      ? 'text-amber-600 font-bold'
+                      ? 'text-status-warning font-bold'
                       : 'text-text-muted'
                   }`}
                   aria-live="polite"
@@ -94,18 +94,18 @@ export const TextArea = forwardRef(({
         aria-invalid={Boolean(error)}
         aria-describedby={describedBy}
         aria-label={label || 'Descriptive answer input'}
-        className={`w-full px-4 py-3 text-base bg-surface text-text-main border rounded-xl font-sans leading-relaxed transition-all duration-normal ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 disabled:bg-subtle disabled:cursor-not-allowed ${
+        className={`w-full px-4 py-3 text-base bg-surface text-text-main border rounded font-sans leading-relaxed transition-all duration-normal ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 disabled:bg-subtle disabled:cursor-not-allowed ${
           error
-            ? 'border-red-600 focus:border-red-600'
+            ? 'border-status-danger focus:border-status-danger'
             : isAtLimit
-            ? 'border-red-500 ring-1 ring-red-500'
+            ? 'border-status-danger ring-1 ring-status-danger'
             : 'border-border-main hover:border-border-strong focus:border-navy-primary'
         }`}
         {...props}
       />
 
       {error && (
-        <p id={errorId} role="alert" className="text-xs text-red-600 font-medium">
+        <p id={errorId} role="alert" className="text-xs text-status-danger font-medium">
           {error}
         </p>
       )}

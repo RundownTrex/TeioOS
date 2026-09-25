@@ -11,7 +11,7 @@ export const ShortcutTrigger = ({ className = '' }) => {
       onClick={openHelp}
       aria-label="Open keyboard shortcuts reference dialog (Keyboard shortcut Alt+H)"
       title="Keyboard Shortcuts Reference"
-      className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md border border-border-strong bg-surface text-text-main hover:bg-subtle transition-colors select-none ${className}`}
+      className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded border border-border-strong bg-surface text-text-main hover:bg-subtle transition-colors select-none ${className}`}
     >
       <Keyboard className="w-4 h-4 text-navy-primary" aria-hidden="true" />
       <span>Shortcuts</span>

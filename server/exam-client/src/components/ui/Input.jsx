@@ -60,9 +60,9 @@ export const Input = ({
           autoFocus={autoFocus}
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy}
-          className={`w-full h-10 px-3.5 text-sm bg-surface text-text-main border rounded-lg transition-all duration-normal ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 disabled:bg-subtle disabled:cursor-not-allowed ${
+          className={`w-full h-10 px-3.5 text-sm bg-surface text-text-main border rounded transition-all duration-normal ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 disabled:bg-subtle disabled:cursor-not-allowed ${
             error
-              ? 'border-red-600 focus:border-red-600'
+              ? 'border-status-danger focus:border-status-danger'
               : 'border-border-main hover:border-border-strong focus:border-navy-primary'
           } ${leftIcon ? 'pl-10' : ''} ${rightIcon ? 'pr-10' : ''}`}
           {...props}
@@ -76,7 +76,7 @@ export const Input = ({
       </div>
 
       {error && (
-        <p id={errorId} role="alert" className="text-xs text-red-600 font-medium">
+        <p id={errorId} role="alert" className="text-xs text-status-danger font-medium">
           {error}
         </p>
       )}

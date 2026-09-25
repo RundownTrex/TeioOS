@@ -25,9 +25,9 @@ export const QuestionHeader = ({
         <h2
           ref={headingRef}
           tabIndex={-1}
-          className="text-base font-bold text-text-main uppercase tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+          className="text-base font-serif font-semibold text-text-main focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
         >
-          QUESTION {displayIndex} OF {displayTotal}
+          Question {displayIndex} of {displayTotal}
         </h2>
         <span className="text-xs font-semibold text-text-muted px-2.5 py-1 rounded bg-subtle border border-border-main">
           {typeLabel}

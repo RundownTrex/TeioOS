@@ -74,11 +74,11 @@ export const Modal = ({
         aria-labelledby={labelledBy}
         aria-label={ariaLabel}
         aria-describedby={ariaDescribedBy}
-        className={`relative z-modal w-full ${sizes[size] || sizes.md} max-h-[70vh] flex flex-col bg-surface border border-border-main rounded-xl shadow-lg animate-scale-in ${className}`}
+        className={`relative z-modal w-full ${sizes[size] || sizes.md} max-h-[70vh] flex flex-col bg-surface border border-border-main rounded-lg shadow-lg animate-scale-in ${className}`}
       >
         {title && (
           <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-border-main">
-            <h2 id={labelledBy} className="text-xl font-semibold text-text-main">
+            <h2 id={labelledBy} className="text-xl font-serif font-semibold text-text-main">
               {title}
             </h2>
             <IconButton

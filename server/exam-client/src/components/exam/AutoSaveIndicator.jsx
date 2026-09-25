@@ -14,38 +14,38 @@ export const AutoSaveIndicator = ({
     },
     [SYNC_STATUS.SAVING]: {
       text: 'Saving response...',
-      icon: <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin shrink-0" aria-hidden="true" />,
-      colorClass: 'text-blue-600 font-medium',
+      icon: <RefreshCw className="w-3.5 h-3.5 text-navy-primary animate-spin shrink-0" aria-hidden="true" />,
+      colorClass: 'text-navy-primary font-medium',
     },
     [SYNC_STATUS.SAVED]: {
       text: 'Response Saved',
-      icon: <CheckCircle2 className="w-3.5 h-3.5 text-green-600 shrink-0" aria-hidden="true" />,
-      colorClass: 'text-green-700 dark:text-green-400 font-medium',
+      icon: <CheckCircle2 className="w-3.5 h-3.5 text-status-success shrink-0" aria-hidden="true" />,
+      colorClass: 'text-status-success font-medium',
     },
     [SYNC_STATUS.RETRYING]: {
       text: 'Retrying server sync...',
-      icon: <RefreshCw className="w-3.5 h-3.5 text-amber-600 animate-spin shrink-0" aria-hidden="true" />,
-      colorClass: 'text-amber-600 font-medium',
+      icon: <RefreshCw className="w-3.5 h-3.5 text-status-warning animate-spin shrink-0" aria-hidden="true" />,
+      colorClass: 'text-status-warning font-medium',
     },
     [SYNC_STATUS.LOCAL]: {
       text: 'Saved in Offline Queue',
-      icon: <CloudOff className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />,
-      colorClass: 'text-amber-700 font-medium',
+      icon: <CloudOff className="w-3.5 h-3.5 text-status-warning shrink-0" aria-hidden="true" />,
+      colorClass: 'text-status-warning font-medium',
     },
     [SYNC_STATUS.OFFLINE]: {
       text: 'Offline (Answers Queued)',
-      icon: <CloudOff className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />,
-      colorClass: 'text-amber-700 font-medium',
+      icon: <CloudOff className="w-3.5 h-3.5 text-status-warning shrink-0" aria-hidden="true" />,
+      colorClass: 'text-status-warning font-medium',
     },
     [SYNC_STATUS.RECOVERY]: {
       text: 'Syncing Offline Queue...',
-      icon: <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin shrink-0" aria-hidden="true" />,
-      colorClass: 'text-blue-600 font-medium',
+      icon: <RefreshCw className="w-3.5 h-3.5 text-navy-primary animate-spin shrink-0" aria-hidden="true" />,
+      colorClass: 'text-navy-primary font-medium',
     },
     [SYNC_STATUS.ERROR]: {
       text: 'Saved in Local Cache',
-      icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />,
-      colorClass: 'text-amber-600 font-medium',
+      icon: <AlertTriangle className="w-3.5 h-3.5 text-status-warning shrink-0" aria-hidden="true" />,
+      colorClass: 'text-status-warning font-medium',
     },
   };
 

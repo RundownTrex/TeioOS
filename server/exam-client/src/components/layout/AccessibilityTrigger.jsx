@@ -8,7 +8,7 @@ export const AccessibilityTrigger = ({ onClick, className = '' }) => {
       type="button"
       onClick={onClick}
       aria-label="Open accessibility preferences dialog (Keyboard shortcut Alt+A)"
-      className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md border border-border-strong bg-surface text-text-main hover:bg-subtle transition-colors focus-visible:outline-none select-none ${className}`}
+      className={`inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded border border-border-strong bg-surface text-text-main hover:bg-subtle transition-colors focus-visible:outline-none select-none ${className}`}
     >
       <Settings className="w-4 h-4 text-navy-primary" aria-hidden="true" />
       <span>Accessibility</span>

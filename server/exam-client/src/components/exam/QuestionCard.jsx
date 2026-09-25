@@ -24,7 +24,7 @@ export const QuestionCard = ({
   className = '',
 }) => {
   return (
-    <Card className={`w-full border-border-main bg-surface shadow-sm ${className}`}>
+    <Card className={`w-full border-border-main bg-surface ${className}`}>
       <CardHeader>
         <QuestionHeader
           currentIndex={currentIndex}

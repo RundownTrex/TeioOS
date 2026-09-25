@@ -73,7 +73,7 @@ export const Input = forwardRef(
             aria-label={ariaLabel}
             aria-invalid={Boolean(error)}
             aria-describedby={describedBy}
-            className={`w-full h-10 px-3.5 text-sm bg-surface text-text-main border rounded-lg transition-all duration-normal ease-in-out focus:outline-none disabled:bg-subtle disabled:cursor-not-allowed ${
+            className={`w-full h-10 px-3.5 text-sm bg-surface text-text-main border rounded transition-all duration-normal ease-in-out focus:outline-none disabled:bg-subtle disabled:cursor-not-allowed ${
               error
                 ? 'border-status-danger focus:border-status-danger focus:ring-2 focus:ring-status-danger'
                 : 'border-border-main hover:border-border-strong focus:border-navy-primary focus:ring-2 focus:ring-navy-tint'

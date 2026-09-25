@@ -4,7 +4,7 @@ import { ShortcutTrigger } from './ShortcutTrigger';
 import { useAccessibility } from '../../hooks/useAccessibility';
 
 export const Header = ({
-  title = 'TEIOOS EXAM PLATFORM',
+  title = 'TeioOS Examination Platform',
   subtitle,
   centerContent,
   rightContent,
@@ -15,12 +15,12 @@ export const Header = ({
   const handleOpenAcc = onOpenAccessibility || openModal;
 
   return (
-    <header className={`sticky top-0 z-header bg-surface border-b border-border-main py-2.5 px-4 sm:px-6 shadow-sm select-none ${className}`}>
+    <header className={`sticky top-0 z-header bg-surface border-b border-border-main py-2.5 px-4 sm:px-6 select-none ${className}`}>
       <div className="w-full mx-auto flex items-center justify-between gap-4">
         {/* Left System Title */}
         <div className="flex items-center gap-3 shrink-0">
           <div>
-            <h1 className="text-base font-bold tracking-tight text-text-main leading-none">
+            <h1 className="text-base font-serif font-semibold text-text-main leading-none">
               {title}
             </h1>
             {subtitle && (

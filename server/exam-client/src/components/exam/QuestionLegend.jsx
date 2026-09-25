@@ -37,7 +37,7 @@ export const QuestionLegend = ({
       className={`text-xs select-none ${className}`}
     >
       <div className="flex items-center justify-between mb-1.5">
-        <span className="font-bold text-text-main uppercase tracking-wider text-xs">
+        <span className="font-medium text-text-main text-xs">
           Legend
         </span>
         {activeFilter !== 'ALL' && onFilterChange && (
@@ -63,7 +63,7 @@ export const QuestionLegend = ({
               onClick={() => onFilterChange && onFilterChange(isSelected ? 'ALL' : item.key)}
               title={`Filter: ${item.label} (${count})`}
               aria-label={`Filter by ${item.label}: ${count} questions`}
-              className={`flex items-center gap-1.5 py-1 px-1.5 rounded-md text-left transition-colors duration-fast cursor-pointer text-xs ${
+              className={`flex items-center gap-1.5 py-1 px-1.5 rounded text-left transition-colors duration-fast cursor-pointer text-xs ${
                 isSelected
                   ? 'bg-navy-primary/10 text-navy-primary font-bold'
                   : 'hover:bg-subtle text-text-muted'

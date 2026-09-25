@@ -58,14 +58,14 @@ export const LoginPage = () => {
       <div className="p-6 sm:p-8">
         <div className="flex items-center gap-3 mb-6">
           <span
-            className="w-10 h-10 rounded-lg bg-navy-primary text-text-inverse flex items-center justify-center shrink-0"
+            className="w-10 h-10 rounded bg-navy-primary text-text-inverse flex items-center justify-center shrink-0"
             aria-hidden="true"
           >
             <ShieldCheck className="w-5 h-5" />
           </span>
           <div className="leading-tight">
-            <p className="text-base font-bold text-text-main">TeioOS</p>
-            <p className="text-xs text-text-muted">Examination Platform Administration</p>
+            <p className="font-serif text-base font-semibold text-text-main">TeioOS</p>
+            <p className="text-caption text-text-muted">Examination Platform Administration</p>
           </div>
         </div>
 
@@ -81,8 +81,8 @@ export const LoginPage = () => {
           </Alert>
         )}
 
-        <h1 className="text-xl font-bold text-text-main mb-1">Administrator Sign In</h1>
-        <p className="text-sm text-text-muted mb-6">
+        <h1 className="font-serif text-h1 font-semibold text-text-main mb-1">Administrator Sign In</h1>
+        <p className="text-body text-text-muted mb-6">
           Sign in to manage examinations, students and results.
         </p>
 

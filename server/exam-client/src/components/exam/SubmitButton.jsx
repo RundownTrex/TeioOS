@@ -43,9 +43,9 @@ export const SubmitButton = ({
         isLoading={isLoading}
         leftIcon={<Send className="w-4 h-4" />}
         ariaLabel="Submit Examination Paper (Final Submission)"
-        className="font-bold tracking-wide shadow-md"
+        className="font-semibold"
       >
-        SUBMIT EXAMINATION
+        Submit Examination
       </Button>
     </div>
   );

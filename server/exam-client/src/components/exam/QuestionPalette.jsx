@@ -108,19 +108,19 @@ export const QuestionPalette = ({
       {/* ── HEADER: Title + Progress ── */}
       <div className="shrink-0 pb-2 mb-2 border-b border-border-main">
         <div className="flex items-center justify-between mb-1.5">
-          <h3 className="text-sm font-bold text-text-main uppercase tracking-wider flex items-center gap-1.5">
+          <h3 className="font-serif text-sm font-semibold text-text-main flex items-center gap-1.5">
             <Layers className="w-4 h-4 text-navy-primary" aria-hidden="true" />
             Question Palette
           </h3>
-          <span className="text-xs font-mono font-bold text-navy-primary">
+          <span className="text-xs font-mono font-medium text-navy-primary">
             {progressPercent}%
           </span>
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full bg-subtle rounded-full h-1.5 overflow-hidden">
+        <div className="w-full bg-subtle rounded h-1.5 overflow-hidden">
           <div
-            className="bg-navy-primary h-full rounded-full transition-all duration-300 ease-out"
+            className="bg-navy-primary h-full rounded transition-all duration-300 ease-out"
             style={{ width: `${progressPercent}%` }}
             role="progressbar"
             aria-valuenow={progressPercent}
@@ -130,7 +130,7 @@ export const QuestionPalette = ({
           />
         </div>
         <p className="text-xs text-text-muted mt-1 font-mono">
-          {answeredCount}/{totalQuestions} answered · {statusCounts.REVIEW} flagged
+          {answeredCount}/{totalQuestions} answered, {statusCounts.REVIEW} flagged
         </p>
       </div>
 
@@ -147,7 +147,7 @@ export const QuestionPalette = ({
               aria-selected={isActive}
               aria-controls="palette-grid-container"
               onClick={() => setActiveFilter(tab.id)}
-              className={`flex-1 py-1 rounded-md text-xs font-medium transition-colors duration-fast text-center cursor-pointer border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary ${
+              className={`flex-1 py-1 rounded text-xs font-medium transition-colors duration-fast text-center cursor-pointer border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary ${
                 isActive
                   ? 'bg-navy-primary text-text-inverse border-navy-primary font-bold'
                   : 'bg-transparent text-text-muted border-transparent hover:bg-subtle hover:text-text-main'

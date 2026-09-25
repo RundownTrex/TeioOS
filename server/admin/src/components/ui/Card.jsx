@@ -9,7 +9,7 @@ export const Card = ({
   ...props
 }) => {
   const variants = {
-    default:  'bg-surface border border-border-main text-text-main shadow-sm',
+    default:  'bg-surface border border-border-main text-text-main',
     outlined: 'bg-surface border-2 border-border-strong text-text-main',
     elevated: 'bg-surface border border-border-main text-text-main shadow-md',
   };
@@ -31,7 +31,7 @@ export const Card = ({
       onKeyDown={handleKeyDown}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? (tabIndex ?? 0) : tabIndex}
-      className={`rounded-xl overflow-hidden transition-all duration-normal ease-in-out ${variants[variant] || variants.default} ${
+      className={`rounded overflow-hidden transition-all duration-normal ease-in-out ${variants[variant] || variants.default} ${
         isClickable ? 'cursor-pointer hover:border-navy-primary' : ''
       } ${className}`}
       {...props}

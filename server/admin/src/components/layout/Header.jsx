@@ -22,7 +22,7 @@ export const Header = ({ onMenuClick, className = '' }) => {
         type="button"
         onClick={onMenuClick}
         aria-label="Open navigation menu"
-        className="inline-flex items-center justify-center p-2 rounded-lg text-text-muted hover:text-text-main hover:bg-subtle transition-colors lg:hidden"
+        className="inline-flex items-center justify-center p-2 rounded text-text-muted hover:text-text-main hover:bg-subtle transition-colors lg:hidden"
       >
         <Menu className="w-5 h-5" aria-hidden="true" />
       </button>

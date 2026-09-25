@@ -30,9 +30,9 @@ export const MCQRenderer = ({
           <label
             key={option.id || idx}
             htmlFor={optionId}
-            className={`flex items-start gap-3.5 p-3.5 border rounded-lg cursor-pointer transition-all duration-normal ease-in-out select-none ${
+            className={`flex items-start gap-3.5 p-3.5 border rounded cursor-pointer transition-all duration-normal ease-in-out select-none ${
               isSelected
-                ? 'border-navy-primary bg-navy-primary/5 text-text-main font-semibold ring-1 ring-navy-primary shadow-xs'
+                ? 'border-navy-primary bg-navy-tint text-text-main font-semibold ring-1 ring-navy-primary'
                 : 'border-border-main hover:border-border-strong hover:bg-subtle/30 bg-surface text-text-main'
             } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           >

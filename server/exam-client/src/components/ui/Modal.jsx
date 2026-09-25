@@ -100,14 +100,14 @@ export const Modal = ({
         aria-describedby={descId}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className={`w-full bg-surface border border-border-main rounded-xl shadow-lg overflow-hidden flex flex-col max-h-[90vh] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary ${
+        className={`w-full bg-surface border border-border-main rounded-lg shadow-lg overflow-hidden flex flex-col max-h-[90vh] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary ${
           sizes[size] || sizes.md
         } ${className}`}
       >
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-border-main flex items-center justify-between">
           {title ? (
-            <h2 id={titleId} className="text-base font-bold text-text-main uppercase tracking-wide">
+            <h2 id={titleId} className="text-lg font-serif font-semibold text-text-main">
               {title}
             </h2>
           ) : (

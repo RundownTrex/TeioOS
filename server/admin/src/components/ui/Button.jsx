@@ -17,17 +17,17 @@ export const Button = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-normal ease-in-out active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none disabled:active:scale-100 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 whitespace-nowrap';
+    'inline-flex items-center justify-center font-semibold rounded transition-all duration-normal ease-in-out active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none disabled:active:scale-100 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 whitespace-nowrap';
 
   const variants = {
     primary:
-      'bg-navy-primary hover:bg-navy-hover active:bg-navy-active text-text-inverse shadow-xs border border-transparent',
+      'bg-navy-primary hover:bg-navy-hover active:bg-navy-active text-text-inverse border border-transparent',
     secondary:
       'bg-subtle hover:bg-border-main active:bg-border-strong text-text-main border border-border-main',
     outline:
       'border border-border-strong hover:border-navy-primary hover:bg-navy-tint text-text-main',
     danger:
-      'bg-btn-danger hover:bg-btn-danger-hover active:bg-btn-danger-active text-text-inverse shadow-xs border border-transparent',
+      'bg-btn-danger hover:bg-btn-danger-hover active:bg-btn-danger-active text-text-inverse border border-transparent',
     ghost:
       'hover:bg-subtle text-text-main border border-transparent',
   };

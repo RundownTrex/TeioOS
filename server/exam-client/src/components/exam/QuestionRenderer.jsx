@@ -26,7 +26,7 @@ export const QuestionRenderer = ({
   return (
     <div className={`flex flex-col gap-4 my-3 ${className}`}>
       {/* Question Stem Text Reading Container */}
-      <div className="p-4 sm:p-5 bg-subtle/60 border border-border-main rounded-xl text-lg leading-relaxed text-text-main font-sans max-w-reading">
+      <div className="p-4 sm:p-5 bg-subtle/40 border border-border-main rounded text-lg leading-relaxed text-text-main font-serif max-w-reading">
         <p className="whitespace-pre-line">{questionText}</p>
       </div>
 

@@ -19,7 +19,7 @@ export const MarksBadge = ({
         [{marks} {marks === 1 ? 'Mark' : 'Marks'}]
       </span>
       {negativeMarks > 0 ? (
-        <span aria-hidden="true" className="px-2 py-1 text-xs font-medium rounded bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-800">
+        <span aria-hidden="true" className="px-2 py-1 text-xs font-medium rounded bg-status-danger-bg text-status-danger border border-status-danger">
           [Neg: -{negativeMarks}]
         </span>
       ) : (

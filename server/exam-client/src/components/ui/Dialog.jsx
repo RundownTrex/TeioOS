@@ -15,8 +15,8 @@ export const Dialog = ({
   isLoading = false,
 }) => {
   const icons = {
-    danger: <AlertTriangle className="w-6 h-6 text-red-600 shrink-0" aria-hidden="true" />,
-    warning: <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0" aria-hidden="true" />,
+    danger: <AlertTriangle className="w-6 h-6 text-status-danger shrink-0" aria-hidden="true" />,
+    warning: <AlertTriangle className="w-6 h-6 text-status-warning shrink-0" aria-hidden="true" />,
     primary: <Info className="w-6 h-6 text-navy-primary shrink-0" aria-hidden="true" />,
   };
 

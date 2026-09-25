@@ -5,7 +5,7 @@ import { useTTS } from '../../hooks/useTTS';
 
 export const Timer = ({
   secondsRemaining = 0,
-  label = 'REMAINING TIME',
+  label = 'Time Remaining',
   className = '',
 }) => {
   const isCritical = secondsRemaining > 0 && secondsRemaining <= 300; // < 5 minutes
@@ -43,15 +43,15 @@ export const Timer = ({
       role="timer"
       aria-label={`${label}: ${formatted}`}
       aria-live="off"
-      className={`inline-flex items-center gap-2.5 px-4 py-1.5 rounded-lg border font-mono font-bold select-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 ${
+      className={`inline-flex items-center gap-2.5 px-4 py-1.5 rounded border font-mono font-bold select-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-1 ${
         isCritical
-          ? 'bg-red-100 text-red-700 border-red-500 animate-pulse'
+          ? 'bg-status-danger-bg text-status-danger border-status-danger animate-pulse'
           : 'bg-surface text-text-main border-border-strong'
       } ${className}`}
     >
-      <Clock className={`w-4 h-4 ${isCritical ? 'text-red-600' : 'text-navy-primary'}`} aria-hidden="true" />
+      <Clock className={`w-4 h-4 ${isCritical ? 'text-status-danger' : 'text-navy-primary'}`} aria-hidden="true" />
       <span className="text-xs font-sans font-semibold text-text-muted">{label}:</span>
-      <span className="text-base tracking-wider">{formatted}</span>
+      <span className="text-base">{formatted}</span>
     </div>
   );
 };

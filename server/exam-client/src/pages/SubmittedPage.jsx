@@ -6,7 +6,8 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../hooks/useAuth';
 import { useExam } from '../hooks/useExam';
-import { CheckCircle2, ShieldCheck, Home, LogOut } from 'lucide-react';
+import { ShieldCheck, Home, LogOut } from 'lucide-react';
+import { SubmissionSeal } from '../components/exam/SubmissionSeal';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
 import { useShortcuts } from '../hooks/useShortcuts';
@@ -115,8 +116,8 @@ export const SubmittedPage = () => {
         <Card className="border border-border-main bg-surface overflow-hidden">
           {/* Success Banner */}
           <CardHeader className="text-center py-8 bg-subtle/40 border-b border-border-main">
-            <div className="inline-flex p-3.5 bg-status-success-bg text-status-success rounded-full mb-3">
-              <CheckCircle2 className="w-10 h-10" aria-hidden="true" />
+            <div className="mb-4 flex justify-center">
+              <SubmissionSeal size={96} animate={false} />
             </div>
             <h2
               ref={pageHeadingRef}

@@ -19,3 +19,4 @@ export { Timer } from './Timer';
 export { AutoSaveIndicator } from './AutoSaveIndicator';
 export { NetworkStatusIndicator } from './NetworkStatusIndicator';
 export { ExamStatusBar } from './ExamStatusBar';
+export { SubmissionSeal } from './SubmissionSeal';

@@ -357,6 +357,30 @@ html[data-theme="dark"] {
 }
 
 /* ==========================================================================
+   The Submission Seal Animation (DESIGN.md §5)
+   Circular mark in --teio-seal with deliberate press-down motion:
+   scale from 1.15 -> 1.0 with slight overshoot, ~280ms ease-out.
+   ========================================================================== */
+@keyframes stamp-press {
+  0% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.0);
+  }
+}
+
+.animate-stamp-seal {
+  animation: stamp-press 280ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ==========================================================================
    Reduced Motion Accessibility Overrides
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
@@ -365,6 +389,11 @@ html[data-theme="dark"] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .animate-stamp-seal {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
   }
 }
 
@@ -375,4 +404,10 @@ html[data-reduced-motion="true"] ::after {
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
+}
+
+html[data-reduced-motion="true"] .animate-stamp-seal {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
 }

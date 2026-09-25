@@ -15,6 +15,7 @@ import {
   NavigationControls,
   Timer,
   ExamStatusBar,
+  SubmissionSeal,
 } from '../components/exam';
 import { Skeleton } from '../components/ui/Skeleton';
 import { ErrorState } from '../components/ui/ErrorState';
@@ -62,11 +63,20 @@ export const ActiveExamPage = () => {
   const [isConnected, setIsConnected] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmittingPaper, setIsSubmittingPaper] = useState(false);
+  const [isSubmissionSealed, setIsSubmissionSealed] = useState(false);
 
   const debounceTimerRef = useRef(null);
   const autoSubmitRef = useRef(null);
   const questionHeadingRef = useRef(null);
   const lastAnnouncedIndexRef = useRef(null);
+  const sealNavTimeoutRef = useRef(null);
+
+  // Clear submission seal timer on unmount
+  useEffect(() => {
+    return () => {
+      if (sealNavTimeoutRef.current) clearTimeout(sealNavTimeoutRef.current);
+    };
+  }, []);
 
   // True when the server has frozen the individual timer because the candidate
   // left the exam (page closed/hidden or inactivity fallback). While paused,
@@ -467,6 +477,15 @@ export const ActiveExamPage = () => {
     speakText('Returned to exam.', 'Exam Resumed');
   }, [speakText]);
 
+  const navigateToSubmitted = useCallback(() => {
+    if (sealNavTimeoutRef.current) {
+      clearTimeout(sealNavTimeoutRef.current);
+      sealNavTimeoutRef.current = null;
+    }
+    setIsSubmitModalOpen(false);
+    navigate(`/exam/${scheduleId}/submitted`, { replace: true });
+  }, [navigate, scheduleId]);
+
   const handleConfirmSubmit = async () => {
     setIsSubmittingPaper(true);
     speakText('Submitting examination paper...', 'Submitting');
@@ -485,8 +504,11 @@ export const ActiveExamPage = () => {
       }
     } finally {
       setIsSubmittingPaper(false);
-      setIsSubmitModalOpen(false);
-      navigate(`/exam/${scheduleId}/submitted`, { replace: true });
+      setIsSubmissionSealed(true);
+      speakText('Examination paper sealed and submitted. Press Enter to proceed to dashboard.', 'Submission Sealed');
+      sealNavTimeoutRef.current = setTimeout(() => {
+        navigateToSubmitted();
+      }, 1800);
     }
   };
 
@@ -500,6 +522,8 @@ export const ActiveExamPage = () => {
     }
 
     speakText('Time expired. Submitting answers automatically.', 'Auto Submit');
+    setIsSubmitModalOpen(true);
+    setIsSubmittingPaper(true);
 
     // Final synchronization: refresh the authoritative session snapshot before submitting
     try {
@@ -523,7 +547,12 @@ export const ActiveExamPage = () => {
         enqueueSubmission(scheduleId, true);
       }
     } finally {
-      navigate(`/exam/${scheduleId}/submitted`, { replace: true });
+      setIsSubmittingPaper(false);
+      setIsSubmissionSealed(true);
+      speakText('Time expired. Examination paper sealed and submitted. Press Enter to proceed.', 'Submission Sealed');
+      sealNavTimeoutRef.current = setTimeout(() => {
+        navigateToSubmitted();
+      }, 1800);
     }
   };
 
@@ -646,6 +675,15 @@ export const ActiveExamPage = () => {
       }
 
       if (isInputElem) return;
+
+      if (isSubmitModalOpen) {
+        if (isSubmissionSealed && (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape')) {
+          e.preventDefault();
+          navigateToSubmitted();
+        }
+        return;
+      }
+
       if (e.altKey || e.ctrlKey || e.metaKey) return;
 
       const key = e.key.toUpperCase();
@@ -712,6 +750,9 @@ export const ActiveExamPage = () => {
     handleReadTimer,
     handleFocusPalette,
     speakText,
+    isSubmitModalOpen,
+    isSubmissionSealed,
+    navigateToSubmitted,
   ]);
 
   // Register Global Keyboard Shortcuts & Web Speech API TTS/STT Handlers
@@ -892,59 +933,89 @@ export const ActiveExamPage = () => {
         />
       </div>
 
-      {/* Screen 7: Submit Confirmation Modal Dialog */}
+      {/* Screen 7: Submit Confirmation & Official Stamp-Seal Moment */}
       <Modal
         isOpen={isSubmitModalOpen}
-        onClose={handleCloseSubmitModal}
-        title="CONFIRM FINAL SUBMISSION"
+        onClose={isSubmissionSealed || isSubmittingPaper ? undefined : handleCloseSubmitModal}
+        title={isSubmissionSealed ? 'Examination Paper Sealed' : 'Confirm Final Submission'}
         size="sm"
         footer={
-          <div className="flex items-center justify-end gap-3 w-full">
-            <Button variant="outline" size="md" onClick={handleCloseSubmitModal}>
-              Return to Exam
-            </Button>
-            <Button
-              variant="primary"
-              size="md"
-              isLoading={isSubmittingPaper}
-              onClick={handleConfirmSubmit}
-            >
-              FINAL SUBMIT
-            </Button>
-          </div>
+          isSubmissionSealed ? (
+            <div className="flex items-center justify-end w-full">
+              <Button
+                variant="primary"
+                size="md"
+                autoFocus
+                onClick={navigateToSubmitted}
+              >
+                Proceed to Dashboard (Enter)
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-end gap-3 w-full">
+              <Button variant="outline" size="md" onClick={handleCloseSubmitModal} isDisabled={isSubmittingPaper}>
+                Return to Paper
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                isLoading={isSubmittingPaper}
+                onClick={handleConfirmSubmit}
+              >
+                Final Submit
+              </Button>
+            </div>
+          )
         }
       >
-        <div className="space-y-4 text-xs select-none">
-          {/* Answer Summary Table */}
-          <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">
-            SUMMARY OF ANSWERS:
-          </h3>
-          <div className="p-3 border border-border-main bg-subtle/50 rounded-md space-y-2.5 font-mono">
-            <div className="flex justify-between items-center">
-              <span className="text-text-muted font-semibold">Total Questions:</span>
-              <span className="font-bold text-text-main">{totalQuestions}</span>
+        {isSubmissionSealed ? (
+          <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
+            <SubmissionSeal size={96} animate={true} />
+            <div>
+              <h3 className="font-serif text-h1 font-semibold text-text-main">
+                Examination Paper Sealed
+              </h3>
+              <p className="text-caption text-text-muted mt-1.5 leading-relaxed max-w-xs mx-auto">
+                Your responses have been securely verified and registered on the examination server.
+              </p>
             </div>
-            <hr className="border-border-main" />
-            <div className="flex justify-between items-center">
-              <span className="text-green-700 font-bold">✓ Answered:</span>
-              <span className="font-bold text-green-700">{answeredCount}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-amber-700 font-bold">! Unanswered:</span>
-              <span className="font-bold text-amber-700">{unansweredCount}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-purple-700 font-bold">* Marked for Review:</span>
-              <span className="font-bold text-purple-700">{reviewCount}</span>
+            <div className="px-3 py-1.5 rounded bg-subtle border border-border-main font-mono text-xs text-text-muted">
+              Status: Formally Recorded
             </div>
           </div>
+        ) : (
+          <div className="space-y-4 text-xs select-none">
+            {/* Answer Summary Table */}
+            <h3 className="text-sm font-semibold text-text-main font-serif">
+              Summary of Responses
+            </h3>
+            <div className="p-3 border border-border-main bg-subtle/50 rounded space-y-2.5 font-mono">
+              <div className="flex justify-between items-center">
+                <span className="text-text-muted font-semibold">Total Questions:</span>
+                <span className="font-bold text-text-main">{totalQuestions}</span>
+              </div>
+              <hr className="border-border-main" />
+              <div className="flex justify-between items-center">
+                <span className="text-status-success font-bold">✓ Answered:</span>
+                <span className="font-bold text-status-success">{answeredCount}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-status-warning font-bold">! Unanswered:</span>
+                <span className="font-bold text-status-warning">{unansweredCount}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-status-review font-bold">* Marked for Review:</span>
+                <span className="font-bold text-status-review">{reviewCount}</span>
+              </div>
+            </div>
 
-          {/* Irreversible Action Warning */}
-          <div className="flex items-start gap-2.5 p-3 bg-amber-50 border border-amber-300 text-amber-900 rounded-md font-medium">
-            <span className="text-base leading-none mt-0.5" aria-hidden="true">⚠</span>
-            <span>Once submitted, answers cannot be edited or re-submitted. Ensure all responses are final before proceeding.</span>
+            {/* Irreversible Action Warning */}
+            <div className="flex items-start gap-2.5 p-3 bg-status-warning-bg border border-status-warning-border text-text-main rounded font-medium">
+              <span className="text-base leading-none mt-0.5 text-status-warning" aria-hidden="true">⚠</span>
+              <span>Once submitted, answers cannot be edited or re-submitted. Ensure all responses are final before proceeding.</span>
+            </div>
           </div>
-        </div>
+        )}
       </Modal>
     </ExamLayout>
   );

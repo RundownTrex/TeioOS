@@ -179,12 +179,6 @@ export const AppRoutes = () => {
               <Route path={PATHS.REPORT_STUDENT} element={<StudentResultsReportPage />} />
               <Route path={PATHS.REPORT_EXAM} element={<ExamSummaryReportPage />} />
               <Route path={PATHS.REPORT_EVALUATION} element={<EvaluationSummaryReportPage />} />
-
-              {/* Accessibility Profiles */}
-              <Route
-                path={PATHS.ACCESSIBILITY_PROFILES}
-                element={placeholder('Accessibility Profiles')}
-              />
             </Route>
 
             {/* Admin-only Routes */}

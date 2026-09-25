@@ -3,6 +3,7 @@ import { STORAGE_KEYS } from '../utils/constants';
 import { getItem, setItem, removeItem } from '../utils/storage';
 import { authApi } from '../features/auth/api/authApi';
 import { announceToScreenReader } from '../utils/ariaAnnounce';
+import { useAccessibility } from '../hooks/useAccessibility';
 
 export const AuthContext = createContext(null);
 
@@ -12,6 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(token));
   const [isLoadingSession, setIsLoadingSession] = useState(true);
   const [authError, setAuthError] = useState(null);
+  const { applyProfile } = useAccessibility();
 
   // Validate session on mount if token exists
   const validateSession = useCallback(async (authToken) => {
@@ -26,9 +28,13 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingSession(true);
       const response = await authApi.getStudentSession(authToken);
       if (response?.data) {
-        setUserProfile(response.data);
+        const profile = response.data;
+        setUserProfile(profile);
         setIsAuthenticated(true);
         setItem(STORAGE_KEYS.BASE_TOKEN, authToken, sessionStorage);
+        if (profile.accessibility_profile) {
+          applyProfile(profile.accessibility_profile);
+        }
       }
     } catch (err) {
       console.warn('Student session validation failed:', err);
@@ -79,6 +85,9 @@ export const AuthProvider = ({ children }) => {
 
       setUserProfile(profile || { roll_number: rollNumber });
       setIsAuthenticated(true);
+      if (profile?.accessibility_profile) {
+        applyProfile(profile.accessibility_profile);
+      }
 
       announceToScreenReader(`Login successful. Welcome student ${rollNumber}.`, 'polite');
       return { success: true, profile };

@@ -65,10 +65,11 @@ async def transcribe_student_audio(
         except ImportError:
             logger.info("Optional speech_recognition package not installed; using standard audio processor.")
 
-        # Fallback transcript formatting if recognizer package is not installed or audio chunk was mock/raw
         if not transcription_text:
-            # Clean fallback acknowledgment for audio dictation stream
-            transcription_text = f"Audio dictation recorded successfully ({len(content)} bytes)."
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Speech-to-text dictation service is unavailable offline. Please type your response into the field."
+            )
 
         response_data = SpeechTranscriptionResponse(
             text=transcription_text,

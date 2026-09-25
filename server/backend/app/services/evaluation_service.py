@@ -30,8 +30,53 @@ class EvaluationService:
     def get_answers_for_session(self, session_id: uuid.UUID) -> Sequence[StudentAnswer]:
         """
         Returns all student answers (both MCQ and Descriptive) for an exam session.
+        Ensures placeholder answer records exist for unattempted questions so the evaluator
+        can inspect all questions in the paper and skipped questions default to 0 marks.
         """
-        return self.answer_repo.get_all_by_session(session_id)
+        from app.models.student_exam import StudentExam
+        from app.models.exam_schedule import ExamSchedule
+        from sqlalchemy import select
+        from sqlalchemy.orm import joinedload
+
+        assignment = self.db.scalars(
+            select(StudentExam)
+            .options(joinedload(StudentExam.exam_schedule).joinedload(ExamSchedule.exam))
+            .where(StudentExam.id == session_id)
+        ).first()
+
+        existing_answers = list(self.answer_repo.get_all_by_session(session_id))
+        if not assignment or not assignment.exam_schedule or not assignment.exam_schedule.exam:
+            return existing_answers
+
+        exam_questions = self.question_repo.get_all(exam_id=assignment.exam_schedule.exam_id, limit=1000)
+        existing_q_ids = {ans.question_id for ans in existing_answers}
+
+        timestamp = assignment.submitted_at or assignment.last_activity_at or datetime.now(timezone.utc)
+        created_any = False
+
+        for q in exam_questions:
+            if q.id not in existing_q_ids:
+                new_ans = StudentAnswer(
+                    id=uuid.uuid4(),
+                    student_exam_id=session_id,
+                    question_id=q.id,
+                    answered_at=timestamp,
+                    selected_option_id=None,
+                    answer_text=None,
+                    awarded_marks=0.0 if q.question_type == QuestionType.DESCRIPTIVE else None,
+                    created_at=timestamp,
+                    updated_at=timestamp,
+                )
+                new_ans.question = q
+                self.db.add(new_ans)
+                existing_answers.append(new_ans)
+                created_any = True
+
+        if created_any:
+            self.db.commit()
+            return self.answer_repo.get_all_by_session(session_id)
+
+        return existing_answers
 
     def evaluate_answer(
         self,

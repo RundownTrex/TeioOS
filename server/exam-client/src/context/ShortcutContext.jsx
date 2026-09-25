@@ -33,7 +33,7 @@ export const DEFAULT_SHORTCUTS = {
   dashboardSection3: { key: '3', alt: true, ctrl: false, shift: false, label: 'Jump to Completed Papers (Dashboard)', category: 'Portal Navigation' },
   dashboardProfile: { key: 'U', alt: true, ctrl: false, shift: false, label: 'Jump to Student Profile (Dashboard)', category: 'Portal Navigation' },
   dashboardRefresh: { key: 'R', alt: true, ctrl: false, shift: false, label: 'Refresh Examination Schedules (Dashboard)', category: 'Portal Navigation' },
-  navDashboard: { key: 'D', alt: true, ctrl: false, shift: false, label: 'Return to Dashboard', category: 'Portal Navigation' },
+  navDashboard: { key: 'B', alt: true, ctrl: false, shift: false, label: 'Return to Dashboard', category: 'Portal Navigation' },
   logout: { key: 'L', alt: true, ctrl: false, shift: false, label: 'Sign Out / Log Out', category: 'Portal Navigation' },
 
   // System & Accessibility

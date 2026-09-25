@@ -212,7 +212,9 @@ export const AccessibilityProvider = ({ children }) => {
   };
 
   const applyProfile = (profileKey) => {
-    switch (profileKey) {
+    const normalizedKey = (profileKey || 'standard').toLowerCase().replace(/[\s-]/g, '_');
+    switch (normalizedKey) {
+      case 'screen_reader':
       case 'screenreader':
         setSettings((prev) => ({
           ...prev,
@@ -228,6 +230,7 @@ export const AccessibilityProvider = ({ children }) => {
         }));
         announceToScreenReader('Applied Screen Reader Accessibility Profile.');
         break;
+      case 'high_contrast':
       case 'vision':
         setSettings((prev) => ({
           ...prev,
@@ -239,8 +242,20 @@ export const AccessibilityProvider = ({ children }) => {
           letterSpacing: 'wide',
           ttsEnabled: true,
         }));
-        announceToScreenReader('Applied High Vision Accessibility Profile');
+        announceToScreenReader('Applied High Contrast Accessibility Profile');
         break;
+      case 'large_text':
+        setSettings((prev) => ({
+          ...prev,
+          profile: 'large_text',
+          screenReaderMode: false,
+          fontScale: 150,
+          lineHeight: 'relaxed',
+          letterSpacing: 'wide',
+        }));
+        announceToScreenReader('Applied Large Text Accessibility Profile');
+        break;
+      case 'reduced_motion':
       case 'motor':
         setSettings((prev) => ({
           ...prev,
@@ -250,7 +265,7 @@ export const AccessibilityProvider = ({ children }) => {
           reducedMotion: true,
           lineHeight: 'relaxed',
         }));
-        announceToScreenReader('Applied Motor Accessibility Profile');
+        announceToScreenReader('Applied Reduced Motion Accessibility Profile');
         break;
       case 'cognitive':
         setSettings((prev) => ({
@@ -264,13 +279,14 @@ export const AccessibilityProvider = ({ children }) => {
         }));
         announceToScreenReader('Applied Cognitive & Dyslexia Accessibility Profile');
         break;
+      case 'standard':
       case 'default':
       default:
         setSettings((prev) => ({
           ...DEFAULT_SETTINGS,
           profile: 'default',
         }));
-        announceToScreenReader('Applied Default Baseline Accessibility Profile');
+        announceToScreenReader('Applied Standard Baseline Accessibility Profile');
         break;
     }
   };

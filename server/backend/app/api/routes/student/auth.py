@@ -63,6 +63,7 @@ def get_student_session_info(
         department_name=dept_name,
         class_name=class_name,
         role=token_payload.role,
+        accessibility_profile=getattr(student, "accessibility_profile", None) or "standard",
         active_exam_session=token_payload.exam_session_id,
         active_exam_schedule=token_payload.exam_schedule_id,
     )

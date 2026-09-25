@@ -31,6 +31,12 @@ class StudentAnswerService:
         if not question:
             raise NotFoundException(resource_name="Question")
 
+        # Check if the candidate is clearing/unsetting an answer
+        if selected_option_id is None and (answer_text is None or answer_text.strip() == ""):
+            self.answer_repo.delete_answer(session_id=session_id, question_id=question_id)
+            self.db.commit()
+            return
+
         # Reject invalid combinations
         if selected_option_id is not None and answer_text is not None:
             raise BusinessRuleException("An answer cannot contain both a selected option and answer text")

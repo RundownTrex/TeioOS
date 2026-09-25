@@ -9,7 +9,6 @@ import {
   CalendarClock,
   ClipboardCheck,
   BarChart3,
-  Accessibility,
   Settings,
   Activity,
   Radar,
@@ -71,7 +70,6 @@ export const NAV_GROUPS = [
   {
     label: 'System',
     items: [
-      { label: 'Accessibility Profiles', path: PATHS.ACCESSIBILITY_PROFILES, icon: Accessibility, isPlanned: true },
       { label: 'Settings', path: PATHS.SETTINGS, icon: Settings, roles: [USER_ROLES.ADMIN] },
     ],
   },

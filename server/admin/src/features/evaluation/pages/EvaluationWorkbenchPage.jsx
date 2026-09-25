@@ -271,6 +271,7 @@ export const EvaluationWorkbenchPage = () => {
               const q = answer.question;
               const isSelected = index === activeQuestionIndex;
               const isMcq = q?.question_type === 'MCQ';
+              const isUnattempted = !isMcq && !answer.answer_text;
               const isEvaluated =
                 isMcq || (answer.awarded_marks !== null && answer.awarded_marks !== undefined);
 
@@ -289,7 +290,9 @@ export const EvaluationWorkbenchPage = () => {
                     <span className="w-5 h-5 rounded-full bg-subtle flex items-center justify-center font-mono text-[11px] shrink-0">
                       {index + 1}
                     </span>
-                    <span className="truncate">Q{index + 1} ({q?.question_type ?? 'Q'})</span>
+                    <span className="truncate">
+                      Q{index + 1} ({q?.question_type ?? 'Q'}){isUnattempted ? ' • Skipped' : ''}
+                    </span>
                   </div>
                   {isEvaluated ? (
                     <CheckCircle2
@@ -317,6 +320,9 @@ export const EvaluationWorkbenchPage = () => {
                 <Badge variant={isDescriptive ? 'amber' : 'purple'}>
                   {activeQuestion?.question_type ?? 'QUESTION'}
                 </Badge>
+                {isDescriptive && !activeAnswer?.answer_text && (
+                  <Badge variant="neutral">Unattempted (0 pts)</Badge>
+                )}
               </div>
               <Badge variant="info" className="text-xs font-bold">
                 Max Marks: {activeQuestion?.marks} pts

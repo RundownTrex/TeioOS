@@ -24,6 +24,7 @@ class StudentSessionInfo(BaseModel):
     department_name: str
     class_name: str
     role: str
+    accessibility_profile: str | None = "standard"
     active_exam_session: str | None = None
     active_exam_schedule: str | None = None
 

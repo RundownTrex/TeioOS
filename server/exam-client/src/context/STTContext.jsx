@@ -407,15 +407,12 @@ export const STTProvider = ({ children }) => {
               }
             } catch (err) {
               console.warn('Speech transcription API notice:', err);
-              // Graceful fallback notice for offline client
-              const fallbackNotice = '[Audio dictation recorded]';
-              if (onResultCallbackRef.current) {
-                onResultCallbackRef.current({
-                  final: fallbackNotice,
-                  interim: '',
-                  fullText: fallbackNotice,
-                });
-              }
+              const errMsg =
+                err?.response?.data?.message ||
+                err?.response?.data?.detail ||
+                'Speech dictation is unavailable offline. Please type your response into the field.';
+              setError(errMsg);
+              announceToScreenReader(errMsg, 'assertive');
             } finally {
               setIsTranscribing(false);
             }

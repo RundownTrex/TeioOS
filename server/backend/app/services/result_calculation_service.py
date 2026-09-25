@@ -46,6 +46,7 @@ class ResultCalculationService:
         obtained_marks = 0.0
 
         descriptive_questions_count = 0
+        attempted_descriptive_count = 0
         evaluated_descriptive_count = 0
 
         mcq_score = 0.0
@@ -63,9 +64,17 @@ class ResultCalculationService:
                         mcq_score -= q.negative_marks
             elif q.question_type == QuestionType.DESCRIPTIVE:
                 descriptive_questions_count += 1
-                if ans and ans.awarded_marks is not None:
+                has_attempt = ans is not None and bool(ans.answer_text and ans.answer_text.strip())
+                if has_attempt:
+                    attempted_descriptive_count += 1
+                    if ans.awarded_marks is not None:
+                        evaluated_descriptive_count += 1
+                        descriptive_score += ans.awarded_marks
+                elif ans and ans.awarded_marks is not None:
+                    # Explicit evaluation on unattempted/empty answer
                     evaluated_descriptive_count += 1
                     descriptive_score += ans.awarded_marks
+                # Skipped/unattempted questions with no awarded marks default to 0.0
 
         if mcq_score < 0:
             mcq_score = 0.0
@@ -73,11 +82,11 @@ class ResultCalculationService:
         obtained_marks = max(0.0, mcq_score + descriptive_score)
         percentage = (obtained_marks / total_marks * 100) if total_marks > 0 else 0.0
 
-        if descriptive_questions_count == 0:
+        if descriptive_questions_count == 0 or attempted_descriptive_count == 0:
             evaluation_status = EvaluationStatus.COMPLETED
         elif evaluated_descriptive_count == 0:
             evaluation_status = EvaluationStatus.PENDING
-        elif evaluated_descriptive_count == descriptive_questions_count:
+        elif evaluated_descriptive_count >= attempted_descriptive_count:
             evaluation_status = EvaluationStatus.COMPLETED
         else:
             evaluation_status = EvaluationStatus.PARTIALLY_EVALUATED

@@ -65,3 +65,18 @@ class StudentAnswerRepository(BaseRepository[StudentAnswer]):
         
         self.session.execute(stmt)
 
+    def delete_answer(self, session_id: uuid.UUID, question_id: uuid.UUID) -> bool:
+        """
+        Deletes a student's answer when clearing response.
+        Returns True if a row was deleted, False otherwise.
+        """
+        stmt = select(StudentAnswer).where(
+            StudentAnswer.student_exam_id == session_id,
+            StudentAnswer.question_id == question_id,
+        )
+        answer = self.session.scalars(stmt).first()
+        if answer:
+            self.session.delete(answer)
+            return True
+        return False
+

@@ -211,7 +211,7 @@ export const AccessibilityProvider = ({ children }) => {
     });
   };
 
-  const applyProfile = (profileKey) => {
+  const applyProfile = useCallback((profileKey) => {
     const normalizedKey = (profileKey || 'standard').toLowerCase().replace(/[\s-]/g, '_');
     switch (normalizedKey) {
       case 'screen_reader':
@@ -289,12 +289,12 @@ export const AccessibilityProvider = ({ children }) => {
         announceToScreenReader('Applied Standard Baseline Accessibility Profile');
         break;
     }
-  };
+  }, []);
 
-  const resetAccessibility = () => {
+  const resetAccessibility = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
     announceToScreenReader('Reset all accessibility preferences to factory defaults');
-  };
+  }, []);
 
   const value = {
     profile: settings.profile,

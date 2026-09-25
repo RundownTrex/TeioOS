@@ -12,8 +12,11 @@ from app.models.exam import Exam
 from app.models.result import Result, EvaluationStatus
 from app.schemas.user import StudentSessionInfo
 from app.services.student_answer_service import StudentAnswerService
+from app.services.student_service import StudentService
 from app.services.result_calculation_service import ResultCalculationService
 from app.services.evaluation_service import EvaluationService
+from app.schemas.student import StudentCreate, StudentUpdate
+from datetime import date
 from app.core.exceptions import BusinessRuleException, NotFoundException
 
 
@@ -41,6 +44,51 @@ class TestStudentSessionInfoSchema(unittest.TestCase):
             role="student",
         )
         self.assertEqual(info.accessibility_profile, "standard")
+
+
+class TestStudentAccessibilityProfileService(unittest.TestCase):
+    def setUp(self):
+        self.db = MagicMock()
+        self.student_repo = MagicMock()
+        self.class_repo = MagicMock()
+        self.service = StudentService(
+            db=self.db,
+            student_repo=self.student_repo,
+            class_repo=self.class_repo,
+        )
+
+    def test_create_student_persists_accessibility_profile(self):
+        self.class_repo.get_by_id.return_value = MagicMock()
+        self.student_repo.get_by_roll_number.return_value = None
+
+        data = StudentCreate(
+            roll_number="CS2026100",
+            name="Alice Smith",
+            date_of_birth=date(2002, 5, 14),
+            class_id=uuid.uuid4(),
+            accessibility_profile="screen_reader",
+        )
+
+        student = self.service.create_student(data)
+        self.assertEqual(student.accessibility_profile, "screen_reader")
+        self.student_repo.create.assert_called_once()
+        self.db.commit.assert_called_once()
+
+    def test_update_student_accessibility_profile(self):
+        student_id = uuid.uuid4()
+        existing_student = MagicMock(
+            id=student_id,
+            roll_number="CS2026100",
+            class_id=uuid.uuid4(),
+            accessibility_profile="standard",
+        )
+        self.student_repo.get_by_id.return_value = existing_student
+
+        update_data = StudentUpdate(accessibility_profile="high_contrast")
+        self.service.update_student(student_id, update_data)
+
+        self.assertEqual(existing_student.accessibility_profile, "high_contrast")
+        self.db.commit.assert_called_once()
 
 
 class TestStudentAnswerService(unittest.TestCase):

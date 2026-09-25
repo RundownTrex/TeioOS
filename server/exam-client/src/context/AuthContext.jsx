@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(Boolean(token));
   const [isLoadingSession, setIsLoadingSession] = useState(true);
   const [authError, setAuthError] = useState(null);
-  const { applyProfile } = useAccessibility();
+  const { applyProfile, resetAccessibility } = useAccessibility();
 
   // Validate session on mount if token exists
   const validateSession = useCallback(async (authToken) => {
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoadingSession(false);
     }
-  }, []);
+  }, [applyProfile]);
 
   useEffect(() => {
     validateSession(token);
@@ -58,12 +58,13 @@ export const AuthProvider = ({ children }) => {
       setUserProfile(null);
       setIsAuthenticated(false);
       sessionStorage.clear();
+      resetAccessibility();
       announceToScreenReader('Your examination session has expired. Please log in again.', 'assertive');
     };
 
     window.addEventListener('auth:session-expired', handleSessionExpired);
     return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
-  }, []);
+  }, [resetAccessibility]);
 
   // Perform Student Login
   const login = async (rollNumber, password) => {
@@ -105,8 +106,9 @@ export const AuthProvider = ({ children }) => {
     setUserProfile(null);
     setIsAuthenticated(false);
     sessionStorage.clear();
+    resetAccessibility();
     announceToScreenReader('You have logged out of the examination portal.', 'polite');
-  }, []);
+  }, [resetAccessibility]);
 
   const value = {
     token,

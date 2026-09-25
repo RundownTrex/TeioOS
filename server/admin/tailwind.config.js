@@ -64,12 +64,20 @@ export default {
           'danger-active': 'var(--color-btn-danger-active)',
         },
 
+        seal: {
+          DEFAULT: 'var(--teio-seal)',
+          hover: 'var(--teio-seal-hover)',
+          tint: 'var(--teio-seal-tint)',
+        },
+        ledger: 'var(--teio-ledger)',
+
         overlay: 'var(--color-overlay)',
         'navy-tint': 'var(--color-navy-tint)',
       },
       fontFamily: {
-        sans: ['var(--font-family-sans)'],
-        mono: ['var(--font-family-mono)'],
+        serif: ['var(--font-family-serif)', 'Georgia', 'serif'],
+        sans: ['var(--font-family-sans)', '-apple-system', 'sans-serif'],
+        mono: ['var(--font-family-mono)', 'monospace'],
       },
       fontSize: {
         xs: 'var(--font-size-xs)',

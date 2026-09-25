@@ -1,130 +1,184 @@
 /* ==========================================================================
-   TeioOS Student Examination Client — Reusable Design System Tokens (CSS)
-   Single Source of Truth for Colors, Typography, Spacing, Focus, & Layout
+   TeioOS Student Examination Client — Design System Tokens (CSS)
+   The Examination Register — Official System of Record Design System
+   Grounding the visual identity in formal, invigilated examinations.
    ========================================================================== */
 
 :root {
   /* --------------------------------------------------------------------------
-     1. Color Tokens (Default Academic Light Mode - WCAG 2.1 AA Compliant)
+     1. TeioOS Document & Paper Palette (DESIGN.md §2)
      -------------------------------------------------------------------------- */
-  --color-bg-canvas: #f8faf9;
-  --color-bg-surface: #ffffff;
-  --color-bg-subtle: #f1f5f9;
-  
-  --color-text-main: #0f172a;
-  --color-text-muted: #475569;
-  --color-text-inverse: #ffffff;
-  
-  --color-border-main: #e2e8f0;
-  --color-border-strong: #cbd5e1;
-  
-  --color-navy-primary: #1e3a8a;
-  --color-navy-hover: #1e40af;
-  --color-navy-active: #172554;
-  
-  /* Status & Question Palette Colors */
-  --color-status-answered: #15803d;
-  --color-status-answered-bg: #f0fdf4;
-  --color-status-unanswered: #b45309;
-  --color-status-unanswered-bg: #fffbeb;
-  --color-status-review: #6d28d9;
-  --color-status-review-bg: #f5f3ff;
-  --color-status-unvisited: #64748b;
-  --color-status-unvisited-bg: #f8fafc;
-  
-  /* Focus Ring Token (Light Mode: 3px solid #1E3A8A with 2px white gap) */
-  --focus-ring-color: #1e3a8a;
-  --focus-ring-width: 3px;
-  --focus-ring-offset: 2px;
-  --focus-ring-shadow: 0 0 0 4px rgba(30, 58, 138, 0.25);
+  --teio-paper:        #F2F3EE;  /* page background — cool, muted paper */
+  --teio-paper-raised: #FFFFFF;  /* card/surface background */
+  --teio-ink:          #14181C;  /* primary text — near-black ink */
+  --teio-ink-muted:    #565B54;  /* secondary text */
+  --teio-rule:         #D8D6CB;  /* borders, hairlines — ruled paper lines */
+  --teio-rule-strong:  #B5B2A3;
+
+  --teio-seal:         #7C2D2D;  /* the ONE accent — deep stamp/seal red */
+  --teio-seal-hover:   #641F1F;
+  --teio-seal-tint:    rgba(124, 45, 45, 0.08); /* selected-row/active-nav */
+
+  --teio-ledger:       #3D5A5B;  /* secondary structural color — muted ink-teal */
 
   /* --------------------------------------------------------------------------
-     2. Typography Tokens
+     Mapped UI Color Tokens (Academic Document Light Mode)
      -------------------------------------------------------------------------- */
-  --font-family-sans: Inter, Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  
-  --font-size-xs: 0.75rem;    /* 12px */
-  --font-size-sm: 0.875rem;   /* 14px */
-  --font-size-base: 1rem;     /* 16px */
-  --font-size-lg: 1.125rem;   /* 18px (Question Reading Stem) */
-  --font-size-xl: 1.25rem;    /* 20px */
-  --font-size-2xl: 1.5rem;    /* 24px */
-  --font-size-3xl: 1.875rem;  /* 30px */
+  --color-bg-canvas:  var(--teio-paper);
+  --color-bg-surface: var(--teio-paper-raised);
+  --color-bg-subtle:  #E8EAE2;
 
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
+  --color-text-main:    var(--teio-ink);
+  --color-text-muted:   var(--teio-ink-muted);
+  --color-text-inverse: #FFFFFF;
+
+  --color-border-main:   var(--teio-rule);
+  --color-border-strong: var(--teio-rule-strong);
+
+  /* Primary Action Colors (Inheriting Teio Seal) */
+  --color-navy-primary: var(--teio-seal);
+  --color-navy-hover:   var(--teio-seal-hover);
+  --color-navy-active:  #4F1818;
+  --color-navy-tint:    var(--teio-seal-tint);
+
+  /* Question Palette & Exam Status Colors (DESIGN.md §2) */
+  --color-status-answered:      #3F7A4F;
+  --color-status-answered-bg:   #EBF3ED;
+  --color-status-unanswered:    #A66A1E;
+  --color-status-unanswered-bg: #F8F3EA;
+  --color-status-review:        #3D5A5B;
+  --color-status-review-bg:     #EDF3F3;
+  --color-status-unvisited:     #565B54;
+  --color-status-unvisited-bg:  #F2F3EE;
+
+  /* Semantic Status Colors (DESIGN.md §2 & §6 — Ported from Admin Dashboard) */
+  --color-status-success:        #3F7A4F;
+  --color-status-success-bg:     #EBF3ED;
+  --color-status-success-border: #B7D9C0;
+  --color-status-warning:        #A66A1E;
+  --color-status-warning-bg:     #F8F3EA;
+  --color-status-warning-border: #E8D3B2;
+  --color-status-danger:         #A13B34;
+  --color-status-danger-bg:      #F8ECEB;
+  --color-status-danger-border:  #E4B7B4;
+  --color-status-info:           #3D5A80;
+  --color-status-info-bg:        #EBF1F7;
+  --color-status-info-border:    #B7CCE0;
+  --color-status-neutral:        #565B54;
+  --color-status-neutral-bg:     #F2F3EE;
+  --color-status-neutral-border: #D8D6CB;
+
+  /* Destructive Action Colors */
+  --color-btn-danger:        var(--teio-seal);
+  --color-btn-danger-hover:  var(--teio-seal-hover);
+  --color-btn-danger-active: #4F1818;
+
+  /* Overlays */
+  --color-overlay: rgba(20, 24, 28, 0.55);
+
+  /* Focus Ring Token (Disciplined 2px seal ring) */
+  --focus-ring-color:  var(--teio-seal);
+  --focus-ring-width:  2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-shadow: 0 0 0 3px rgba(124, 45, 45, 0.25);
+
+  /* --------------------------------------------------------------------------
+     2. Typography Tokens (DESIGN.md §3 — IBM Plex Suite)
+     -------------------------------------------------------------------------- */
+  --font-family-serif: "IBM Plex Serif", Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-family-sans:  "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-mono:  "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Document Type Scale (DESIGN.md §3) */
+  --text-display: 1.75rem;    /* 28px — rare top-level titles */
+  --text-h1:      1.375rem;   /* 22px */
+  --text-h2:      1.125rem;   /* 18px */
+  --text-body:    0.9375rem;  /* 15px */
+  --text-caption: 0.8125rem;  /* 13px */
+
+  --font-size-xs:  0.75rem;    /* 12px */
+  --font-size-sm:  0.875rem;   /* 14px */
+  --font-size-base: 0.9375rem; /* 15px */
+  --font-size-lg:  1.125rem;   /* 18px (Question Reading Stem) */
+  --font-size-xl:  1.25rem;    /* 20px */
+  --font-size-2xl: 1.375rem;   /* 22px */
+  --font-size-3xl: 1.75rem;    /* 28px */
+
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
   --font-weight-semibold: 600;
-  --font-weight-bold: 700;
+  --font-weight-bold:     700;
 
-  --line-height-tight: 1.25;
-  --line-height-normal: 1.5;
-  --line-height-relaxed: 1.56; /* Optimized readability for question text */
+  --line-height-tight:   1.25;
+  --line-height-normal:  1.5;
+  --line-height-relaxed: 1.625; /* Optimized readability for question text */
 
   /* --------------------------------------------------------------------------
      3. Spacing Scale
      -------------------------------------------------------------------------- */
-  --spacing-0: 0px;
-  --spacing-1: 0.25rem;  /* 4px */
-  --spacing-2: 0.5rem;   /* 8px */
-  --spacing-3: 0.75rem;  /* 12px */
-  --spacing-4: 1rem;     /* 16px */
-  --spacing-5: 1.25rem;  /* 20px */
-  --spacing-6: 1.5rem;   /* 24px */
-  --spacing-8: 2rem;     /* 32px */
+  --spacing-0:  0px;
+  --spacing-1:  0.25rem;  /* 4px */
+  --spacing-2:  0.5rem;   /* 8px */
+  --spacing-3:  0.75rem;  /* 12px */
+  --spacing-4:  1rem;     /* 16px */
+  --spacing-5:  1.25rem;  /* 20px */
+  --spacing-6:  1.5rem;   /* 24px */
+  --spacing-8:  2rem;     /* 32px */
   --spacing-10: 2.5rem;  /* 40px */
   --spacing-12: 3rem;    /* 48px */
   --spacing-16: 4rem;    /* 64px */
 
   /* --------------------------------------------------------------------------
-     4. Border Radius Tokens
+     4. Border Radius Tokens (DESIGN.md §4: 4px everywhere, no exceptions)
      -------------------------------------------------------------------------- */
   --radius-none: 0px;
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 8px;
+  --radius-sm:   2px;
+  --radius-md:   4px;
+  --radius-lg:   4px;
+  --radius-xl:   4px;
+  --radius-2xl:  4px;
   --radius-full: 9999px;
 
   /* --------------------------------------------------------------------------
-     5. Elevation & Shadow Tokens
+     5. Elevation & Shadow Tokens (DESIGN.md §4: No drop shadows on cards)
      -------------------------------------------------------------------------- */
   --shadow-none: none;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xs:   none;
+  --shadow-sm:   none;
+  --shadow-md:   0 4px 12px rgba(20, 24, 28, 0.08); /* Reserved for floating menus/dropdowns */
+  --shadow-lg:   0 8px 24px rgba(20, 24, 28, 0.12); /* Reserved for floating modals/dialogs */
 
   /* --------------------------------------------------------------------------
-     6. Animation & Transition Tokens
+     6. Animation & Transition Tokens (DESIGN.md §5: Quiet, deliberate)
      -------------------------------------------------------------------------- */
-  --duration-fast: 150ms;
+  --duration-fast:   150ms;
   --duration-normal: 200ms;
-  --duration-slow: 300ms;
-  
+  --duration-slow:   280ms;
+
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-out:    cubic-bezier(0, 0, 0.2, 1);
   --ease-linear: linear;
 
   /* --------------------------------------------------------------------------
      7. Layout & Dimension Tokens
      -------------------------------------------------------------------------- */
-  --dim-login-width: 440px;
+  --dim-login-width:     440px;
   --dim-dashboard-width: 800px;
-  --dim-reading-width: 720px;
+  --dim-reading-width:   720px;
   --dim-workbench-width: 1440px;
-  --dim-sidebar-width: 350px;
-  --dim-header-height: 60px;
-  --dim-footer-height: 40px;
+  --dim-sidebar-width:   280px; /* Aligned with system default; question palette uses rem-based scaling in ExamLayout */
+  --dim-header-height:   60px;
+  --dim-footer-height:   40px;
 
   /* --------------------------------------------------------------------------
      8. Z-Index Scale Tokens
      -------------------------------------------------------------------------- */
-  --z-base: 0;
-  --z-sticky: 10;
-  --z-header: 20;
-  --z-sidebar: 30;
-  --z-backdrop: 40;
-  --z-modal: 50;
+  --z-base:      0;
+  --z-sticky:    10;
+  --z-header:    20;
+  --z-sidebar:   30;
+  --z-backdrop:  40;
+  --z-modal:     50;
   --z-skip-link: 60;
   --z-announcer: 70;
 }
@@ -142,9 +196,9 @@ html[data-font-scale="200"] { font-size: 200%; }
    Line Height & Letter Spacing Accessibility Overrides
    ========================================================================== */
 html[data-line-height="relaxed"] { line-height: 1.75 !important; }
-html[data-line-height="loose"] { line-height: 2.0 !important; }
+html[data-line-height="loose"]   { line-height: 2.0 !important; }
 
-html[data-letter-spacing="wide"] { letter-spacing: 0.05em !important; }
+html[data-letter-spacing="wide"]  { letter-spacing: 0.05em !important; }
 html[data-letter-spacing="wider"] { letter-spacing: 0.1em !important; }
 
 /* ==========================================================================
@@ -156,69 +210,138 @@ html[data-dyslexic-font="true"] {
 }
 
 /* ==========================================================================
-   High Contrast Mode Theme Tokens (WCAG AAA Compliant)
+   High Contrast Mode Theme Tokens (DESIGN.md §2 — Functional Accessibility)
+   Untouched pure black/white/yellow scheme.
    ========================================================================== */
 html[data-theme="high-contrast"] {
-  --color-bg-canvas: #000000;
+  --teio-paper:        #000000;
+  --teio-paper-raised: #121212;
+  --teio-ink:          #FFFFFF;
+  --teio-ink-muted:    #E5E5E5;
+  --teio-rule:         #FFFFFF;
+  --teio-rule-strong:  #FFFFFF;
+  --teio-seal:         #FFFF00;
+  --teio-seal-hover:   #FFFF66;
+  --teio-seal-tint:    rgba(255, 255, 0, 0.18);
+  --teio-ledger:       #00CCFF;
+
+  --color-bg-canvas:  #000000;
   --color-bg-surface: #121212;
-  --color-bg-subtle: #1e1e1e;
-  
-  --color-text-main: #ffffff;
-  --color-text-muted: #e5e5e5;
+  --color-bg-subtle:  #1E1E1E;
+
+  --color-text-main:    #FFFFFF;
+  --color-text-muted:   #E5E5E5;
   --color-text-inverse: #000000;
-  
-  --color-border-main: #ffffff;
-  --color-border-strong: #ffffff;
-  
-  --color-navy-primary: #ffff00;
-  --color-navy-hover: #ffff66;
-  --color-navy-active: #cccc00;
 
-  --color-status-answered: #00ff00;
-  --color-status-answered-bg: #003300;
-  --color-status-unanswered: #ff9900;
-  --color-status-unanswered-bg: #331f00;
-  --color-status-review: #ff00ff;
-  --color-status-review-bg: #330033;
-  --color-status-unvisited: #ffffff;
-  --color-status-unvisited-bg: #121212;
+  --color-border-main:   #FFFFFF;
+  --color-border-strong: #FFFFFF;
 
-  --focus-ring-color: #ffff00;
-  --focus-ring-width: 3px;
+  --color-navy-primary: #FFFF00;
+  --color-navy-hover:   #FFFF66;
+  --color-navy-active:  #CCCC00;
+  --color-navy-tint:    rgba(255, 255, 0, 0.18);
+
+  --color-status-answered:      #00FF00;
+  --color-status-answered-bg:   #003300;
+  --color-status-unanswered:    #FF9900;
+  --color-status-unanswered-bg: #331F00;
+  --color-status-review:        #FF00FF;
+  --color-status-review-bg:     #330033;
+  --color-status-unvisited:     #FFFFFF;
+  --color-status-unvisited-bg:  #121212;
+
+  --color-status-success:        #00FF00;
+  --color-status-success-bg:     #003300;
+  --color-status-success-border: #00FF00;
+  --color-status-warning:        #FF9900;
+  --color-status-warning-bg:     #331F00;
+  --color-status-warning-border: #FF9900;
+  --color-status-danger:         #FF4444;
+  --color-status-danger-bg:      #330000;
+  --color-status-danger-border:  #FF4444;
+  --color-status-info:           #00CCFF;
+  --color-status-info-bg:        #002233;
+  --color-status-info-border:    #00CCFF;
+  --color-status-neutral:        #FFFFFF;
+  --color-status-neutral-bg:     #121212;
+  --color-status-neutral-border: #FFFFFF;
+
+  --color-btn-danger:        #FF4444;
+  --color-btn-danger-hover:  #FF6666;
+  --color-btn-danger-active: #CC0000;
+
+  --color-overlay: rgba(0, 0, 0, 0.8);
+
+  --focus-ring-color:  #FFFF00;
+  --focus-ring-width:  3px;
   --focus-ring-offset: 3px;
   --focus-ring-shadow: none;
 }
 
 /* ==========================================================================
-   Dark Theme Tokens
+   Dark Theme Tokens (DESIGN.md §2 — Ink/Paper Inversion)
    ========================================================================== */
 html[data-theme="dark"] {
-  --color-bg-canvas: #0f172a;
-  --color-bg-surface: #1e293b;
-  --color-bg-subtle: #334155;
-  
-  --color-text-main: #f8fafc;
-  --color-text-muted: #94a3b8;
-  --color-text-inverse: #0f172a;
-  
-  --color-border-main: #334155;
-  --color-border-strong: #475569;
-  
-  --color-navy-primary: #38bdf8;
-  --color-navy-hover: #7dd3fc;
-  --color-navy-active: #0284c7;
+  --teio-paper:        #17191C;
+  --teio-paper-raised: #1F2225;
+  --teio-ink:          #EDEBE3;
+  --teio-ink-muted:    #A6A69C;
+  --teio-rule:         #33362F;
+  --teio-rule-strong:  #474A42;
+  --teio-seal:         #C1544C;
+  --teio-seal-hover:   #D4665E;
+  --teio-seal-tint:    rgba(193, 84, 76, 0.15);
+  --teio-ledger:       #5A7E80;
 
-  --color-status-answered: #4ade80;
-  --color-status-answered-bg: #064e3b;
-  --color-status-unanswered: #fbbf24;
-  --color-status-unanswered-bg: #78350f;
-  --color-status-review: #c084fc;
-  --color-status-review-bg: #581c87;
-  --color-status-unvisited: #94a3b8;
-  --color-status-unvisited-bg: #1e293b;
+  --color-bg-canvas:  #17191C;
+  --color-bg-surface: #1F2225;
+  --color-bg-subtle:  #25282C;
 
-  --focus-ring-color: #38bdf8;
-  --focus-ring-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+  --color-text-main:    #EDEBE3;
+  --color-text-muted:   #A6A69C;
+  --color-text-inverse: #17191C;
+
+  --color-border-main:   #33362F;
+  --color-border-strong: #474A42;
+
+  --color-navy-primary: #C1544C;
+  --color-navy-hover:   #D4665E;
+  --color-navy-active:  #E07870;
+  --color-navy-tint:    rgba(193, 84, 76, 0.15);
+
+  --color-status-answered:      #529E67;
+  --color-status-answered-bg:   #142B1B;
+  --color-status-unanswered:    #C78328;
+  --color-status-unanswered-bg: #33200A;
+  --color-status-review:        #5A7E80;
+  --color-status-review-bg:     #152728;
+  --color-status-unvisited:     #A6A69C;
+  --color-status-unvisited-bg:  #1F2225;
+
+  --color-status-success:        #529E67;
+  --color-status-success-bg:     #142B1B;
+  --color-status-success-border: #234D2E;
+  --color-status-warning:        #C78328;
+  --color-status-warning-bg:     #33200A;
+  --color-status-warning-border: #5C3A10;
+  --color-status-danger:         #C1544C;
+  --color-status-danger-bg:      #331513;
+  --color-status-danger-border:  #61221D;
+  --color-status-info:           #5077A6;
+  --color-status-info-bg:        #152233;
+  --color-status-info-border:    #223B59;
+  --color-status-neutral:        #A6A69C;
+  --color-status-neutral-bg:     #1F2225;
+  --color-status-neutral-border: #33362F;
+
+  --color-btn-danger:        #C1544C;
+  --color-btn-danger-hover:  #D4665E;
+  --color-btn-danger-active: #A13B34;
+
+  --color-overlay: rgba(10, 12, 14, 0.75);
+
+  --focus-ring-color:  #C1544C;
+  --focus-ring-shadow: 0 0 0 3px rgba(193, 84, 76, 0.35);
 }
 
 /* ==========================================================================

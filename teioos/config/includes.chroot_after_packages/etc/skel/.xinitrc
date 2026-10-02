@@ -87,13 +87,12 @@ SERVER_HOST="teioos-server.local"
 SERVER_PORT=8080
 SERVER_URL="http://${SERVER_HOST}:${SERVER_PORT}/exam/login/"
 
-MAX_RETRIES=30
+MAX_RETRIES=20
 RETRY_COUNT=0
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if getent hosts "$SERVER_HOST" >/dev/null 2>&1; then
-        if (exec 3<>"/dev/tcp/${SERVER_HOST}/${SERVER_PORT}") 2>/dev/null; then
-            exec 3>&-
-            exec 3<&-
+    SERVER_IP=$(timeout 1 avahi-resolve -n "$SERVER_HOST" 2>/dev/null | awk '{print $2}')
+    if [ -n "$SERVER_IP" ]; then
+        if (timeout 1 bash -c "cat < /dev/null > /dev/tcp/${SERVER_IP}/${SERVER_PORT}") 2>/dev/null; then
             break
         fi
     fi

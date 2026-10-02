@@ -38,6 +38,7 @@ export default {
           'unanswered-bg': 'var(--color-status-unanswered-bg)',
           review: 'var(--color-status-review)',
           'review-bg': 'var(--color-status-review-bg)',
+          'review-border': 'var(--color-status-review-border)',
           unvisited: 'var(--color-status-unvisited)',
           'unvisited-bg': 'var(--color-status-unvisited-bg)',
 

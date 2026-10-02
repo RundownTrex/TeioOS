@@ -71,8 +71,7 @@ class ResultCalculationService:
                         evaluated_descriptive_count += 1
                         descriptive_score += ans.awarded_marks
                 elif ans and ans.awarded_marks is not None:
-                    # Explicit evaluation on unattempted/empty answer
-                    evaluated_descriptive_count += 1
+                    # Unattempted placeholder or skipped answer with awarded marks (default 0.0) contributes to score
                     descriptive_score += ans.awarded_marks
                 # Skipped/unattempted questions with no awarded marks default to 0.0
 

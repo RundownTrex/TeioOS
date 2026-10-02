@@ -273,9 +273,9 @@ export const ExamReviewPage = () => {
       </Button>
 
       {/* Score Summary Box */}
-      <div className="p-4 rounded-xl bg-subtle/40 border border-border-main space-y-3">
+      <div className="p-4 rounded bg-subtle/40 border border-border-main space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-navy-primary flex items-center gap-1.5">
+          <span className="text-xs font-mono font-bold text-navy-primary flex items-center gap-1.5">
             <Award className="w-4 h-4" aria-hidden="true" />
             Result Summary
           </span>
@@ -301,27 +301,27 @@ export const ExamReviewPage = () => {
 
         {/* Breakdown Telemetry Grid */}
         <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-          <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
+          <div className="p-2 rounded bg-status-success-bg border border-status-success-border text-center">
             <span className="text-text-muted block text-[11px] font-medium">Correct</span>
-            <span className="text-base font-extrabold font-mono text-green-600 dark:text-green-400">
+            <span className="text-base font-extrabold font-mono text-status-success">
               {correctCount}
             </span>
           </div>
-          <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-center">
+          <div className="p-2 rounded bg-status-danger-bg border border-status-danger-border text-center">
             <span className="text-text-muted block text-[11px] font-medium">Incorrect</span>
-            <span className="text-base font-extrabold font-mono text-red-600 dark:text-red-400">
+            <span className="text-base font-extrabold font-mono text-status-danger">
               {incorrectCount}
             </span>
           </div>
-          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
+          <div className="p-2 rounded bg-status-warning-bg border border-status-warning-border text-center">
             <span className="text-text-muted block text-[11px] font-medium">Unanswered</span>
-            <span className="text-base font-extrabold font-mono text-amber-600 dark:text-amber-400">
+            <span className="text-base font-extrabold font-mono text-status-warning">
               {unansweredCount}
             </span>
           </div>
-          <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-center">
+          <div className="p-2 rounded bg-status-review-bg border border-status-review-border text-center">
             <span className="text-text-muted block text-[11px] font-medium">Descriptive</span>
-            <span className="text-base font-extrabold font-mono text-purple-600 dark:text-purple-400">
+            <span className="text-base font-extrabold font-mono text-status-review">
               {descriptiveCount}
             </span>
           </div>
@@ -330,7 +330,7 @@ export const ExamReviewPage = () => {
 
       {/* Filter Questions */}
       <div className="space-y-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+        <span className="text-xs font-bold text-text-muted flex items-center gap-1.5">
           <Filter className="w-3.5 h-3.5" aria-hidden="true" />
           Filter Questions
         </span>
@@ -358,7 +358,7 @@ export const ExamReviewPage = () => {
 
       {/* Question Jump Palette */}
       <div className="space-y-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+        <span className="text-xs font-bold text-text-muted flex items-center gap-1.5">
           <Grid className="w-3.5 h-3.5" aria-hidden="true" />
           Question Jump
         </span>
@@ -370,13 +370,13 @@ export const ExamReviewPage = () => {
 
             let btnStyle = 'border-border-main bg-subtle text-text-main';
             if (isCorrect) {
-              btnStyle = 'border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400 font-bold';
+              btnStyle = 'border-status-success-border bg-status-success-bg text-status-success font-bold';
             } else if (isIncorrect) {
-              btnStyle = 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400 font-bold';
+              btnStyle = 'border-status-danger-border bg-status-danger-bg text-status-danger font-bold';
             } else if (isUnanswered) {
-              btnStyle = 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold';
+              btnStyle = 'border-status-warning-border bg-status-warning-bg text-status-warning font-bold';
             } else {
-              btnStyle = 'border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold';
+              btnStyle = 'border-status-review-border bg-status-review-bg text-status-review font-bold';
             }
 
             return (
@@ -385,7 +385,7 @@ export const ExamReviewPage = () => {
                 type="button"
                 onClick={() => scrollToQuestion(q.question_id, idx)}
                 title={`Jump to Question ${idx + 1} (${q.status})`}
-                className={`h-8 rounded-lg border text-xs font-mono transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary ${btnStyle}`}
+                className={`h-8 rounded border text-xs font-mono transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary ${btnStyle}`}
               >
                 Q{idx + 1}
               </button>
@@ -407,18 +407,18 @@ export const ExamReviewPage = () => {
         <div className="pb-6 border-b border-border-main">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <span className="text-xs font-mono font-bold text-navy-primary uppercase tracking-wider">
-                {subject_code} • {department_name}
+              <span className="text-xs font-mono font-bold text-navy-primary">
+                {subject_code ? `${subject_code}, ` : ''}{department_name}
               </span>
               <h1
                 ref={pageHeadingRef}
                 tabIndex={-1}
-                className="text-2xl font-extrabold text-text-main leading-snug mt-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary rounded"
+                className="text-2xl font-bold font-serif text-text-main leading-snug mt-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary rounded"
               >
-                {subject_name} — Paper Review
+                {subject_name}: Paper Review
               </h1>
               <p className="text-xs text-text-muted mt-1.5 font-medium">
-                Candidate: <strong className="text-text-main">{studentName}</strong> {rollNumber ? `(${rollNumber})` : ''} • Published: {formatDateTime(published_at)}
+                Candidate: <strong className="text-text-main">{studentName}</strong> {rollNumber ? `(${rollNumber})` : ''}, published {formatDateTime(published_at)}
               </p>
             </div>
 
@@ -455,12 +455,12 @@ export const ExamReviewPage = () => {
                   key={q.question_id || idx}
                   id={`review-question-${q.question_id || idx}`}
                   tabIndex={-1}
-                  className="pb-6 border-b border-border-main last:border-b-0 space-y-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary rounded-lg p-2"
+                  className="pb-6 border-b border-border-main last:border-b-0 space-y-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary rounded p-2"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-mono font-bold text-navy-primary uppercase">
-                        Question {idx + 1} • {isMcq ? 'Multiple Choice' : 'Descriptive Essay'}
+                      <span className="text-xs font-mono font-bold text-navy-primary">
+                        Question {idx + 1} ({isMcq ? 'Multiple Choice' : 'Descriptive Essay'})
                       </span>
                       <Badge variant={statusBadgeVariant} size="sm">
                         {q.status} ({q.obtained_marks} / {q.marks} Marks)
@@ -473,7 +473,7 @@ export const ExamReviewPage = () => {
                   </div>
 
                   {/* Question Stem */}
-                  <div className="text-base font-medium text-text-main leading-relaxed">
+                  <div className="text-base font-serif font-medium text-text-main leading-relaxed">
                     {q.question_text}
                   </div>
 
@@ -489,15 +489,15 @@ export const ExamReviewPage = () => {
                         let badgeVariant = 'neutral';
 
                         if (isUserSelection && isCorrectOption) {
-                          optionStyle = 'border-green-500/40 bg-green-500/10 text-text-main font-medium';
+                          optionStyle = 'border-status-success-border bg-status-success-bg text-text-main font-medium';
                           badgeText = 'Your Answer (Correct)';
                           badgeVariant = 'success';
                         } else if (isUserSelection && !isCorrectOption) {
-                          optionStyle = 'border-red-500/40 bg-red-500/10 text-text-main font-medium';
+                          optionStyle = 'border-status-danger-border bg-status-danger-bg text-text-main font-medium';
                           badgeText = 'Your Answer (Incorrect)';
                           badgeVariant = 'danger';
                         } else if (isCorrectOption) {
-                          optionStyle = 'border-blue-500/40 bg-blue-500/10 text-text-main font-medium';
+                          optionStyle = 'border-status-info-border bg-status-info-bg text-text-main font-medium';
                           badgeText = 'Correct Answer';
                           badgeVariant = 'info';
                         }
@@ -505,7 +505,7 @@ export const ExamReviewPage = () => {
                         return (
                           <div
                             key={opt.id || optIdx}
-                            className={`p-3 border rounded-lg flex items-center justify-between gap-3 text-sm transition-colors ${optionStyle}`}
+                            className={`p-3 border rounded flex items-center justify-between gap-3 text-sm transition-colors ${optionStyle}`}
                           >
                             <div className="flex items-center gap-3">
                               <span className="w-6 h-6 rounded-full border border-current flex items-center justify-center text-xs font-mono shrink-0">
@@ -528,8 +528,8 @@ export const ExamReviewPage = () => {
                   {/* Descriptive Answer & Evaluator Feedback Breakdown */}
                   {!isMcq && (
                     <div className="space-y-3 pt-1">
-                      <div className="p-3.5 bg-subtle/40 border border-border-main rounded-lg space-y-1">
-                        <span className="text-xs font-bold text-navy-primary block uppercase tracking-wider">
+                      <div className="p-3.5 bg-subtle/40 border border-border-main rounded space-y-1">
+                        <span className="text-xs font-bold text-navy-primary block">
                           Candidate Submitted Answer:
                         </span>
                         <p className="text-sm text-text-main whitespace-pre-wrap font-mono leading-relaxed">
@@ -540,9 +540,9 @@ export const ExamReviewPage = () => {
                       </div>
 
                       {q.evaluator_feedback && (
-                        <div className="p-3.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-text-main text-sm space-y-1">
-                          <span className="font-bold text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1.5 uppercase tracking-wider">
-                            <MessageSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" aria-hidden="true" />
+                        <div className="p-3.5 bg-status-review-bg border border-status-review-border rounded text-text-main text-sm space-y-1">
+                          <span className="font-bold text-xs text-status-review flex items-center gap-1.5">
+                            <MessageSquare className="w-4 h-4 text-status-review" aria-hidden="true" />
                             Evaluator Feedback & Comments:
                           </span>
                           <p className="whitespace-pre-wrap leading-relaxed italic">{q.evaluator_feedback}</p>
@@ -554,7 +554,7 @@ export const ExamReviewPage = () => {
               );
             })
           ) : (
-            <div className="p-8 text-center text-sm text-text-muted border border-border-main rounded-xl bg-surface">
+            <div className="p-8 text-center text-sm text-text-muted border border-border-main rounded bg-surface">
               No questions found matching the selected filter ({filter}).
             </div>
           )}

@@ -2,9 +2,10 @@ from typing import Annotated
 from uuid import UUID
 from fastapi import APIRouter, Depends, status
 
-from app.api.dependencies.database import SessionDep, OAuth2FormDep
+from app.api.dependencies.database import OAuth2FormDep
 from app.api.dependencies.auth import require_student
 from app.api.dependencies.services import StudentAuthServiceDep
+from app.api.dependencies.repositories import StudentRepoDep
 from app.models.student import Student
 from app.core.exceptions import NotFoundException
 from app.schemas.response import APIResponse
@@ -39,20 +40,20 @@ def login_student(
 @router.get("/me", response_model=APIResponse[StudentSessionInfo])
 def get_student_session_info(
     token_payload: Annotated[TokenPayload, Depends(require_student)],
-    session: SessionDep,
+    student_repo: StudentRepoDep,
 ) -> APIResponse[StudentSessionInfo]:
     """
     Protected endpoint.
     Only students can access this. Returns candidate profile details from database.
     """
-    student = session.query(Student).filter(Student.id == UUID(token_payload.sub)).first()
+    student = student_repo.get_by_id(UUID(token_payload.sub))
     if not student:
         raise NotFoundException(resource_name="Student")
 
     dept_name = (
         student.enrolled_class.department.name
         if student.enrolled_class and student.enrolled_class.department
-        else "Computer Science & Engineering"
+        else ""
     )
     class_name = student.enrolled_class.name if student.enrolled_class else ""
 

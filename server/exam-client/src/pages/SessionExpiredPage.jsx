@@ -14,13 +14,13 @@ export const SessionExpiredPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-canvas text-text-main p-4 select-none">
-      <Card className="max-w-[440px] w-full border-border-main bg-surface shadow-md text-center">
+      <Card className="max-w-[440px] w-full border-border-main bg-surface text-center">
         <CardHeader className="py-6 bg-subtle/40 border-b border-border-main">
-          <div className="inline-flex p-3 bg-amber-100 text-amber-600 rounded-2xl shadow-xs mb-2">
+          <div className="inline-flex p-2.5 bg-status-warning-bg text-status-warning border border-status-warning-border rounded mb-3">
             <Clock className="w-8 h-8" aria-hidden="true" />
           </div>
-          <h1 className="text-lg font-extrabold text-text-main tracking-tight uppercase">
-            SESSION EXPIRED
+          <h1 className="text-lg font-bold font-serif text-text-main tracking-tight">
+            Session Expired
           </h1>
         </CardHeader>
 

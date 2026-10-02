@@ -18,9 +18,10 @@ export const Checkbox = ({
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
-      <div
+      <label
+        htmlFor={checkboxId}
         className={`inline-flex items-start gap-3 select-none text-sm text-text-main ${
-          isDisabled ? 'opacity-60 cursor-not-allowed' : ''
+          isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
         }`}
       >
         <div className="relative flex items-center justify-center mt-0.5 shrink-0">
@@ -48,7 +49,7 @@ export const Checkbox = ({
                 ? 'bg-navy-primary border-navy-primary text-text-inverse'
                 : 'bg-surface border-border-strong hover:border-text-main'
               }
-              ${error ? 'border-red-600' : ''}
+              ${error ? 'border-status-danger' : ''}
               ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
           >
             {checked && (
@@ -58,24 +59,23 @@ export const Checkbox = ({
         </div>
 
         {label && (
-          <label
-            htmlFor={checkboxId}
+          <span
             className={`leading-snug font-medium ${
               isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
             }`}
           >
             {label}
             {isRequired && (
-              <span className="text-red-600 ml-1" aria-hidden="true">
+              <span className="text-status-danger ml-1" aria-hidden="true">
                 *
               </span>
             )}
-          </label>
+          </span>
         )}
-      </div>
+      </label>
 
       {error && (
-        <p id={errorId} role="alert" className="text-xs text-red-600 font-medium pl-8">
+        <p id={errorId} role="alert" className="text-xs text-status-danger font-medium pl-8">
           {error}
         </p>
       )}

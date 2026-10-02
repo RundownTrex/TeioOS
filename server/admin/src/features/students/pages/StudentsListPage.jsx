@@ -171,7 +171,7 @@ export const StudentsListPage = () => {
         const classObj = classNames.get(row.class_id);
         if (!classObj) return '—';
         const departmentName = departmentNames.get(classObj.department_id);
-        return departmentName ? `${classObj.name} · ${departmentName}` : classObj.name;
+        return departmentName ? `${classObj.name} (${departmentName})` : classObj.name;
       },
     },
     { key: 'date_of_birth', header: 'Date of Birth', render: (row) => formatDate(row.date_of_birth) },
@@ -299,7 +299,7 @@ export const StudentsListPage = () => {
               options: classesQuery.data?.items?.map((item) => ({
                 value: item.id,
                 label: departmentNames.get(item.department_id)
-                  ? `${item.name} · ${departmentNames.get(item.department_id)}`
+                  ? `${item.name} (${departmentNames.get(item.department_id)})`
                   : item.name,
               })) ?? [],
             },

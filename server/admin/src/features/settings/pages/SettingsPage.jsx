@@ -139,7 +139,7 @@ const ReservedSection = ({ icon: Icon, label, description }) => (
     </div>
     <h3 className="text-base font-semibold text-text-main">{label} Settings</h3>
     <p className="mt-2 text-sm text-text-muted max-w-sm">{description}</p>
-    <Badge variant="amber" className="mt-4">Coming in a Future Release</Badge>
+    <Badge variant="warning" className="mt-4">Coming in a Future Release</Badge>
   </div>
 );
 
@@ -217,7 +217,7 @@ const SecuritySection = ({ values, onChange }) => (
     />
 
     <div className="mb-4">
-      <p className="text-xs font-bold uppercase tracking-wider text-navy-primary mb-3">Password Policy</p>
+      <p className="text-xs font-bold font-serif text-text-main mb-3">Password Policy</p>
     </div>
 
     <SettingRow
@@ -284,7 +284,7 @@ const SecuritySection = ({ values, onChange }) => (
     </SettingRow>
 
     <div className="mt-6 mb-4">
-      <p className="text-xs font-bold uppercase tracking-wider text-navy-primary mb-3">Session Management</p>
+      <p className="text-xs font-bold font-serif text-text-main mb-3">Session Management</p>
     </div>
 
     <SettingRow

@@ -23,7 +23,7 @@ export const Divider = ({
         className={`flex items-center gap-4 my-4 w-full ${className}`}
       >
         <div className="flex-1 h-px bg-border-main" />
-        <span className="text-xs font-medium text-text-muted uppercase tracking-wider">
+        <span className="text-xs font-medium text-text-muted">
           {label}
         </span>
         <div className="flex-1 h-px bg-border-main" />

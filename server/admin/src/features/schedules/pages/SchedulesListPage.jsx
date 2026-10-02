@@ -128,7 +128,7 @@ export const SchedulesListPage = () => {
           <div>
             <p className="text-sm font-medium text-text-main">{title}</p>
             <p className="text-xs text-text-muted">
-              {subjectName ? `${subjectName} · ` : ''}{exam ? `${exam.total_marks} total marks` : ''}
+              {subjectName ? `${subjectName}, ` : ''}{exam ? `${exam.total_marks} total marks` : ''}
             </p>
           </div>
         );
@@ -263,12 +263,14 @@ export const SchedulesListPage = () => {
           <AlertCircle className="w-4 h-4 mt-0.5 text-navy-primary shrink-0" aria-hidden="true" />
           <div className="text-xs space-y-1">
             <p className="font-semibold text-text-main">Timing System Architecture:</p>
-            <p>
-              • <strong>Availability Window:</strong> The overall start and end timeframe during which candidates may access the examination.
-            </p>
-            <p>
-              • <strong>Candidate Duration:</strong> The independent per-student timer (set on the Exam definition) that begins the moment a candidate starts their session.
-            </p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              <li>
+                <strong>Availability Window:</strong> The overall start and end timeframe during which candidates may access the examination.
+              </li>
+              <li>
+                <strong>Candidate Duration:</strong> The independent per-student timer (set on the Exam definition) that begins the moment a candidate starts their session.
+              </li>
+            </ul>
           </div>
         </div>
       </Alert>

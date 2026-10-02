@@ -8,11 +8,13 @@ import { AlertCircle, CheckCircle2, Info, AlertTriangle, X } from 'lucide-react'
 export const Alert = ({
   title,
   children,
+  message,
   variant = 'info',
   onClose,
   className = '',
   ...props
 }) => {
+  const content = children || message;
   const icons = {
     info: <Info className="w-4 h-4 text-status-info shrink-0" />,
     success: <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />,
@@ -33,7 +35,7 @@ export const Alert = ({
     <div
       role={isAssertive ? 'alert' : 'status'}
       aria-live={isAssertive ? 'assertive' : 'polite'}
-      className={`p-3.5 border rounded-lg flex items-start gap-3 ${
+      className={`p-3.5 border rounded flex items-start gap-3 ${
         variants[variant] || variants.info
       } ${className}`}
       {...props}
@@ -42,7 +44,7 @@ export const Alert = ({
 
       <div className="flex-1 text-sm leading-relaxed">
         {title && <h4 className="font-semibold mb-0.5">{title}</h4>}
-        <div>{children}</div>
+        {content && <div>{content}</div>}
       </div>
 
       {onClose && (
@@ -50,7 +52,7 @@ export const Alert = ({
           type="button"
           onClick={onClose}
           aria-label="Dismiss alert"
-          className="p-1 rounded-md hover:bg-subtle transition-colors shrink-0"
+          className="p-1 rounded hover:bg-subtle transition-colors shrink-0"
         >
           <X className="w-4 h-4" aria-hidden="true" />
         </button>

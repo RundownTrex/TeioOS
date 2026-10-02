@@ -236,7 +236,7 @@ export const AnalyticsOverviewPage = () => {
 
       {/* 1. Dashboard Statistics Cards */}
       <div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-navy-primary mb-3">
+        <h3 className="text-xs font-bold font-serif text-text-main mb-3">
           Dashboard Overview Statistics
         </h3>
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 print-no-break">
@@ -275,7 +275,7 @@ export const AnalyticsOverviewPage = () => {
 
       {/* 2. Analytics Performance Summary Cards */}
       <div className="mt-6">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-navy-primary mb-3">
+        <h3 className="text-xs font-bold font-serif text-text-main mb-3">
           Performance Analytics
         </h3>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 print-no-break">

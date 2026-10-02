@@ -8,12 +8,12 @@ export const Badge = ({
   ...props
 }) => {
   const variants = {
-    success: 'bg-status-answered-bg text-status-answered border-status-answered',
-    warning: 'bg-status-unanswered-bg text-status-unanswered border-status-unanswered',
-    purple:  'bg-status-review-bg text-status-review border-status-review',
-    info:    'bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700',
-    neutral: 'bg-subtle text-text-main border-border-main',
-    danger:  'bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700',
+    success: 'bg-status-success-bg text-status-success border-status-success-border',
+    warning: 'bg-status-warning-bg text-status-warning border-status-warning-border',
+    purple:  'bg-status-review-bg text-status-review border-status-review-border',
+    info:    'bg-status-info-bg text-status-info border-status-info-border',
+    neutral: 'bg-status-neutral-bg text-status-neutral border-status-neutral-border',
+    danger:  'bg-status-danger-bg text-status-danger border-status-danger-border',
   };
 
   const sizes = {
@@ -23,7 +23,7 @@ export const Badge = ({
 
   return (
     <span
-      className={`inline-flex items-center justify-center border rounded-full font-bold uppercase tracking-wider select-none leading-none ${
+      className={`inline-flex items-center justify-center border rounded font-medium select-none leading-none ${
         variants[variant] || variants.neutral
       } ${sizes[size] || sizes.md} ${className}`}
       {...props}

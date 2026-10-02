@@ -352,7 +352,7 @@ export const DashboardPage = () => {
                       {item.studentName}
                     </span>
                     <span className="text-xs text-text-muted">
-                      {item.rollNumber} · {item.subjectName}
+                      {item.rollNumber ? `${item.rollNumber}, ` : ''}{item.subjectName}
                     </span>
                   </div>
                   <div className="flex flex-col items-end shrink-0">
@@ -371,7 +371,7 @@ export const DashboardPage = () => {
 
         <Card>
           <CardHeader>
-            <h2 className="text-base font-semibold">Recent Activity</h2>
+            <h2 className="text-base font-bold font-serif text-text-main">Recent Activity</h2>
           </CardHeader>
 
           {statsQuery.isError ? (
@@ -399,7 +399,7 @@ export const DashboardPage = () => {
                       className={`flex items-center gap-3 px-5 py-3 hover:bg-subtle ${LINK_FOCUS}`}
                     >
                       <span
-                        className="w-8 h-8 rounded-lg bg-subtle flex items-center justify-center shrink-0"
+                        className="w-8 h-8 rounded bg-subtle flex items-center justify-center shrink-0"
                         aria-hidden="true"
                       >
                         <FileCheck2 className="w-4 h-4 text-text-muted" />
@@ -409,7 +409,7 @@ export const DashboardPage = () => {
                           {student?.name || 'Unknown student'}
                         </span>
                         <span className="text-xs text-text-muted">
-                          {student?.roll_number || ''} · Result published
+                          {student?.roll_number ? `${student.roll_number}, result published` : 'Result published'}
                         </span>
                       </span>
                       <span className="flex flex-col items-end shrink-0">
@@ -431,7 +431,7 @@ export const DashboardPage = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <h2 className="text-base font-semibold">Recently Created Exams</h2>
+              <h2 className="text-base font-bold font-serif text-text-main">Recently Created Exams</h2>
               <Link
                 to={PATHS.EXAMS}
                 className={`text-sm font-medium text-navy-primary hover:text-navy-hover ${LINK_FOCUS}`}
@@ -464,7 +464,7 @@ export const DashboardPage = () => {
                       {exam.title || subjectNames.get(exam.subject_id)?.name || 'Exam'}
                     </span>
                     <span className="text-xs text-text-muted tabular-nums">
-                      {formatNumber(exam.total_marks)} marks · {exam.duration_minutes} min
+                      {formatNumber(exam.total_marks)} marks, {exam.duration_minutes} min
                     </span>
                   </div>
                   <span className="text-xs text-text-muted shrink-0">

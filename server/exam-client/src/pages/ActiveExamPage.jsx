@@ -276,7 +276,7 @@ export const ActiveExamPage = () => {
     const isMcq = currentQuestion?.type === 'MCQ' || currentQuestion?.type === 'OBJECTIVE' || currentQuestion?.type === 'SINGLE_SELECT';
     const qTypeText = isMcq ? 'Multiple choice question.' : 'Descriptive essay question.';
 
-    const marksVal = Number(currentQuestion?.marks) || 1;
+    const marksVal = Number.isFinite(Number(currentQuestion?.marks)) ? Number(currentQuestion.marks) : 1;
     const marksText = `${marksVal} ${marksVal === 1 ? 'mark' : 'marks'}.`;
 
     const negVal = Number(currentQuestion?.negativeMarks) || 0;
@@ -580,7 +580,7 @@ export const ActiveExamPage = () => {
     if (!currentQuestion) return;
     const isMcq = currentQuestion?.type === 'MCQ' || currentQuestion?.type === 'OBJECTIVE' || currentQuestion?.type === 'SINGLE_SELECT';
     const qType = isMcq ? 'Multiple choice question.' : 'Descriptive essay question.';
-    const marksVal = Number(currentQuestion?.marks) || 1;
+    const marksVal = Number.isFinite(Number(currentQuestion?.marks)) ? Number(currentQuestion.marks) : 1;
     const marksText = `${marksVal} ${marksVal === 1 ? 'mark' : 'marks'}.`;
     const negVal = Number(currentQuestion?.negativeMarks) || 0;
     const negText = negVal > 0 ? `Negative marks: ${negVal} ${negVal === 1 ? 'mark' : 'marks'}.` : 'No negative marks.';

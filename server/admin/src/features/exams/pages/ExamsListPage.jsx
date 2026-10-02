@@ -126,7 +126,7 @@ export const ExamsListPage = () => {
           <div>
             <p className="text-sm font-medium text-text-main">{displayTitle(row, subjectName)}</p>
             <p className="text-xs text-text-muted">
-              {subjectName || 'Subject'} · Created {formatDateTime(row.created_at)}
+              {subjectName || 'Subject'}, created {formatDateTime(row.created_at)}
             </p>
           </div>
         );

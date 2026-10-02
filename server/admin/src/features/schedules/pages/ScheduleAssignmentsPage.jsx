@@ -492,7 +492,7 @@ export const ScheduleAssignmentsPage = () => {
             onChange={(e) => setSelectedStudentId(e.target.value)}
             options={(allStudentsQuery.data?.items ?? []).map((s) => ({
               value: s.id,
-              label: `${s.roll_number} — ${s.name} (${classMap.get(s.class_id)?.name ?? 'Class N/A'})`,
+              label: `${s.roll_number} (${s.name}, ${classMap.get(s.class_id)?.name ?? 'Class N/A'})`,
             }))}
             placeholder="Select a student…"
             isRequired

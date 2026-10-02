@@ -12,7 +12,7 @@ import { useExamInstructions } from '../features/exams/hooks/useExamInstructions
 import { useExam } from '../hooks/useExam';
 import { useAuth } from '../hooks/useAuth';
 import { examsApi } from '../features/exams/api/examsApi';
-import { ShieldCheck, Info, ArrowRight, ArrowLeft, Clock, Lock, CheckCircle2, FileText } from 'lucide-react';
+import { ShieldCheck, Info, ArrowLeft, Clock, Lock, CheckCircle2, FileText } from 'lucide-react';
 import { formatDateTime } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
@@ -289,18 +289,18 @@ export const InstructionsPage = () => {
   return (
     <ExamLayout paperTitle={data.subjectCode || 'EXAM'} sectionTitle="Instructions & Rules">
       <div className="max-w-[800px] mx-auto space-y-6 select-none my-2">
-        <Card className="border-border-main bg-surface shadow-sm">
+        <Card className="border-border-main bg-surface">
           {/* Paper Metadata Banner */}
           <CardHeader className="bg-subtle/40 border-b border-border-main pb-4">
             {(data.subjectCode || data.departmentName) && (
-              <span className="text-xs font-mono font-bold text-navy-primary uppercase tracking-wider">
-                {data.subjectCode}{data.subjectCode && data.departmentName ? ' • ' : ''}{data.departmentName}
+              <span className="text-xs font-mono font-bold text-navy-primary">
+                {data.subjectCode}{data.subjectCode && data.departmentName ? ', ' : ''}{data.departmentName}
               </span>
             )}
             <h2
               ref={pageHeadingRef}
               tabIndex={-1}
-              className="text-2xl font-extrabold text-text-main leading-snug mt-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+              className="text-2xl font-bold font-serif text-text-main leading-snug mt-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
             >
               {data.subjectName}
             </h2>
@@ -314,16 +314,16 @@ export const InstructionsPage = () => {
           <CardBody className="space-y-6 p-6">
             {/* Start Time Unlock Notice Banner */}
             {isUpcoming ? (
-              <div className="flex items-start gap-3 p-3.5 bg-amber-50 border border-amber-300 text-amber-900 text-xs rounded-lg font-medium">
-                <Clock className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" aria-hidden="true" />
+              <div className="flex items-start gap-3 p-3.5 bg-status-warning-bg border border-status-warning-border text-status-warning text-xs rounded font-medium">
+                <Clock className="w-4 h-4 shrink-0 text-status-warning mt-0.5" aria-hidden="true" />
                 <div>
                   <strong>Kiosk Examination Schedule Lock:</strong> Paper scheduled to start at{' '}
                   <span className="font-bold">{formatDateTime(data.startTime)}</span>. The "Begin Examination" CTA button will automatically unlock in real-time when the schedule window opens.
                 </div>
               </div>
             ) : (
-              <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-300 text-green-900 text-xs rounded-lg font-medium">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-green-600 mt-0.5" aria-hidden="true" />
+              <div className="flex items-start gap-3 p-3 bg-status-success-bg border border-status-success-border text-status-success text-xs rounded font-medium">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-status-success mt-0.5" aria-hidden="true" />
                 <div>
                   <strong>Examination Window Active:</strong> You may check the agreement box and click "Begin Examination" to unlock your paper.
                 </div>
@@ -338,10 +338,10 @@ export const InstructionsPage = () => {
 
             {/* Custom Exam Instructions (If set on Exam by Admin/Teacher) */}
             {data.customInstructions && (
-              <section aria-labelledby="custom-instructions-heading" className="space-y-3 p-4 bg-subtle/70 rounded-lg border border-border-main">
-                <h3 id="custom-instructions-heading" className="text-sm font-bold text-text-main uppercase tracking-wider flex items-center gap-2">
+              <section aria-labelledby="custom-instructions-heading" className="space-y-3 p-4 bg-subtle/70 rounded border border-border-main">
+                <h3 id="custom-instructions-heading" className="text-sm font-bold font-serif text-text-main flex items-center gap-2">
                   <FileText className="w-4 h-4 text-navy-primary" aria-hidden="true" />
-                  SPECIFIC EXAMINATION INSTRUCTIONS:
+                  Specific Examination Instructions:
                 </h3>
                 <div className="text-xs text-text-main leading-relaxed whitespace-pre-line font-medium">
                   {data.customInstructions}
@@ -351,9 +351,9 @@ export const InstructionsPage = () => {
 
             {/* Candidate Conduct & Rules */}
             <section aria-labelledby="conduct-rules-heading" className="space-y-3">
-              <h3 id="conduct-rules-heading" className="text-sm font-bold text-text-main uppercase tracking-wider flex items-center gap-2">
+              <h3 id="conduct-rules-heading" className="text-sm font-bold font-serif text-text-main flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-navy-primary" aria-hidden="true" />
-                CANDIDATE CONDUCT & EXAMINATION RULES:
+                Candidate Conduct & Examination Rules:
               </h3>
               <ol className="list-decimal pl-5 space-y-2.5 text-xs text-text-main leading-relaxed font-normal">
                 {STANDARD_CONDUCT_RULES.map((rule, idx) => (
@@ -366,9 +366,9 @@ export const InstructionsPage = () => {
 
             {/* Technical & Accessibility Notice */}
             <section aria-labelledby="technical-notice-heading" className="space-y-3 pt-4 border-t border-border-main">
-              <h3 id="technical-notice-heading" className="text-sm font-bold text-text-main uppercase tracking-wider flex items-center gap-2">
+              <h3 id="technical-notice-heading" className="text-sm font-bold font-serif text-text-main flex items-center gap-2">
                 <Info className="w-4 h-4 text-navy-primary" aria-hidden="true" />
-                TECHNICAL & ACCESSIBILITY NOTICE:
+                Technical & Accessibility Notice:
               </h3>
               <ul className="list-disc pl-5 space-y-1.5 text-xs text-text-muted leading-relaxed">
                 {TECHNICAL_ACCESSIBILITY_NOTICES.map((notice, idx) => (
@@ -380,7 +380,7 @@ export const InstructionsPage = () => {
             </section>
 
             {/* Mandatory Agreement Checkbox */}
-            <div className="p-4 bg-subtle rounded-lg border border-border-main">
+            <div className="p-4 bg-subtle rounded border border-border-main">
               <Checkbox
                 id="agree-rules-checkbox"
                 checked={hasAgreed}
@@ -401,7 +401,7 @@ export const InstructionsPage = () => {
                 isDisabled={!hasAgreed || isUpcoming || isStarting}
                 isLoading={isStarting}
                 onClick={handleBeginExam}
-                rightIcon={isUpcoming ? <Lock className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                rightIcon={isUpcoming ? <Lock className="w-4 h-4" /> : undefined}
                 ariaLabel="Begin Examination Session"
               >
                 {isUpcoming

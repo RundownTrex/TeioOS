@@ -48,6 +48,7 @@
   --color-status-unanswered-bg: #F8F3EA;
   --color-status-review:        #3D5A5B;
   --color-status-review-bg:     #EDF3F3;
+  --color-status-review-border: #AFC6C7;
   --color-status-unvisited:     #565B54;
   --color-status-unvisited-bg:  #F2F3EE;
 
@@ -169,6 +170,13 @@
   --dim-sidebar-width:   280px; /* Aligned with system default; question palette uses rem-based scaling in ExamLayout */
   --dim-header-height:   60px;
   --dim-footer-height:   40px;
+  --dim-table-header:    44px;
+  --dim-table-row:       48px;
+  --dim-toolbar:         56px;
+  --dim-pagination:      48px;
+  --dim-dialog-sm:       400px;
+  --dim-dialog-md:       520px;
+  --dim-dialog-lg:       640px;
 
   /* --------------------------------------------------------------------------
      8. Z-Index Scale Tokens
@@ -177,6 +185,7 @@
   --z-sticky:    10;
   --z-header:    20;
   --z-sidebar:   30;
+  --z-dropdown:  35;
   --z-backdrop:  40;
   --z-modal:     50;
   --z-skip-link: 60;
@@ -247,6 +256,7 @@ html[data-theme="high-contrast"] {
   --color-status-unanswered-bg: #331F00;
   --color-status-review:        #FF00FF;
   --color-status-review-bg:     #330033;
+  --color-status-review-border: #FF00FF;
   --color-status-unvisited:     #FFFFFF;
   --color-status-unvisited-bg:  #121212;
 
@@ -315,6 +325,7 @@ html[data-theme="dark"] {
   --color-status-unanswered-bg: #33200A;
   --color-status-review:        #5A7E80;
   --color-status-review-bg:     #152728;
+  --color-status-review-border: #254648;
   --color-status-unvisited:     #A6A69C;
   --color-status-unvisited-bg:  #1F2225;
 

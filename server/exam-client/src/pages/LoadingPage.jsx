@@ -7,7 +7,7 @@ import { ExamLayout } from '../layouts/ExamLayout';
  */
 export const LoadingPage = () => {
   return (
-    <ExamLayout paperTitle="TEIOOS EXAM" sectionTitle="LOADING QUESTION DATA...">
+    <ExamLayout paperTitle="TeioOS Examination" sectionTitle="Loading Question Data...">
       <div className="max-w-reading mx-auto space-y-6 select-none my-4">
         {/* Header Skeleton */}
         <div className="space-y-2">
@@ -16,14 +16,14 @@ export const LoadingPage = () => {
         </div>
 
         {/* Stem Skeleton */}
-        <Skeleton variant="rectangular" height={140} className="rounded-xl" />
+        <Skeleton variant="rectangular" height={140} className="rounded" />
 
         {/* Options Skeleton */}
         <div className="space-y-3 pt-2">
-          <Skeleton variant="rectangular" height={52} className="rounded-xl" />
-          <Skeleton variant="rectangular" height={52} className="rounded-xl" />
-          <Skeleton variant="rectangular" height={52} className="rounded-xl" />
-          <Skeleton variant="rectangular" height={52} className="rounded-xl" />
+          <Skeleton variant="rectangular" height={52} className="rounded" />
+          <Skeleton variant="rectangular" height={52} className="rounded" />
+          <Skeleton variant="rectangular" height={52} className="rounded" />
+          <Skeleton variant="rectangular" height={52} className="rounded" />
         </div>
       </div>
     </ExamLayout>

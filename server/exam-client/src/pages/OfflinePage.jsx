@@ -40,22 +40,26 @@ export const OfflinePage = () => {
     speakText('Retrying server connection...', 'Retry');
     setTimeout(() => {
       setIsRetrying(false);
-      navigate(-1); // Return to previous active exam page
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate('/dashboard');
+      }
     }, 600);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-canvas text-text-main p-4 select-none">
-      <Card className="max-w-[520px] w-full border-amber-300 bg-surface shadow-md">
-        <CardHeader className="text-center py-6 bg-amber-50 border-b border-amber-200">
-          <div className="inline-flex p-3 bg-amber-100 text-amber-600 rounded-2xl shadow-xs mb-2">
+      <Card className="max-w-[520px] w-full border-status-warning-border bg-surface">
+        <CardHeader className="text-center py-6 bg-status-warning-bg border-b border-status-warning-border">
+          <div className="inline-flex p-3 bg-surface text-status-warning rounded border border-status-warning-border mb-2">
             <WifiOff className="w-8 h-8" aria-hidden="true" />
           </div>
-          <h1 className="text-lg font-extrabold text-amber-950 tracking-tight uppercase">
-            SERVER DISCONNECTED
+          <h1 className="text-lg font-bold font-serif text-text-main">
+            Server Disconnected
           </h1>
-          <span className="text-xs font-mono font-semibold text-amber-700 mt-1 block">
-            [!] WORKING IN LOCAL CACHE MODE │ RETRYING IN {String(retrySeconds).padStart(2, '0')}s
+          <span className="text-xs font-mono font-medium text-status-warning mt-1 block">
+            Working in local cache mode. Retrying in {String(retrySeconds).padStart(2, '0')}s
           </span>
         </CardHeader>
 
@@ -66,11 +70,11 @@ export const OfflinePage = () => {
               <span>All responses are saved locally on terminal storage.</span>
             </li>
             <li className="flex items-start gap-2.5">
-              <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <Clock className="w-4 h-4 text-status-warning shrink-0 mt-0.5" aria-hidden="true" />
               <span>Exam countdown timer continues to run accurately.</span>
             </li>
             <li className="flex items-start gap-2.5">
-              <CheckCircle className="w-4 h-4 text-green-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <CheckCircle className="w-4 h-4 text-status-success shrink-0 mt-0.5" aria-hidden="true" />
               <span>You may continue answering questions without interruption.</span>
             </li>
           </ul>

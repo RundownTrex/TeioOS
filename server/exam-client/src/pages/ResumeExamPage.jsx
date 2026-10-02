@@ -194,17 +194,17 @@ export const ResumeExamPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-canvas text-text-main p-4 select-none">
-      <Card className="max-w-[540px] w-full border-border-main bg-surface shadow-md">
+      <Card className="max-w-[540px] w-full border-border-main bg-surface">
         <CardHeader className="text-center py-6 bg-subtle/50 border-b border-border-main">
-          <div className="inline-flex p-3 bg-navy-primary text-text-inverse rounded-2xl shadow-xs mb-3">
+          <div className="inline-flex p-3 bg-navy-primary text-text-inverse rounded mb-3">
             <RotateCcw className="w-7 h-7" aria-hidden="true" />
           </div>
           <h1
             ref={pageHeadingRef}
             tabIndex={-1}
-            className="text-lg font-extrabold text-text-main tracking-tight uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+            className="text-lg font-bold font-serif text-text-main focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
           >
-            RESUME EXAMINATION SESSION
+            Resume Examination Session
           </h1>
           <p className="text-xs text-text-muted mt-1 font-medium">
             An active paper session was detected for {studentName} ({rollNumber}).
@@ -214,8 +214,8 @@ export const ResumeExamPage = () => {
         <CardBody className="p-6 space-y-5">
           {/* Paused Session Notice */}
           {isPaused && (
-            <div role="status" aria-live="polite" className="flex items-start gap-3 p-3.5 bg-amber-50 border border-amber-300 text-amber-900 text-xs rounded-lg font-medium">
-              <PauseCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" aria-hidden="true" />
+            <div role="status" aria-live="polite" className="flex items-start gap-3 p-3.5 bg-status-warning-bg border border-status-warning-border text-status-warning text-xs rounded font-medium">
+              <PauseCircle className="w-4 h-4 shrink-0 text-status-warning mt-0.5" aria-hidden="true" />
               <div>
                 <strong>Examination timer paused:</strong> Your exam timer was frozen when you left the
                 screen. Time was not counted while you were away, and the countdown will continue from
@@ -225,7 +225,7 @@ export const ResumeExamPage = () => {
           )}
 
           {/* Session Details List */}
-          <div className="p-4 border border-border-main bg-subtle/40 rounded-lg space-y-3 text-xs font-mono">
+          <div className="p-4 border border-border-main bg-subtle/40 rounded space-y-3 text-xs font-mono">
             <div className="flex justify-between items-center">
               <span className="text-text-muted font-semibold flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-navy-primary" aria-hidden="true" />
@@ -235,10 +235,10 @@ export const ResumeExamPage = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-text-muted font-semibold flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-green-600" aria-hidden="true" />
+                <ShieldCheck className="w-3.5 h-3.5 text-status-success" aria-hidden="true" />
                 Restored Draft Responses:
               </span>
-              <span className="font-bold text-green-700">{savedCount} Questions Cached</span>
+              <span className="font-bold text-status-success">{savedCount} Questions Cached</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-text-muted font-semibold flex items-center gap-1.5">
@@ -249,10 +249,10 @@ export const ResumeExamPage = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-text-muted font-semibold flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
+                <Clock className="w-3.5 h-3.5 text-status-warning" aria-hidden="true" />
                 {isPaused ? 'Remaining Time (Frozen):' : 'Server Remaining Time:'}
               </span>
-              <span className="font-bold text-amber-700">{formatDuration(secondsRemaining)}</span>
+              <span className="font-bold text-status-warning">{formatDuration(secondsRemaining)}</span>
             </div>
           </div>
 
@@ -273,7 +273,7 @@ export const ResumeExamPage = () => {
             onClick={handleResume}
             ariaLabel="Resume Examination Workbench"
           >
-            RESUME EXAMINATION WORKBENCH (Enter)
+            Resume Examination Workbench (Enter)
           </Button>
         </CardBody>
       </Card>

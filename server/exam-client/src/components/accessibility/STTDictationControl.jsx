@@ -48,9 +48,9 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
         <Alert
           variant="error"
           title="Speech Recognition Alert"
-          message={error}
-          icon={<AlertCircle className="w-4 h-4 text-red-700 shrink-0" />}
-        />
+        >
+          {error}
+        </Alert>
       )}
 
       {/* Browser Support Warning */}
@@ -58,12 +58,13 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
         <Alert
           variant="warning"
           title="Speech Recognition Unsupported"
-          message="Your current browser does not support Web Speech or Audio Media Devices."
-        />
+        >
+          Your current browser does not support Web Speech or Audio Media Devices.
+        </Alert>
       )}
 
       {isSupported && (
-        <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-subtle/60 border border-border-main rounded-lg text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-subtle/60 border border-border-main rounded text-xs">
           {/* Left Action Buttons */}
           <div className="flex items-center gap-2">
             <Button
@@ -120,10 +121,10 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
             {/* Real-time Mic Level Indicator for Audio Dictation Mode */}
             {isListening && dictationMode === 'audio_recorder' && (
               <div className="hidden sm:flex items-center gap-1 text-[11px] font-mono text-text-muted" title="Microphone Input Volume Level">
-                <Radio className="w-3 h-3 text-red-600 animate-pulse" aria-hidden="true" />
+                <Radio className="w-3 h-3 text-status-danger animate-pulse" aria-hidden="true" />
                 <div className="w-12 h-2 bg-surface rounded-full overflow-hidden border border-border-main">
                   <div
-                    className="h-full bg-red-600 transition-all duration-75"
+                    className="h-full bg-status-danger transition-all duration-75"
                     style={{ width: `${Math.max(audioLevel, 5)}%` }}
                   />
                 </div>
@@ -135,28 +136,28 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
               aria-atomic="true"
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[11px] font-bold ${
                 isListening
-                  ? 'bg-red-100 text-red-800 border border-red-300 animate-pulse'
+                  ? 'bg-status-danger-bg text-status-danger border border-status-danger-border animate-pulse'
                   : isPaused
-                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                  ? 'bg-status-warning-bg text-status-warning border border-status-warning-border'
                   : 'bg-surface text-text-muted border border-border-main'
               }`}
             >
               <span
                 className={`w-2 h-2 rounded-full ${
-                  isListening ? 'bg-red-600' : isPaused ? 'bg-amber-600' : 'bg-text-muted'
+                  isListening ? 'bg-status-danger' : isPaused ? 'bg-status-warning' : 'bg-text-muted'
                 }`}
                 aria-hidden="true"
               />
               <span>
                 {isTranscribing
-                  ? 'PROCESSING AUDIO'
+                  ? 'Processing Audio'
                   : isListening
                   ? dictationMode === 'audio_recorder'
-                    ? 'MIC RECORDING (FIREFOX)'
-                    : 'LISTENING (MIC ON)'
+                    ? 'Mic Recording (Firefox)'
+                    : 'Listening (Mic On)'
                   : isPaused
-                  ? 'DICTATION PAUSED'
-                  : 'DICTATION OFF'}
+                  ? 'Dictation Paused'
+                  : 'Dictation Off'}
               </span>
             </span>
           </div>
@@ -172,10 +173,10 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
 
       {/* Live Interim Transcript Preview Banner */}
       {interimTranscript && (
-        <div className="p-2.5 bg-navy-primary/5 border border-navy-primary/30 rounded-lg text-xs flex items-start gap-2 animate-fadeIn">
+        <div className="p-2.5 bg-navy-primary/5 border border-navy-primary/30 rounded text-xs flex items-start gap-2 animate-fade-in">
           <CornerDownLeft className="w-3.5 h-3.5 text-navy-primary shrink-0 mt-0.5" aria-hidden="true" />
           <div className="flex-1">
-            <span className="font-bold text-navy-primary block text-[10px] uppercase tracking-wider mb-0.5">
+            <span className="font-bold text-navy-primary block text-[10px] mb-0.5">
               Live Speech Dictation Preview:
             </span>
             <span className="font-mono text-text-main italic">{interimTranscript}...</span>

@@ -205,9 +205,9 @@ export const ScheduleFormPage = () => {
 
             {/* Selected Exam Information & Candidate Duration Card */}
             {selectedExam && (
-              <div className="p-4 rounded-lg bg-subtle border border-border-main space-y-3">
+              <div className="p-4 rounded bg-subtle border border-border-main space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-navy-primary">
+                  <span className="text-xs font-bold font-serif text-text-main">
                     Examination Profile
                   </span>
                   <Badge variant="purple">Candidate Duration: {selectedExam.duration_minutes} mins</Badge>

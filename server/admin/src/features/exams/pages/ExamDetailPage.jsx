@@ -405,8 +405,8 @@ export const ExamDetailPage = () => {
         title={examTitle}
         description={
           subjectName
-            ? `${subjectName} · ${formatNumber(exam.duration_minutes)} minutes · ${formatNumber(exam.total_marks)} total marks`
-            : `${formatNumber(exam.duration_minutes)} minutes · ${formatNumber(exam.total_marks)} total marks`
+            ? `${subjectName}, ${formatNumber(exam.duration_minutes)} minutes, ${formatNumber(exam.total_marks)} total marks`
+            : `${formatNumber(exam.duration_minutes)} minutes, ${formatNumber(exam.total_marks)} total marks`
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -467,7 +467,7 @@ export const ExamDetailPage = () => {
                 {formatMarks(allocated)} of {formatNumber(exam.total_marks)} marks allocated
               </p>
               <p className="mt-1 text-xs text-text-muted" aria-live="polite">
-                {mcqCount} MCQ · {descriptiveCount} descriptive ·{' '}
+                {mcqCount} MCQ, {descriptiveCount} descriptive,{' '}
                 {formatNumber(exam.question_count ?? items.length)} questions total
               </p>
             </div>

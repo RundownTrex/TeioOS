@@ -32,11 +32,11 @@ export const Input = ({
       {label && (
         <label
           htmlFor={inputId}
-          className="text-xs font-bold text-text-main uppercase tracking-wider flex items-center justify-between"
+          className="text-xs font-medium text-text-muted flex items-center justify-between"
         >
           <span>
             {label}
-            {isRequired && <span className="text-red-600 ml-1" aria-hidden="true">*</span>}
+            {isRequired && <span className="text-status-danger ml-1" aria-hidden="true">*</span>}
           </span>
         </label>
       )}

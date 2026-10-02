@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ClipboardCheck, ArrowRight, Search, CheckCircle2, Clock } from 'lucide-react';
+import { ClipboardCheck, Search, CheckCircle2, Clock } from 'lucide-react';
 
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Card, CardHeader, CardBody } from '../../../components/ui/Card';
@@ -74,7 +74,7 @@ export const EvaluationListPage = () => {
       header: 'Pending Answers',
       align: 'center',
       render: (row) => (
-        <Badge variant="amber">
+        <Badge variant="warning">
           {row.pendingAnswers} {row.pendingAnswers === 1 ? 'answer' : 'answers'} to evaluate
         </Badge>
       ),
@@ -97,7 +97,6 @@ export const EvaluationListPage = () => {
           onClick={() => navigate(PATHS.evaluationWorkbench(row.id))}
         >
           Evaluate
-          <ArrowRight className="w-3.5 h-3.5 ml-1" aria-hidden="true" />
         </Button>
       ),
     },

@@ -54,7 +54,7 @@ export const UserMenu = ({ className = '' }) => {
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label={`User menu for ${user.name}`}
-        className="inline-flex items-center gap-2 p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary"
+        className="inline-flex items-center gap-2 p-1.5 rounded text-text-muted hover:text-text-main hover:bg-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary"
       >
         <div className="w-8 h-8 rounded-full bg-navy-tint text-navy-primary font-bold flex items-center justify-center text-xs shrink-0 border border-navy-primary/20">
           {user.name ? user.name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
@@ -69,7 +69,7 @@ export const UserMenu = ({ className = '' }) => {
       {isOpen && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-64 py-2 bg-surface border border-border-main rounded-xl shadow-lg z-dropdown animate-fadeIn"
+          className="absolute right-0 mt-2 w-64 py-2 bg-surface border border-border-main rounded shadow-lg z-dropdown animate-fade-in"
         >
           {/* User Details Header */}
           <div className="px-4 py-2.5 border-b border-border-main flex items-center gap-3">

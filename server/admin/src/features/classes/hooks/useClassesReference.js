@@ -40,6 +40,6 @@ export const buildClassOptions = (data, departmentNameMap) =>
       const departmentName = departmentNameMap?.get(item.department_id);
       return {
         value: item.id,
-        label: departmentName ? `${item.name} · ${departmentName}` : item.name,
+        label: departmentName ? `${item.name} (${departmentName})` : item.name,
       };
     });

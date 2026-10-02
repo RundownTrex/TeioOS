@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from uuid import UUID
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.result import Result, EvaluationStatus
 from app.repositories.result_repository import ResultRepository
@@ -82,17 +83,25 @@ class ResultService:
             raise BusinessRuleException("Cannot publish result: descriptive answers are still pending evaluation")
 
         result.published_at = datetime.now(timezone.utc)
-        self.result_repo.update(result)
-        self.result_repo.session.commit()
-        self.result_repo.session.refresh(result)
-        return result
+        try:
+            self.result_repo.update(result)
+            self.result_repo.session.commit()
+            self.result_repo.session.refresh(result)
+            return result
+        except SQLAlchemyError:
+            self.result_repo.session.rollback()
+            raise
 
     def delete_result(self, result_id: UUID) -> None:
         """
         Delete a result by ID.
         """
         result = self.get_result(result_id)
-        self.result_repo.delete(result)
-        self.result_repo.session.commit()
+        try:
+            self.result_repo.delete(result)
+            self.result_repo.session.commit()
+        except SQLAlchemyError:
+            self.result_repo.session.rollback()
+            raise
 
 

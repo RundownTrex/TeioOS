@@ -168,7 +168,7 @@ export const AccessibilityModal = () => {
     <Modal
       isOpen={isModalOpen}
       onClose={closeModal}
-      title="ACCESSIBILITY PREFERENCES"
+      title="Accessibility Preferences"
       footer={footerActions}
       size="lg"
     >
@@ -184,7 +184,7 @@ export const AccessibilityModal = () => {
         {/* ── TAB 1: PRESET PROFILES ── */}
         <TabPanel value="profiles" className="space-y-4">
           <div>
-            <h3 className="text-sm font-bold text-navy-primary uppercase tracking-wide mb-1">
+            <h3 className="text-sm font-bold font-serif text-text-main mb-1">
               One-Click Accessibility Profiles
             </h3>
             <p className="text-xs text-text-muted mb-3">
@@ -199,7 +199,7 @@ export const AccessibilityModal = () => {
             onChange={(val) => applyProfile(val)}
           />
 
-          <div className="p-3.5 bg-subtle/50 border border-border-main rounded-lg flex items-start gap-2.5 text-xs text-text-main">
+          <div className="p-3.5 bg-subtle/50 border border-border-main rounded flex items-start gap-2.5 text-xs text-text-main">
             <ShieldCheck className="w-4 h-4 text-navy-primary shrink-0 mt-0.5" aria-hidden="true" />
             <p>
               Applying a profile instantly updates all contrast, typography, and speech engine settings across the examination client without reloading the page.
@@ -211,7 +211,7 @@ export const AccessibilityModal = () => {
         <TabPanel value="display" className="space-y-5 max-h-[60vh] overflow-y-auto pr-1">
           {/* Theme selection */}
           <section aria-labelledby="theme-heading" className="space-y-3">
-            <div className="flex items-center gap-2 text-navy-primary font-bold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-text-main font-semibold text-xs">
               <Sun className="w-4 h-4" aria-hidden="true" />
               <h3 id="theme-heading">Color Contrast Theme</h3>
             </div>
@@ -227,7 +227,7 @@ export const AccessibilityModal = () => {
 
           {/* Font Scaling */}
           <section aria-labelledby="font-scale-heading" className="space-y-3">
-            <div className="flex items-center gap-2 text-navy-primary font-bold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-text-main font-semibold text-xs">
               <Eye className="w-4 h-4" aria-hidden="true" />
               <h3 id="font-scale-heading">Font Size Scaling</h3>
             </div>
@@ -243,14 +243,14 @@ export const AccessibilityModal = () => {
 
           {/* Spacing & Legibility */}
           <section aria-labelledby="spacing-heading" className="space-y-3">
-            <div className="flex items-center gap-2 text-navy-primary font-bold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-text-main font-semibold text-xs">
               <Type className="w-4 h-4" aria-hidden="true" />
-              <h3 id="spacing-heading">Typography Spacing & Dyslexia Support</h3>
+              <h3 id="spacing-heading">Typography Spacing &amp; Dyslexia Support</h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <span className="text-xs font-bold text-text-main uppercase tracking-wider mb-1.5 block">
+                <span className="text-xs font-medium text-text-muted mb-1.5 block">
                   Line Spacing (Vertical):
                 </span>
                 <RadioGroup
@@ -262,7 +262,7 @@ export const AccessibilityModal = () => {
               </div>
 
               <div>
-                <span className="text-xs font-bold text-text-main uppercase tracking-wider mb-1.5 block">
+                <span className="text-xs font-medium text-text-muted mb-1.5 block">
                   Letter Spacing (Tracking):
                 </span>
                 <RadioGroup
@@ -274,7 +274,7 @@ export const AccessibilityModal = () => {
               </div>
             </div>
 
-            <div className="p-3 border border-border-main bg-subtle/40 rounded-lg space-y-2 mt-2">
+            <div className="p-3 border border-border-main bg-subtle/40 rounded space-y-2 mt-2">
               <Switch
                 id="dyslexic-font-switch"
                 label="Dyslexia-Friendly Font (Lexend / High Legibility)"
@@ -294,9 +294,9 @@ export const AccessibilityModal = () => {
         {/* ── TAB 3: SPEECH & AUDIO ── */}
         <TabPanel value="speech" className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
           {/* Audio Navigation Banner */}
-          <div className="p-3.5 bg-surface border border-border-strong rounded-xl space-y-2 shadow-xs">
+          <div className="p-3.5 bg-surface border border-border-main rounded space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-navy-primary uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-text-main flex items-center gap-1.5">
                 <Volume2 className="w-4 h-4" aria-hidden="true" />
                 In-Browser Audio Narrator
               </span>
@@ -314,7 +314,7 @@ export const AccessibilityModal = () => {
 
           {/* In-browser TTS settings */}
           {ttsEnabled && (
-            <div className="p-4 border border-border-main bg-subtle/40 rounded-xl space-y-4">
+            <div className="p-4 border border-border-main bg-subtle/40 rounded space-y-4">
               <div className="space-y-4 text-xs">
                 {/* Voice Selection */}
                 {voices.length > 0 && (
@@ -405,7 +405,7 @@ export const AccessibilityModal = () => {
 
                 {/* Live Controls */}
                 <div className="pt-3 border-t border-border-main space-y-2">
-                  <span className="font-bold text-text-main uppercase tracking-wider block text-[11px]">
+                  <span className="font-medium text-text-muted block text-xs">
                     Live Voice Controls:
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
@@ -469,7 +469,7 @@ export const AccessibilityModal = () => {
         {/* ── TAB 4: SPEECH DICTATION (STT) ── */}
         <TabPanel value="dictation" className="space-y-4">
           <div>
-            <h3 className="text-sm font-bold text-navy-primary uppercase tracking-wide mb-1">
+            <h3 className="text-sm font-bold font-serif text-text-main mb-1">
               Speech-to-Text Voice Dictation
             </h3>
             <p className="text-xs text-text-muted mb-3">
@@ -477,7 +477,7 @@ export const AccessibilityModal = () => {
             </p>
           </div>
 
-          <div className="p-4 border border-border-main bg-subtle/50 rounded-xl space-y-4">
+          <div className="p-4 border border-border-main bg-subtle/50 rounded space-y-4">
             <Switch
               id="stt-enable-switch"
               label="Enable Speech Dictation (Descriptive Questions Only)"

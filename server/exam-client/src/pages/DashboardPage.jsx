@@ -9,7 +9,7 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState } from '../components/ui/ErrorState';
 import { DashboardSection } from '../components/layout/DashboardSection';
-import { ArrowRight, User, Clock, Lock, RotateCcw, RefreshCw } from 'lucide-react';
+import { User, Clock, Lock, RotateCcw, RefreshCw } from 'lucide-react';
 import { formatDateTime } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
@@ -231,7 +231,7 @@ export const DashboardPage = () => {
         {/* SECTION 1: CURRENT / ACTIVE EXAMINATION HERO */}
         <DashboardSection
           id="current-exam"
-          title="CURRENT EXAMINATION"
+          title="Current Examination"
           headingRef={pageHeadingRef}
           action={
             <Button variant="outline" size="sm" onClick={() => refetch()} leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>
@@ -245,20 +245,20 @@ export const DashboardPage = () => {
               const isUpcoming = startTimeMs > now;
               const resumeActive = isInProgress(primaryExam);
               const statusText = resumeActive
-                ? 'IN PROGRESS'
+                ? 'In Progress'
                 : isUpcoming
-                  ? 'SCHEDULED'
-                  : (primaryExam.status || 'READY TO START');
+                  ? 'Scheduled'
+                  : (primaryExam.status || 'Ready to Start');
               const badgeVariant = resumeActive ? 'info' : isUpcoming ? 'info' : 'success';
 
               return (
-                <Card className="border border-border-main bg-surface shadow-sm">
+                <Card className="border border-border-main bg-surface">
                   <CardHeader className="flex flex-wrap items-start justify-between gap-3 bg-subtle/30 pb-3">
                     <div>
-                      <span className="text-xs font-mono font-semibold text-navy-primary uppercase">
-                        {primaryExam.subject_code} • {primaryExam.department_name}
+                      <span className="text-xs font-mono font-semibold text-navy-primary">
+                        {primaryExam.subject_code ? `${primaryExam.subject_code}, ` : ''}{primaryExam.department_name}
                       </span>
-                      <h3 className="text-xl font-bold text-text-main leading-snug">
+                      <h3 className="text-xl font-bold font-serif text-text-main leading-snug">
                         {primaryExam.subject_name}
                       </h3>
                     </div>
@@ -275,15 +275,15 @@ export const DashboardPage = () => {
                     </div>
 
                     {resumeActive && (
-                      <div className="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-300 text-blue-900 text-xs rounded-md">
-                        <Clock className="w-4 h-4 shrink-0 text-navy-primary" aria-hidden="true" />
+                      <div className="flex items-center gap-2 p-2.5 bg-status-info-bg border border-status-info-border text-status-info text-xs rounded">
+                        <Clock className="w-4 h-4 shrink-0 text-status-info" aria-hidden="true" />
                         <span>An active examination session was detected for this paper. Resume to continue without losing any time.</span>
                       </div>
                     )}
 
                     {isUpcoming && (
-                      <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-300 text-amber-900 text-xs rounded-md">
-                        <Clock className="w-4 h-4 shrink-0 text-amber-600" aria-hidden="true" />
+                      <div className="flex items-center gap-2 p-2.5 bg-status-warning-bg border border-status-warning-border text-status-warning text-xs rounded">
+                        <Clock className="w-4 h-4 shrink-0 text-status-warning" aria-hidden="true" />
                         <span>Examination scheduled to start at {formatDateTime(primaryExam.start_time)}. Instructions can be reviewed in advance.</span>
                       </div>
                     )}
@@ -310,7 +310,7 @@ export const DashboardPage = () => {
                           fullWidth={true}
                           autoFocus={true}
                           onClick={() => navigate(`/exam/${primaryExam.schedule_id}/instructions`)}
-                          rightIcon={isUpcoming ? <Lock className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                          rightIcon={isUpcoming ? <Lock className="w-4 h-4" /> : undefined}
                           ariaLabel={`Proceed to Examination Instructions for ${primaryExam.subject_name}`}
                         >
                           {isUpcoming ? 'Read Instructions (Exam Scheduled)' : 'Proceed to Instructions (Enter)'}
@@ -333,18 +333,18 @@ export const DashboardPage = () => {
 
         {/* SECTION 2: UPCOMING EXAMINATIONS GRID (WHEN > 1 PAPER) */}
         {upcomingExams.length > 0 && (
-          <DashboardSection id="upcoming-exams" title="UPCOMING EXAMINATIONS">
+          <DashboardSection id="upcoming-exams" title="Upcoming Examinations">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {upcomingExams.map((exam) => {
                 const startTimeMs = exam.start_time ? new Date(exam.start_time).getTime() : 0;
                 const isUpcoming = startTimeMs > now;
                 return (
-                  <Card key={exam.schedule_id} className="border border-border-main bg-surface shadow-sm">
+                  <Card key={exam.schedule_id} className="border border-border-main bg-surface">
                     <CardHeader className="bg-subtle/30 pb-2">
-                      <span className="text-[11px] font-mono font-semibold text-navy-primary uppercase">
+                      <span className="text-[11px] font-mono font-semibold text-navy-primary">
                         {exam.subject_code}
                       </span>
-                      <h4 className="text-sm font-bold text-text-main leading-tight truncate">
+                      <h4 className="text-sm font-bold font-serif text-text-main leading-tight truncate">
                         {exam.subject_name}
                       </h4>
                     </CardHeader>
@@ -358,7 +358,7 @@ export const DashboardPage = () => {
                         size="sm"
                         fullWidth={true}
                         onClick={() => navigate(`/exam/${exam.schedule_id}/instructions`)}
-                        rightIcon={isUpcoming ? <Lock className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
+                        rightIcon={isUpcoming ? <Lock className="w-3.5 h-3.5" /> : undefined}
                       >
                         {isUpcoming ? 'View Schedule' : 'Start Exam'}
                       </Button>
@@ -374,8 +374,8 @@ export const DashboardPage = () => {
       {/* ── SIDEBAR COLUMN (4 COLS ON DESKTOP) ── */}
       <div className="lg:col-span-5 xl:col-span-4 space-y-6">
         {/* SECTION 3: COMPACT STUDENT PROFILE */}
-        <DashboardSection id="student-profile" title="STUDENT PROFILE">
-          <Card className="border-border-main bg-surface shadow-sm">
+        <DashboardSection id="student-profile" title="Student Profile">
+          <Card className="border-border-main bg-surface">
             <CardBody className="py-3 px-4">
               <div className="text-xs font-medium text-text-main leading-relaxed space-y-1.5">
                 <div className="flex items-center gap-2">
@@ -398,13 +398,13 @@ export const DashboardPage = () => {
         </DashboardSection>
 
         {/* SECTION 4: COMPLETED PAPERS */}
-        <DashboardSection id="completed-exams" title="COMPLETED PAPERS">
+        <DashboardSection id="completed-exams" title="Completed Papers">
           {completedExams.length > 0 ? (
             <Card className="border-border-main bg-surface overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs" aria-labelledby="completed-exams-heading">
                   <caption className="sr-only">Completed examinations history table</caption>
-                  <thead className="bg-subtle text-text-muted font-semibold uppercase tracking-wider border-b border-border-main">
+                  <thead className="bg-subtle text-text-muted font-semibold border-b border-border-main">
                     <tr>
                       <th scope="col" className="px-3 py-2.5">Code</th>
                       <th scope="col" className="px-3 py-2.5">Title</th>

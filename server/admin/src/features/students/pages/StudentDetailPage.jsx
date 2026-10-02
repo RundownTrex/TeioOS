@@ -150,9 +150,9 @@ export const StudentDetailPage = () => {
   const classObj = classNames.get(student.class_id);
   const className = classObj
     ? departmentNames.get(classObj.department_id)
-      ? `${classObj.name} · ${departmentNames.get(classObj.department_id)}`
+      ? `${classObj.name} (${departmentNames.get(classObj.department_id)})`
       : classObj.name
-    : '—';
+    : '-';
   const profileLabel = PROFILE_LABELS[student.accessibility_profile] || student.accessibility_profile;
 
   return (

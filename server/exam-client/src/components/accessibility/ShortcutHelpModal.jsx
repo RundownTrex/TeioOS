@@ -126,15 +126,15 @@ export const ShortcutHelpModal = () => {
     <Modal
       isOpen={isHelpOpen}
       onClose={closeHelp}
-      title="KEYBOARD & AUDIO NAVIGATION GUIDE"
+      title="Keyboard &amp; Audio Navigation Guide"
       footer={footerActions}
       size="lg"
     >
       <div className="space-y-6 select-none max-h-[60vh] overflow-y-auto pr-1">
         {/* Spoken Audio Guide Banner */}
-        <div className="p-3.5 bg-subtle border border-border-strong rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="p-3.5 bg-subtle/50 border border-border-main rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="space-y-0.5">
-            <span className="text-xs font-bold text-navy-primary uppercase tracking-wider flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-text-main flex items-center gap-1.5">
               <Volume2 className="w-4 h-4" aria-hidden="true" />
               Auditory Quick Reference
             </span>
@@ -162,7 +162,7 @@ export const ShortcutHelpModal = () => {
             <section key={catName} aria-labelledby={`cat-${catName.replace(/\s+/g, '-').toLowerCase()}`}>
               <h3
                 id={`cat-${catName.replace(/\s+/g, '-').toLowerCase()}`}
-                className="text-xs font-bold text-navy-primary uppercase tracking-wider mb-2.5 pb-1 border-b border-border-main flex items-center gap-2"
+                className="text-xs font-bold font-serif text-text-main mb-2.5 pb-1 border-b border-border-main flex items-center gap-2"
               >
                 <Command className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{catName}</span>
@@ -172,10 +172,10 @@ export const ShortcutHelpModal = () => {
                 {list.map((item) => (
                   <div
                     key={item.actionName}
-                    className="flex items-center justify-between p-2.5 bg-subtle/50 border border-border-main rounded-lg"
+                    className="flex items-center justify-between p-2.5 bg-subtle/50 border border-border-main rounded"
                   >
                     <span className="font-medium text-text-main">{item.label}</span>
-                    <kbd className="px-2 py-1 font-mono text-[11px] font-bold bg-surface text-navy-primary border border-border-strong rounded shadow-xs">
+                    <kbd className="px-2 py-1 font-mono text-[11px] font-bold bg-surface text-navy-primary border border-border-strong rounded">
                       {formatCombo(item)}
                     </kbd>
                   </div>

@@ -249,7 +249,7 @@ export const QuestionFormPage = () => {
 
       <PageHeader
         title={isEdit ? 'Edit Question' : 'New Question'}
-        description={`${examTitle} · ${formatNumber(exam?.total_marks)} total marks`}
+        description={`${examTitle}, ${formatNumber(exam?.total_marks)} total marks`}
       />
 
       <Card>
@@ -309,7 +309,7 @@ export const QuestionFormPage = () => {
                 value={form.values.marks ?? ''}
                 onChange={(event) => form.setValue('marks', event.target.value)}
                 error={form.errors.marks}
-                helperText={`Exam total ${formatNumber(exam?.total_marks)} · ${formatMarks(allocatedSum)} allocated`}
+                helperText={`Exam total ${formatNumber(exam?.total_marks)} (${formatMarks(allocatedSum)} allocated)`}
                 isRequired
               />
               {isMCQ ? (
@@ -396,7 +396,7 @@ export const QuestionFormPage = () => {
                   ))}
                 </ul>
                 {form.errors.options && (
-                  <p className="px-4 py-2 text-xs text-danger-main" role="alert">
+                  <p className="px-4 py-2 text-xs text-status-danger" role="alert">
                     {form.errors.options}
                   </p>
                 )}

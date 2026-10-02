@@ -17,7 +17,7 @@ export const DashboardSection = ({
           id={headingId}
           ref={headingRef}
           tabIndex={headingRef ? -1 : undefined}
-          className="text-base font-bold text-text-main tracking-tight uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+          className="text-base font-bold font-serif text-text-main focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
         >
           {title}
         </h2>

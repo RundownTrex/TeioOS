@@ -198,18 +198,18 @@ export const EvaluationWorkbenchPage = () => {
           Back to Evaluation Queue
         </Link>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-surface border border-border-main shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded bg-surface border border-border-main">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-navy-primary/10 flex items-center justify-center text-navy-primary font-bold">
+            <div className="w-10 h-10 rounded bg-navy-primary/10 flex items-center justify-center text-navy-primary font-bold">
               <User className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-text-main">
+              <h2 className="text-base font-bold font-serif text-text-main">
                 {currentStudentMeta?.studentName ?? 'Student Candidate'}
               </h2>
               <p className="text-xs text-text-muted">
-                Roll No: <span className="font-mono font-medium">{currentStudentMeta?.rollNumber ?? '—'}</span> · Subject:{' '}
-                <span className="font-medium text-navy-primary">{currentStudentMeta?.subjectName ?? '—'}</span>
+                Roll No: <span className="font-mono font-medium">{currentStudentMeta?.rollNumber ?? '-'}</span>, Subject:{' '}
+                <span className="font-medium text-navy-primary">{currentStudentMeta?.subjectName ?? '-'}</span>
               </p>
             </div>
           </div>
@@ -262,7 +262,7 @@ export const EvaluationWorkbenchPage = () => {
         {/* Sidebar: Questions Navigator */}
         <Card className="md:col-span-1">
           <CardHeader className="px-4 py-3 border-b border-border-main">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-navy-primary">
+            <h3 className="text-xs font-bold font-serif text-text-main">
               Questions ({sortedAnswers.length})
             </h3>
           </CardHeader>
@@ -280,9 +280,9 @@ export const EvaluationWorkbenchPage = () => {
                   key={answer.id}
                   type="button"
                   onClick={() => setActiveQuestionIndex(index)}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-colors text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary ${
+                  className={`w-full flex items-center justify-between p-2.5 rounded text-left transition-colors text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary ${
                     isSelected
-                      ? 'bg-navy-primary text-white font-bold shadow-xs'
+                      ? 'bg-navy-primary text-white font-bold'
                       : 'hover:bg-subtle text-text-main border border-transparent'
                   }`}
                 >
@@ -291,7 +291,7 @@ export const EvaluationWorkbenchPage = () => {
                       {index + 1}
                     </span>
                     <span className="truncate">
-                      Q{index + 1} ({q?.question_type ?? 'Q'}){isUnattempted ? ' • Skipped' : ''}
+                      Q{index + 1} ({q?.question_type ?? 'Q'}){isUnattempted ? ' (Skipped)' : ''}
                     </span>
                   </div>
                   {isEvaluated ? (
@@ -300,7 +300,7 @@ export const EvaluationWorkbenchPage = () => {
                       aria-hidden="true"
                     />
                   ) : (
-                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" title="Pending evaluation" />
+                    <span className="w-2 h-2 rounded-full bg-status-warning shrink-0" title="Pending evaluation" />
                   )}
                 </button>
               );
@@ -314,10 +314,10 @@ export const EvaluationWorkbenchPage = () => {
           <Card>
             <CardHeader className="flex items-center justify-between px-5 py-4 border-b border-border-main bg-subtle/50">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-navy-primary uppercase tracking-wider">
+                <span className="text-sm font-bold font-serif text-text-main">
                   Question {activeQuestionIndex + 1} of {sortedAnswers.length}
                 </span>
-                <Badge variant={isDescriptive ? 'amber' : 'purple'}>
+                <Badge variant={isDescriptive ? 'warning' : 'purple'}>
                   {activeQuestion?.question_type ?? 'QUESTION'}
                 </Badge>
                 {isDescriptive && !activeAnswer?.answer_text && (
@@ -329,7 +329,7 @@ export const EvaluationWorkbenchPage = () => {
               </Badge>
             </CardHeader>
             <CardBody className="p-5">
-              <p className="text-base font-medium text-text-main leading-relaxed">
+              <p className="text-base font-serif text-text-main leading-relaxed">
                 {activeQuestion?.question_text || 'No question text available.'}
               </p>
             </CardBody>
@@ -338,17 +338,17 @@ export const EvaluationWorkbenchPage = () => {
           {/* Student Answer Display Card */}
           <Card>
             <CardHeader className="px-5 py-3 border-b border-border-main bg-subtle/30 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-text-muted">
+              <span className="text-xs font-semibold text-text-muted">
                 Student Candidate Response
               </span>
               <span className="text-xs text-text-muted">
-                Submitted: {activeAnswer.answered_at ? new Date(activeAnswer.answered_at).toLocaleTimeString() : '—'}
+                Submitted: {activeAnswer.answered_at ? new Date(activeAnswer.answered_at).toLocaleTimeString() : '-'}
               </span>
             </CardHeader>
             <CardBody className="p-5">
               {!isDescriptive ? (
                 /* Read-Only MCQ Score Card */
-                <div className="p-4 rounded-lg bg-subtle border border-border-main space-y-3">
+                <div className="p-4 rounded bg-subtle border border-border-main space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-text-main">
                       Automated MCQ Evaluation (Read-Only)
@@ -364,7 +364,7 @@ export const EvaluationWorkbenchPage = () => {
               ) : (
                 /* High-Readability Descriptive Student Answer Text Box */
                 <div className="space-y-2">
-                  <div className="p-5 rounded-xl bg-subtle/60 border border-border-main font-sans text-base leading-relaxed text-text-main whitespace-pre-wrap min-h-[160px] select-text">
+                  <div className="p-5 rounded bg-subtle/60 border border-border-main font-sans text-base leading-relaxed text-text-main whitespace-pre-wrap min-h-[160px] select-text">
                     {activeAnswer.answer_text ? (
                       activeAnswer.answer_text
                     ) : (
@@ -386,8 +386,8 @@ export const EvaluationWorkbenchPage = () => {
             <Card className="border-2 border-navy-primary/20">
               <form onSubmit={handleSaveEvaluation}>
                 <CardHeader className="px-5 py-4 border-b border-border-main bg-navy-primary/5 flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-navy-primary uppercase tracking-wider">
-                    Manual Evaluation & Scoring
+                  <h3 className="text-sm font-bold font-serif text-text-main">
+                    Manual Evaluation &amp; Scoring
                   </h3>
                   {activeAnswer.awarded_marks !== null && activeAnswer.awarded_marks !== undefined && (
                     <Badge variant="success" dot>
@@ -416,7 +416,7 @@ export const EvaluationWorkbenchPage = () => {
                       autoFocus
                     />
 
-                    <div className="p-3 rounded-lg bg-subtle border border-border-main space-y-1 text-xs text-text-muted flex flex-col justify-center">
+                    <div className="p-3 rounded bg-subtle border border-border-main space-y-1 text-xs text-text-muted flex flex-col justify-center">
                       <span className="font-semibold text-text-main">Scoring Guidelines:</span>
                       <p>
                         Award between <strong>0.0</strong> and <strong>{activeQuestion?.marks}</strong> marks based on accuracy, completeness, and clarity.

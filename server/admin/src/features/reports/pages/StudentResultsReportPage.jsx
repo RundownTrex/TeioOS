@@ -61,7 +61,7 @@ export const StudentResultsReportPage = () => {
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((student) => ({
       value: student.id,
-      label: `${student.roll_number} — ${student.name}`,
+      label: `${student.roll_number} (${student.name})`,
     }));
 
   const selectedStudent = (studentsQuery.data?.items ?? []).find((s) => s.id === reportStudentId);

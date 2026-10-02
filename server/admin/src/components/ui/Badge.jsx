@@ -29,7 +29,7 @@ export const Badge = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 border rounded-full font-bold uppercase tracking-wider select-none leading-none ${variants[variant] || variants.neutral} ${sizes[size] || sizes.md} ${className}`}
+      className={`inline-flex items-center gap-1.5 border rounded font-medium select-none leading-none ${variants[variant] || variants.neutral} ${sizes[size] || sizes.md} ${className}`}
       {...props}
     >
       {dot && <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />}

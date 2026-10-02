@@ -129,7 +129,7 @@ export const ResultDetailPage = () => {
 
       <PageHeader
         title={`Result: ${student?.name ?? 'Student Candidate'}`}
-        description={`Roll Number: ${student?.roll_number ?? '—'} · Candidate Exam Session: ${studentExamId ? String(studentExamId).slice(0, 8) : '—'}`}
+        description={`Roll Number: ${student?.roll_number ?? '-'}, Candidate Exam Session: ${studentExamId ? String(studentExamId).slice(0, 8) : '-'}`}
         actions={
           <div className="flex flex-wrap items-center gap-2 no-print">
             <Button
@@ -173,9 +173,9 @@ export const ResultDetailPage = () => {
       <Card className="mb-6 overflow-hidden">
         <CardHeader className="bg-subtle border-b border-border-main">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <h2 className="text-base font-semibold flex items-center gap-2 text-text-main">
+            <h2 className="text-base font-bold font-serif flex items-center gap-2 text-text-main">
               <Award className="w-5 h-5 text-navy-primary" aria-hidden="true" />
-              Score Breakdown & Status
+              Score Breakdown &amp; Status
             </h2>
             <div className="flex items-center gap-2">
               <StatusBadge type="evaluation" status={result.evaluation_status} />
@@ -184,7 +184,7 @@ export const ResultDetailPage = () => {
                   Published
                 </Badge>
               ) : (
-                <Badge variant="amber" dot>
+                <Badge variant="warning" dot>
                   Unpublished
                 </Badge>
               )}
@@ -193,7 +193,7 @@ export const ResultDetailPage = () => {
         </CardHeader>
         <CardBody className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 rounded-xl bg-subtle border border-border-main">
+            <div className="p-4 rounded bg-subtle border border-border-main">
               <span className="text-xs text-text-muted font-medium block">Total Score</span>
               <div className="flex items-baseline gap-1 mt-1">
                 <span className="text-2xl font-extrabold font-mono text-navy-primary">
@@ -209,7 +209,7 @@ export const ResultDetailPage = () => {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-subtle border border-border-main">
+            <div className="p-4 rounded bg-subtle border border-border-main">
               <span className="text-xs text-text-muted font-medium block">MCQ Score</span>
               <span className="text-2xl font-extrabold font-mono text-text-main block mt-1">
                 {formatNumber(result.mcq_score ?? 0.0, { minFractionDigits: 1 })} pts
@@ -217,7 +217,7 @@ export const ResultDetailPage = () => {
               <span className="text-xs text-text-muted block mt-2">Auto-graded objective questions</span>
             </div>
 
-            <div className="p-4 rounded-xl bg-subtle border border-border-main">
+            <div className="p-4 rounded bg-subtle border border-border-main">
               <span className="text-xs text-text-muted font-medium block">Descriptive Score</span>
               <span className="text-2xl font-extrabold font-mono text-text-main block mt-1">
                 {formatNumber(result.descriptive_score ?? 0.0, { minFractionDigits: 1 })} pts
@@ -225,7 +225,7 @@ export const ResultDetailPage = () => {
               <span className="text-xs text-text-muted block mt-2">Manually evaluated answers</span>
             </div>
 
-            <div className="p-4 rounded-xl bg-subtle border border-border-main">
+            <div className="p-4 rounded bg-subtle border border-border-main">
               <span className="text-xs text-text-muted font-medium block">Publication Date</span>
               <span className="text-sm font-medium text-text-main block mt-1">
                 {result.published_at ? formatDateTime(result.published_at) : 'Not published'}
@@ -240,13 +240,13 @@ export const ResultDetailPage = () => {
 
       {/* Metadata Card */}
       <Card className="mb-6">
-        <CardHeader>Examination & Candidate Metadata</CardHeader>
+        <CardHeader>Examination &amp; Candidate Metadata</CardHeader>
         <CardBody>
           <dl className="m-0">
-            <DetailRow label="Candidate Name">{student?.name ?? '—'}</DetailRow>
-            <DetailRow label="Roll Number">{student?.roll_number ?? '—'}</DetailRow>
+            <DetailRow label="Candidate Name">{student?.name ?? '-'}</DetailRow>
+            <DetailRow label="Roll Number">{student?.roll_number ?? '-'}</DetailRow>
             <DetailRow label="Examination Total Marks">{exam?.total_marks ?? 0} pts</DetailRow>
-            <DetailRow label="Duration">{exam?.duration_minutes ? `${exam.duration_minutes} minutes` : '—'}</DetailRow>
+            <DetailRow label="Duration">{exam?.duration_minutes ? `${exam.duration_minutes} minutes` : '-'}</DetailRow>
             <DetailRow label="Result Record Created">{formatDateTime(result.created_at)}</DetailRow>
             <DetailRow label="Last Updated">{formatDateTime(result.updated_at)}</DetailRow>
           </dl>
@@ -257,8 +257,8 @@ export const ResultDetailPage = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-text-main">
-              Candidate Question Responses & Evaluation Detail
+            <h2 className="text-base font-bold font-serif text-text-main">
+              Candidate Question Responses &amp; Evaluation Detail
             </h2>
             {answersQuery.data && (
               <Badge variant="neutral">{answersQuery.data.length} Questions</Badge>
@@ -280,13 +280,13 @@ export const ResultDetailPage = () => {
                 const q = ans.question;
                 const isMcq = q?.question_type === 'MCQ';
                 const selectedOpt = isMcq
-                  ? q?.options?.find((o) => o.id === ans.selected_option_id)
+                    ? q?.options?.find((o) => o.id === ans.selected_option_id)
                   : null;
 
                 return (
                   <div
                     key={ans.id}
-                    className="p-4 rounded-xl border border-border-main bg-surface space-y-3"
+                    className="p-4 rounded border border-border-main bg-surface space-y-3"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-2.5">
@@ -314,16 +314,16 @@ export const ResultDetailPage = () => {
                           <span
                             className={`text-sm font-bold font-mono ${
                               ans.awarded_marks > 0
-                                ? 'text-green-600 dark:text-green-400'
+                                ? 'text-status-success'
                                 : ans.awarded_marks < 0
-                                ? 'text-red-600 dark:text-red-400'
+                                ? 'text-status-danger'
                                 : 'text-text-muted'
                             }`}
                           >
                             {formatNumber(ans.awarded_marks, { minFractionDigits: 1 })} / {q?.marks ?? 0} pts
                           </span>
                         ) : (
-                          <Badge variant="amber">Pending Evaluation</Badge>
+                          <Badge variant="warning">Pending Evaluation</Badge>
                         )}
                       </div>
                     </div>
@@ -338,29 +338,29 @@ export const ResultDetailPage = () => {
                           let bgStyle = 'bg-subtle border-border-main text-text-main';
                           if (isSelected && isCorrect) {
                             bgStyle =
-                              'bg-green-500/10 border-green-500/30 text-green-800 dark:text-green-200 font-medium';
+                              'bg-status-success-bg border-status-success-border text-status-success font-medium';
                           } else if (isSelected && !isCorrect) {
                             bgStyle =
-                              'bg-red-500/10 border-red-500/30 text-red-800 dark:text-red-200';
+                              'bg-status-danger-bg border-status-danger-border text-status-danger';
                           } else if (isCorrect) {
                             bgStyle =
-                              'bg-blue-500/10 border-blue-500/30 text-blue-800 dark:text-blue-200';
+                              'bg-status-info-bg border-status-info-border text-status-info';
                           }
 
                           return (
                             <div
                               key={opt.id}
-                              className={`p-2.5 rounded-lg border text-sm flex items-center justify-between ${bgStyle}`}
+                              className={`p-2.5 rounded border text-sm flex items-center justify-between ${bgStyle}`}
                             >
                               <div className="flex items-center gap-2">
                                 {isSelected ? (
                                   isCorrect ? (
-                                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                                    <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />
                                   ) : (
-                                    <XCircle className="w-4 h-4 text-red-600 shrink-0" />
+                                    <XCircle className="w-4 h-4 text-status-danger shrink-0" />
                                   )
                                 ) : isCorrect ? (
-                                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+                                  <CheckCircle2 className="w-4 h-4 text-status-info shrink-0" />
                                 ) : (
                                   <div className="w-4 h-4 rounded-full border border-border-main shrink-0" />
                                 )}
@@ -383,7 +383,7 @@ export const ResultDetailPage = () => {
                     {/* Descriptive Answer Display */}
                     {!isMcq && (
                       <div className="mt-3 pl-8 space-y-3">
-                        <div className="p-3 rounded-lg bg-subtle border border-border-main space-y-1">
+                        <div className="p-3 rounded bg-subtle border border-border-main space-y-1">
                           <span className="text-xs text-text-muted font-medium block">
                             Candidate's Response:
                           </span>
@@ -393,8 +393,8 @@ export const ResultDetailPage = () => {
                         </div>
 
                         {ans.evaluator_feedback && (
-                          <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 space-y-1">
-                            <span className="text-xs text-purple-700 dark:text-purple-300 font-semibold flex items-center gap-1">
+                          <div className="p-3 rounded bg-status-review-bg border border-status-review-border space-y-1">
+                            <span className="text-xs text-status-review font-semibold flex items-center gap-1">
                               <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
                               Evaluator Feedback:
                             </span>

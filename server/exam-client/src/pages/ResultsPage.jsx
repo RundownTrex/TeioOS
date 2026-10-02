@@ -149,17 +149,17 @@ export const ResultsPage = () => {
     <ExamLayout paperTitle={subjectCode} sectionTitle="Performance Report">
       <div className="max-w-[900px] mx-auto space-y-6 select-none my-4">
         {/* Paper Header Card */}
-        <Card className="border-border-main bg-surface shadow-sm">
+        <Card className="border-border-main bg-surface">
           <CardHeader className="bg-subtle/40 border-b border-border-main pb-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <span className="text-xs font-mono font-bold text-navy-primary uppercase tracking-wider">
-                  {subjectCode} • PERFORMANCE REPORT
+                <span className="text-xs font-mono font-bold text-navy-primary">
+                  {subjectCode}: Performance Report
                 </span>
                 <h2
                   ref={pageHeadingRef}
                   tabIndex={-1}
-                  className="text-2xl font-extrabold text-text-main leading-snug mt-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
+                  className="text-2xl font-bold font-serif text-text-main leading-snug mt-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary focus-visible:ring-offset-2 rounded"
                 >
                   {subjectName}
                 </h2>
@@ -168,7 +168,7 @@ export const ResultsPage = () => {
                 </p>
               </div>
               <Badge variant={isPublished ? 'success' : 'purple'} size="md">
-                {isPublished ? 'FINAL EVALUATION PUBLISHED' : 'EVALUATION IN PROGRESS'}
+                {isPublished ? 'Final Evaluation Published' : 'Evaluation In Progress'}
               </Badge>
             </div>
           </CardHeader>
@@ -179,15 +179,15 @@ export const ResultsPage = () => {
               {/* Left Column: Overall Result Status Summary */}
               <Card className="md:col-span-1 border border-navy-primary/20 bg-subtle/20 p-5 space-y-4 flex flex-col justify-between">
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-navy-primary uppercase tracking-wider">
+                  <div className="flex items-center gap-2 text-xs font-bold font-serif text-navy-primary">
                     <Award className="w-4 h-4" aria-hidden="true" />
-                    <span>OVERALL RESULT STATUS</span>
+                    <span>Overall Result Status</span>
                   </div>
 
                   {/* Marks Score Box */}
-                  <div className="p-3 bg-surface border border-border-main rounded-lg space-y-1">
+                  <div className="p-3 bg-surface border border-border-main rounded space-y-1">
                     <span className="text-xs font-medium text-text-muted block">
-                      TOTAL MARKS SCORED:
+                      Total Marks Scored:
                     </span>
                     <div className="text-2xl font-extrabold text-text-main">
                       {isPublished ? obtainedMarks : '—'}{' '}
@@ -198,16 +198,16 @@ export const ResultsPage = () => {
                   </div>
 
                   {/* Grade / Percentage Box */}
-                  <div className="p-3 bg-surface border border-border-main rounded-lg space-y-1">
+                  <div className="p-3 bg-surface border border-border-main rounded space-y-1">
                     <span className="text-xs font-medium text-text-muted block">
-                      PERCENTAGE & GRADE:
+                      Percentage & Grade:
                     </span>
                     {isPublished ? (
                       <div className="text-lg font-bold text-text-main">
                         {percentage}% (Grade {grade})
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5 text-sm font-bold text-purple-700">
+                      <div className="flex items-center gap-1.5 text-sm font-bold text-status-review">
                         <Clock className="w-4 h-4" aria-hidden="true" />
                         <span>Pending Evaluation</span>
                       </div>
@@ -217,8 +217,8 @@ export const ResultsPage = () => {
 
                 {/* Published Date Summary */}
                 <div className="pt-3 border-t border-border-main space-y-1">
-                  <span className="text-xs font-semibold text-text-muted uppercase tracking-wider block">
-                    STATUS:
+                  <span className="text-xs font-semibold text-text-muted block">
+                    Status:
                   </span>
                   <div className="text-sm font-bold text-navy-primary">
                     {isPublished
@@ -231,12 +231,12 @@ export const ResultsPage = () => {
               {/* Right Column: Status Details & Notice */}
               <div className="md:col-span-2 space-y-4 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <h3 id="result-status-heading" className="text-sm font-bold text-text-main uppercase tracking-wider flex items-center gap-2">
+                  <h3 id="result-status-heading" className="text-sm font-bold font-serif text-text-main flex items-center gap-2">
                     <FileText className="w-4 h-4 text-navy-primary" aria-hidden="true" />
-                    <span>RESULT DETAILS</span>
+                    <span>Result Details</span>
                   </h3>
 
-                  <div className="border border-border-main rounded-lg p-4 bg-surface space-y-3">
+                  <div className="border border-border-main rounded p-4 bg-surface space-y-3">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-text-muted font-medium">Evaluation Status:</span>
                       <span className="font-bold text-text-main">{evaluationStatus}</span>
@@ -248,7 +248,7 @@ export const ResultsPage = () => {
                     {isPublished && (
                       <div className="flex justify-between items-center text-sm border-t border-border-main pt-2">
                         <span className="text-text-muted font-medium">Marks Obtained:</span>
-                        <span className="font-bold text-success">{obtainedMarks} Marks</span>
+                        <span className="font-bold text-status-success">{obtainedMarks} Marks</span>
                       </div>
                     )}
                   </div>
@@ -271,7 +271,7 @@ export const ResultsPage = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => navigate(`/exam/${scheduleId}/review`)}
-                      leftIcon={<CheckCircle className="w-4 h-4 text-success" />}
+                      leftIcon={<CheckCircle className="w-4 h-4 text-status-success" />}
                     >
                       View Detailed Question Review
                     </Button>

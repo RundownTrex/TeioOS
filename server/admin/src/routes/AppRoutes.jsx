@@ -100,7 +100,7 @@ export const AppRoutes = () => {
           <Route
             path="*"
             element={renderSystemState(
-              '404 — Page Not Found',
+              'Page Not Found (404)',
               'The requested view does not exist or has moved.',
               'Go to Dashboard',
               () => window.location.assign('/admin' + PATHS.DASHBOARD)

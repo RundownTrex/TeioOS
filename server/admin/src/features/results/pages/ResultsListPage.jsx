@@ -200,7 +200,7 @@ export const ResultsListPage = () => {
             Published
           </Badge>
         ) : (
-          <Badge variant="amber" dot>
+          <Badge variant="warning" dot>
             Unpublished
           </Badge>
         ),
@@ -404,20 +404,20 @@ export const ResultsListPage = () => {
             </div>
 
             {/* Backend Scores Breakdown Card */}
-            <div className="p-4 rounded-xl bg-surface border border-border-main space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-navy-primary">
+            <div className="p-4 rounded bg-surface border border-border-main space-y-3">
+              <h4 className="text-xs font-bold font-serif text-text-main">
                 Backend-Calculated Score Breakdown
               </h4>
 
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="p-3 rounded-lg bg-subtle border border-border-main">
+                <div className="p-3 rounded bg-subtle border border-border-main">
                   <span className="text-xs text-text-muted block">MCQ Score (Auto-graded)</span>
                   <span className="text-base font-bold font-mono text-text-main">
                     {formatNumber(selectedResult.mcq_score ?? 0.0, { minFractionDigits: 1 })} pts
                   </span>
                 </div>
 
-                <div className="p-3 rounded-lg bg-subtle border border-border-main">
+                <div className="p-3 rounded bg-subtle border border-border-main">
                   <span className="text-xs text-text-muted block">Descriptive Score (Evaluated)</span>
                   <span className="text-base font-bold font-mono text-text-main">
                     {formatNumber(selectedResult.descriptive_score ?? 0.0, { minFractionDigits: 1 })} pts

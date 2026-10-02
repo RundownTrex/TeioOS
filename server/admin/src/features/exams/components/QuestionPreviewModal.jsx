@@ -31,7 +31,7 @@ export const QuestionPreviewModal = ({ question, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-4 h-10 text-sm font-medium border border-border-strong text-text-main hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary transition-colors"
+            className="rounded px-4 h-10 text-sm font-medium border border-border-strong text-text-main hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary transition-colors"
           >
             Close
           </button>
@@ -52,10 +52,10 @@ export const QuestionPreviewModal = ({ question, onClose }) => {
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-2">
+          <p className="text-xs font-medium text-text-muted mb-2">
             Question
           </p>
-          <p className="text-base text-text-main whitespace-pre-wrap">{question.question_text}</p>
+          <p className="text-base font-serif text-text-main whitespace-pre-wrap">{question.question_text}</p>
         </div>
 
         {isMCQ ? (
@@ -63,9 +63,9 @@ export const QuestionPreviewModal = ({ question, onClose }) => {
             {question.options?.map((option, index) => (
               <div
                 key={option.id}
-                className={`flex items-start gap-3 rounded-lg border p-3 ${
+                className={`flex items-start gap-3 rounded border p-3 ${
                   option.is_correct
-                    ? 'border-emerald-600/60 bg-emerald-50 dark:bg-emerald-950/40'
+                    ? 'border-status-success-border bg-status-success-bg'
                     : 'border-border-main'
                 }`}
               >
@@ -89,7 +89,7 @@ export const QuestionPreviewModal = ({ question, onClose }) => {
           </div>
         ) : (
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-text-muted uppercase tracking-wide">
+            <label className="block text-xs font-medium text-text-muted mb-1">
               Your answer
             </label>
             <textarea
@@ -97,7 +97,7 @@ export const QuestionPreviewModal = ({ question, onClose }) => {
               rows={4}
               disabled
               placeholder="Students type their answer here…"
-              className="w-full rounded-lg border border-border-main bg-subtle px-3 py-2 text-sm text-text-main placeholder:text-text-muted"
+              className="w-full rounded border border-border-main bg-subtle px-3 py-2 text-sm text-text-main placeholder:text-text-muted"
             />
             {question.max_characters && (
               <p className="text-xs text-text-muted">

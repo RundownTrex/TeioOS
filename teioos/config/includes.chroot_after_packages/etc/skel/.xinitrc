@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # ============================================================================
 # TeioOS Kiosk X Session Initialization (.xinitrc)
 # ============================================================================
@@ -13,6 +13,7 @@
 xset -dpms
 xset s off
 xset s noblank
+xsetroot -solid "#0f172a" 2>/dev/null || true
 
 # ── 2. Accessibility Environment Variables ──
 # These must be set BEFORE any GTK/AT-SPI application launches so the
@@ -77,13 +78,36 @@ openbox --config-file /etc/xdg/openbox/rc.xml &
 # ── 8. Hide Mouse Cursor When Idle ──
 unclutter -idle 1 &
 
-# ── 9. Chromium Kiosk Browser ──
+# ── 9. Wait for Exam Server Connectivity ──
+# Avoid launching Chromium before the network interface has obtained a DHCP lease
+# and Avahi has resolved teioos-server.local. If Chromium launches prematurely,
+# it hits net::ERR_NAME_NOT_RESOLVED, displays a blank white screen, and caches
+# the negative DNS failure with a multi-minute backoff.
+SERVER_HOST="teioos-server.local"
+SERVER_PORT=8080
+SERVER_URL="http://${SERVER_HOST}:${SERVER_PORT}/exam/login/"
+
+MAX_RETRIES=30
+RETRY_COUNT=0
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if getent hosts "$SERVER_HOST" >/dev/null 2>&1; then
+        if (exec 3<>"/dev/tcp/${SERVER_HOST}/${SERVER_PORT}") 2>/dev/null; then
+            exec 3>&-
+            exec 3<&-
+            break
+        fi
+    fi
+    sleep 0.5
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+done
+
+# ── 10. Chromium Kiosk Browser ──
 # Launch Chromium in fullscreen kiosk mode with speech & accessibility flags:
 #   --enable-speech-dispatcher : Connects browser Web Speech API to speech-dispatcher / SVOX Pico.
 #   --autoplay-policy=no-user-gesture-required : Allows immediate spoken TTS orientation on mount.
 #   --force-renderer-accessibility : Forces accessibility tree creation.
 exec chromium \
-    --kiosk "http://teioos-server.local:8080/exam/login/" \
+    --kiosk "$SERVER_URL" \
     --noerrdialogs \
     --disable-infobars \
     --disable-session-crashed-bubble \

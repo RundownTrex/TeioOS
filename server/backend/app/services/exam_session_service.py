@@ -110,6 +110,44 @@ class ExamSessionService:
             )
         assignment.paused_at = None
 
+    def _lazy_pause_if_stale(
+        self, assignment: StudentExam, current_time: datetime
+    ) -> bool:
+        """
+        Detects an IN_PROGRESS session that missed the client-side pause signal
+        (hard power loss, VM force-shutdown, kernel panic, network cable pull)
+        and retroactively pauses it at the moment of the last known activity.
+
+        The client normally sends a fire-and-forget ``POST /pause`` on
+        ``beforeunload`` / ``pagehide`` / ``visibilitychange``, but none of
+        these events fire during an abrupt shutdown.  The background sweeper
+        (``pause_inactive_sessions``) catches these eventually, but runs on a
+        60-second interval — if the candidate reboots and reconnects before
+        the sweeper fires, ``paused_at`` is still ``None`` and the session
+        looks active.  Without this guard the reconnection endpoints
+        (``get_exam_session``, ``start_exam_session``) would treat the stale
+        session as live, refresh ``last_activity_at``, and the offline gap
+        would be permanently counted as examination time.
+
+        Returns ``True`` if a retroactive pause was applied, ``False``
+        otherwise.  The caller must still commit the transaction.
+        """
+        if assignment.status != AssignmentStatus.IN_PROGRESS:
+            return False
+        if assignment.paused_at is not None:
+            return False  # Already paused — nothing to do.
+        if assignment.last_activity_at is None:
+            return False  # No activity record to backdate to.
+
+        idle_seconds = (current_time - assignment.last_activity_at).total_seconds()
+        if idle_seconds < settings.exam_inactivity_timeout_seconds:
+            return False  # Session is still within the active heartbeat window.
+
+        # Backdate the pause to the last known heartbeat so the offline gap
+        # is frozen out of the candidate's timer entirely.
+        assignment.paused_at = assignment.last_activity_at
+        return True
+
     def get_assigned_exams(self, student_id: uuid.UUID) -> list[StudentAvailableExamResponse]:
         """
         Returns the exams assigned to the student together with their personal
@@ -204,10 +242,26 @@ class ExamSessionService:
         # Heartbeat: while the session is actively counting down, the periodic
         # snapshot poll from the exam workbench refreshes last_activity_at so
         # the inactivity-based pause fallback never fires for a present candidate.
+        #
+        # IMPORTANT: before refreshing the heartbeat we must check whether the
+        # session is actually stale (i.e. last_activity_at is older than the
+        # inactivity timeout).  A stale session means the candidate disappeared
+        # without sending a pause signal (hard power loss, VM force-shutdown,
+        # kernel panic).  In that case we retroactively pause at the last known
+        # activity so the offline gap is never counted as examination time.
+        # Without this guard, a reconnection after a hard reboot would silently
+        # overwrite last_activity_at, erasing all evidence of the gap.
         current_time = datetime.now(timezone.utc)
         if assignment.status == AssignmentStatus.IN_PROGRESS and assignment.paused_at is None:
-            assignment.last_activity_at = current_time
-            self.db.commit()
+            if self._lazy_pause_if_stale(assignment, current_time):
+                # Session was retroactively paused — persist the pause but do
+                # NOT refresh last_activity_at (it must stay at the pre-crash
+                # timestamp so the resume flow can compute the correct shift).
+                self.db.commit()
+            else:
+                # Session is genuinely active — refresh the heartbeat.
+                assignment.last_activity_at = current_time
+                self.db.commit()
 
         session = self._build_session_response(assignment, schedule.exam.duration_minutes)
         return ExamSessionSnapshotResponse(
@@ -310,6 +364,14 @@ class ExamSessionService:
             else:
                 # ---- Existing assignment: resume or terminal state ----
                 if assignment.status == AssignmentStatus.IN_PROGRESS:
+                    # Catch sessions that missed the client pause signal
+                    # (hard power loss, VM force-shutdown) before the
+                    # background sweeper could flag them.  Retroactively
+                    # pauses at last_activity_at so _unpause correctly
+                    # shifts the deadline and the offline gap is not
+                    # counted as examination time.
+                    self._lazy_pause_if_stale(assignment, current_time)
+
                     # Resume from a pause: shift the deadline forward by the
                     # pause duration so paused time is not counted as active.
                     self._unpause(assignment, current_time)

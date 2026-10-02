@@ -337,5 +337,207 @@ class TestSpeechTranscriptionRoute(unittest.TestCase):
         self.assertIn("unavailable offline", ctx.exception.detail)
 
 
+class TestLazyPauseIfStale(unittest.TestCase):
+    """Tests for _lazy_pause_if_stale — the retroactive pause that catches
+    sessions whose client could not send a pause signal (VM force-shutdown,
+    kernel panic, hard power loss)."""
+
+    def _make_service(self):
+        db = MagicMock()
+        assignment_repo = MagicMock()
+        schedule_repo = MagicMock()
+        result_calc_service = MagicMock()
+
+        from app.services.exam_session_service import ExamSessionService
+        service = ExamSessionService(
+            db=db,
+            assignment_repo=assignment_repo,
+            schedule_repo=schedule_repo,
+            result_calc_service=result_calc_service,
+        )
+        return service
+
+    def _make_assignment(self, *, status, paused_at=None, last_activity_at=None):
+        assignment = MagicMock(spec=StudentExam)
+        assignment.status = status
+        assignment.paused_at = paused_at
+        assignment.last_activity_at = last_activity_at
+        assignment.expires_at = datetime(2026, 10, 2, 15, 0, 0, tzinfo=timezone.utc)
+        return assignment
+
+    @patch("app.services.exam_session_service.settings")
+    def test_stale_session_gets_retroactively_paused(self, mock_settings):
+        """A session idle longer than the inactivity timeout should have
+        paused_at backdated to last_activity_at."""
+        mock_settings.exam_inactivity_timeout_seconds = 60
+
+        service = self._make_service()
+        last_heartbeat = datetime(2026, 10, 2, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 10, 2, 12, 5, 0, tzinfo=timezone.utc)  # 5 min later
+
+        assignment = self._make_assignment(
+            status=AssignmentStatus.IN_PROGRESS,
+            last_activity_at=last_heartbeat,
+        )
+
+        result = service._lazy_pause_if_stale(assignment, now)
+
+        self.assertTrue(result)
+        self.assertEqual(assignment.paused_at, last_heartbeat)
+
+    @patch("app.services.exam_session_service.settings")
+    def test_active_session_not_paused(self, mock_settings):
+        """A session whose last heartbeat is within the timeout window should
+        NOT be paused (normal active polling)."""
+        mock_settings.exam_inactivity_timeout_seconds = 60
+
+        service = self._make_service()
+        last_heartbeat = datetime(2026, 10, 2, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 10, 2, 12, 0, 30, tzinfo=timezone.utc)  # 30s later
+
+        assignment = self._make_assignment(
+            status=AssignmentStatus.IN_PROGRESS,
+            last_activity_at=last_heartbeat,
+        )
+
+        result = service._lazy_pause_if_stale(assignment, now)
+
+        self.assertFalse(result)
+        self.assertIsNone(assignment.paused_at)
+
+    @patch("app.services.exam_session_service.settings")
+    def test_already_paused_session_skipped(self, mock_settings):
+        """A session that already has paused_at set (normal pause flow)
+        should be skipped — no double-pause."""
+        mock_settings.exam_inactivity_timeout_seconds = 60
+
+        service = self._make_service()
+        paused_time = datetime(2026, 10, 2, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 10, 2, 12, 5, 0, tzinfo=timezone.utc)
+
+        assignment = self._make_assignment(
+            status=AssignmentStatus.IN_PROGRESS,
+            paused_at=paused_time,
+            last_activity_at=paused_time,
+        )
+
+        result = service._lazy_pause_if_stale(assignment, now)
+
+        self.assertFalse(result)
+        # paused_at should remain at the original value
+        self.assertEqual(assignment.paused_at, paused_time)
+
+    @patch("app.services.exam_session_service.settings")
+    def test_submitted_session_skipped(self, mock_settings):
+        """Terminal states (SUBMITTED, etc.) should never trigger a pause."""
+        mock_settings.exam_inactivity_timeout_seconds = 60
+
+        service = self._make_service()
+        last_heartbeat = datetime(2026, 10, 2, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 10, 2, 12, 5, 0, tzinfo=timezone.utc)
+
+        assignment = self._make_assignment(
+            status=AssignmentStatus.SUBMITTED,
+            last_activity_at=last_heartbeat,
+        )
+
+        result = service._lazy_pause_if_stale(assignment, now)
+
+        self.assertFalse(result)
+
+    @patch("app.services.exam_session_service.settings")
+    def test_no_activity_record_skipped(self, mock_settings):
+        """If last_activity_at is None (should not happen normally), the
+        method should return False without crashing."""
+        mock_settings.exam_inactivity_timeout_seconds = 60
+
+        service = self._make_service()
+        now = datetime(2026, 10, 2, 12, 5, 0, tzinfo=timezone.utc)
+
+        assignment = self._make_assignment(
+            status=AssignmentStatus.IN_PROGRESS,
+            last_activity_at=None,
+        )
+
+        result = service._lazy_pause_if_stale(assignment, now)
+
+        self.assertFalse(result)
+
+    @patch("app.services.exam_session_service.settings")
+    def test_stale_session_then_unpause_shifts_deadline(self, mock_settings):
+        """End-to-end: a stale session is lazily paused, then _unpause
+        correctly shifts the deadline forward by the offline gap."""
+        mock_settings.exam_inactivity_timeout_seconds = 60
+
+        service = self._make_service()
+        from datetime import timedelta
+
+        last_heartbeat = datetime(2026, 10, 2, 12, 0, 0, tzinfo=timezone.utc)
+        original_expires = datetime(2026, 10, 2, 13, 0, 0, tzinfo=timezone.utc)
+        resume_time = datetime(2026, 10, 2, 12, 10, 0, tzinfo=timezone.utc)  # 10 min offline
+
+        assignment = self._make_assignment(
+            status=AssignmentStatus.IN_PROGRESS,
+            last_activity_at=last_heartbeat,
+        )
+        assignment.expires_at = original_expires
+
+        # Step 1: Lazy pause detects the stale session
+        paused = service._lazy_pause_if_stale(assignment, resume_time)
+        self.assertTrue(paused)
+        self.assertEqual(assignment.paused_at, last_heartbeat)
+
+        # Step 2: Unpause shifts the deadline forward
+        service._unpause(assignment, resume_time)
+        self.assertIsNone(assignment.paused_at)
+
+        # The offline gap is 10 minutes (resume_time - last_heartbeat)
+        expected_expires = original_expires + timedelta(minutes=10)
+        self.assertEqual(assignment.expires_at, expected_expires)
+
+    @patch("app.services.exam_session_service.settings")
+    def test_exact_boundary_is_paused(self, mock_settings):
+        """A session whose idle time is exactly equal to the timeout should
+        be paused (the guard uses strict less-than: idle < threshold)."""
+        mock_settings.exam_inactivity_timeout_seconds = 60
+
+        service = self._make_service()
+        from datetime import timedelta
+        last_heartbeat = datetime(2026, 10, 2, 12, 0, 0, tzinfo=timezone.utc)
+        now = last_heartbeat + timedelta(seconds=60)  # exactly at boundary
+
+        assignment = self._make_assignment(
+            status=AssignmentStatus.IN_PROGRESS,
+            last_activity_at=last_heartbeat,
+        )
+
+        result = service._lazy_pause_if_stale(assignment, now)
+
+        # At the boundary the session has been idle for exactly the timeout
+        # duration, so it IS paused (consistent with the < comparison).
+        self.assertTrue(result)
+        self.assertEqual(assignment.paused_at, last_heartbeat)
+
+    @patch("app.services.exam_session_service.settings")
+    def test_one_second_past_boundary_pauses(self, mock_settings):
+        """A session one second past the inactivity timeout should be paused."""
+        mock_settings.exam_inactivity_timeout_seconds = 60
+
+        service = self._make_service()
+        from datetime import timedelta
+        last_heartbeat = datetime(2026, 10, 2, 12, 0, 0, tzinfo=timezone.utc)
+        now = last_heartbeat + timedelta(seconds=61)
+
+        assignment = self._make_assignment(
+            status=AssignmentStatus.IN_PROGRESS,
+            last_activity_at=last_heartbeat,
+        )
+
+        result = service._lazy_pause_if_stale(assignment, now)
+
+        self.assertTrue(result)
+        self.assertEqual(assignment.paused_at, last_heartbeat)
+
+
 if __name__ == "__main__":
     unittest.main()

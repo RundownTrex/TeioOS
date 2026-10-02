@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # ============================================================================
 # TeioOS Kiosk X Session Initialization (.xinitrc)
 # ============================================================================
@@ -87,17 +87,9 @@ SERVER_HOST="teioos-server.local"
 SERVER_PORT=8080
 SERVER_URL="http://${SERVER_HOST}:${SERVER_PORT}/exam/login/"
 
-MAX_RETRIES=20
-RETRY_COUNT=0
-while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    SERVER_IP=$(timeout 1 avahi-resolve -n "$SERVER_HOST" 2>/dev/null | awk '{print $2}')
-    if [ -n "$SERVER_IP" ]; then
-        if (timeout 1 bash -c "cat < /dev/null > /dev/tcp/${SERVER_IP}/${SERVER_PORT}") 2>/dev/null; then
-            break
-        fi
-    fi
-    sleep 0.5
-    RETRY_COUNT=$((RETRY_COUNT + 1))
+for _attempt in $(seq 1 20); do
+    avahi-resolve -n "$SERVER_HOST" >/dev/null 2>&1 && break
+    sleep 1
 done
 
 # ── 10. Chromium Kiosk Browser ──

@@ -3,8 +3,26 @@ import { useAccessibility } from '../hooks/useAccessibility';
 import { announceToScreenReader } from '../utils/ariaAnnounce';
 import axiosClient from '../api/axiosClient';
 import { API_ENDPOINTS } from '../api/endpoints';
+import { recordingToWav } from '../utils/wavEncoder';
 
 export const STTContext = createContext(null);
+
+// Native recogniser errors meaning the (cloud-backed) engine cannot work here,
+// as opposed to transient conditions such as silence.
+const NATIVE_UNAVAILABLE_ERRORS = new Set(['network', 'service-not-allowed', 'language-not-supported']);
+
+const OFFLINE_FALLBACK_MESSAGE = 'Speech dictation is unavailable right now. Please type your response into the answer field.';
+
+const INSECURE_CONTEXT_MESSAGE =
+  'Microphone access is blocked because this exam page is not running in a secure browser context. ' +
+  'Please inform the invigilator, and type your response for now.';
+
+/** Pick the most specific human-readable message from a TeioOS API error. */
+const getApiErrorMessage = (err) =>
+  err?.response?.data?.errors?.[0] ||
+  err?.response?.data?.message ||
+  err?.response?.data?.detail ||
+  OFFLINE_FALLBACK_MESSAGE;
 
 export const STTProvider = ({ children }) => {
   const { sttEnabled, sttLanguage, setIsMicActive } = useAccessibility();
@@ -27,6 +45,7 @@ export const STTProvider = ({ children }) => {
   const animFrameRef = useRef(null);
   const onResultCallbackRef = useRef(null);
   const shouldRestartRef = useRef(false);
+  const nativeUnavailableRef = useRef(false);
 
   // Check browser speech capabilities on mount
   useEffect(() => {
@@ -211,9 +230,11 @@ export const STTProvider = ({ children }) => {
         }
       }
 
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition = nativeUnavailableRef.current
+        ? null
+        : window.SpeechRecognition || window.webkitSpeechRecognition;
 
-      // MODE 1: Native Web Speech API (Edge / Chrome)
+      // MODE 1: Native Web Speech API (Edge / Chrome with cloud access)
       if (SpeechRecognition) {
         setDictationMode('native');
         if (recognitionRef.current) {
@@ -287,10 +308,22 @@ export const STTProvider = ({ children }) => {
             errorMsg = 'No microphone device found on your computer.';
             shouldRestartRef.current = false;
             if (setIsMicActive) setIsMicActive(false);
-          } else if (event.error === 'network') {
-            // Network fallback: Switch to MediaRecorder audio dictation mode
-            console.warn('WebSpeech network error. Falling back to Firefox Audio Dictation mode...');
-            setDictationMode('audio_recorder');
+          } else if (NATIVE_UNAVAILABLE_ERRORS.has(event.error)) {
+            // Chromium's native recogniser streams audio to a cloud service. On an
+            // offline exam LAN (or a Chromium build without Google API keys) it
+            // can never work, so stop the auto-restart loop, remember the failure
+            // for this session and switch to offline server-side dictation.
+            console.warn(`Native SpeechRecognition unavailable (${event.error}); using offline server dictation.`);
+            nativeUnavailableRef.current = true;
+            shouldRestartRef.current = false;
+            recognition.onend = null;
+            try {
+              recognition.abort();
+            } catch (e) {
+              // ignore
+            }
+            recognitionRef.current = null;
+            setIsListening(false);
             startAudioRecorderDictation();
             return;
           }
@@ -325,14 +358,19 @@ export const STTProvider = ({ children }) => {
         return;
       }
 
-      // MODE 2: Web Audio & MediaRecorder Fallback (Firefox & Offline Examination Mode)
+      // MODE 2: MediaRecorder + offline server transcription (kiosk / offline exam LAN)
       startAudioRecorderDictation();
 
       async function startAudioRecorderDictation() {
         setDictationMode('audio_recorder');
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          setError('Speech Recognition and Microphone Media API are unsupported in this browser.');
-          announceToScreenReader('Speech Recognition is unsupported in this browser.', 'assertive');
+          // Browsers hide mediaDevices entirely on insecure (plain HTTP, non-localhost)
+          // origins, so distinguish that deployment issue from a genuinely old browser.
+          const message = window.isSecureContext === false
+            ? INSECURE_CONTEXT_MESSAGE
+            : 'Speech Recognition and Microphone Media API are unsupported in this browser.';
+          setError(message);
+          announceToScreenReader(message, 'assertive');
           if (setIsMicActive) setIsMicActive(false);
           return;
         }
@@ -364,7 +402,9 @@ export const STTProvider = ({ children }) => {
             setIsPaused(false);
             shouldRestartRef.current = true;
             if (setIsMicActive) setIsMicActive(true);
-            announceToScreenReader('Audio speech dictation started. Speak into your microphone.');
+            announceToScreenReader(
+              'Recording started. Speak your answer, then press Stop Dictation to insert the transcribed text.'
+            );
           };
 
           mediaRecorder.onstop = async () => {
@@ -377,21 +417,22 @@ export const STTProvider = ({ children }) => {
             const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/webm' });
             audioChunksRef.current = [];
 
-            // Transcribe captured audio blob via backend STT endpoint
+            // Transcribe the recording offline on the exam server
             setIsTranscribing(true);
             announceToScreenReader('Processing speech dictation audio...');
 
             try {
+              const wavBlob = await recordingToWav(audioBlob);
               const formData = new FormData();
-              formData.append('file', audioBlob, 'dictation_speech.webm');
+              formData.append('file', wavBlob, 'dictation.wav');
               formData.append('language', sttLanguage || 'en-US');
 
               const res = await axiosClient.post(API_ENDPOINTS.TRANSCRIBE_SPEECH, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
               });
 
-              if (res.data?.success && res.data?.data?.text) {
-                const transcribedText = res.data.data.text;
+              const transcribedText = res.data?.success ? res.data?.data?.text?.trim() : '';
+              if (transcribedText) {
                 setFinalTranscript((prev) => {
                   const updated = (prev + ' ' + transcribedText).trim();
                   if (onResultCallbackRef.current) {
@@ -404,13 +445,14 @@ export const STTProvider = ({ children }) => {
                   return updated;
                 });
                 announceToScreenReader(`Speech transcribed: ${transcribedText}`);
+              } else {
+                const message = 'No speech was detected. Please try again and speak clearly into the microphone.';
+                setError(message);
+                announceToScreenReader(message, 'assertive');
               }
             } catch (err) {
               console.warn('Speech transcription API notice:', err);
-              const errMsg =
-                err?.response?.data?.message ||
-                err?.response?.data?.detail ||
-                'Speech dictation is unavailable offline. Please type your response into the field.';
+              const errMsg = err?.response ? getApiErrorMessage(err) : OFFLINE_FALLBACK_MESSAGE;
               setError(errMsg);
               announceToScreenReader(errMsg, 'assertive');
             } finally {

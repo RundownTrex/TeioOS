@@ -308,33 +308,67 @@ class TestResultCalculationService(unittest.TestCase):
 
 
 class TestSpeechTranscriptionRoute(unittest.TestCase):
-    @patch("app.api.routes.student.speech.logger")
-    def test_empty_transcription_raises_503(self, _mock_logger):
-        import asyncio
-        from fastapi import HTTPException
-        from app.api.routes.student.speech import transcribe_student_audio
+    """The route must stay thin: size-check the upload and delegate to the service."""
+
+    def _payload(self):
         from app.schemas.token import TokenPayload
 
-        mock_file = MagicMock()
-        mock_file.filename = "dictation.webm"
-
-        async def fake_read():
-            return b"fake audio payload"
-
-        mock_file.read = fake_read
-
-        payload = TokenPayload(
+        return TokenPayload(
             sub=str(uuid.uuid4()),
             role="student",
             exam_session_id=str(uuid.uuid4()),
             exam_schedule_id=str(uuid.uuid4()),
         )
 
-        with self.assertRaises(HTTPException) as ctx:
-            asyncio.run(transcribe_student_audio(token_payload=payload, file=mock_file))
+    def _file(self, content: bytes):
+        mock_file = MagicMock()
+        mock_file.filename = "dictation.wav"
 
-        self.assertEqual(ctx.exception.status_code, 503)
-        self.assertIn("unavailable offline", ctx.exception.detail)
+        async def fake_read(size=-1):
+            return content if size is None or size < 0 else content[:size]
+
+        mock_file.read = fake_read
+        return mock_file
+
+    @patch("app.api.routes.student.speech.logger")
+    def test_delegates_to_speech_service(self, _mock_logger):
+        import asyncio
+        from app.api.routes.student.speech import transcribe_student_audio
+        from app.schemas.speech import SpeechTranscriptionResponse
+
+        service = MagicMock()
+        service.transcribe.return_value = SpeechTranscriptionResponse(
+            text="the mitochondria", language="en-US", confidence=0.9
+        )
+
+        response = asyncio.run(transcribe_student_audio(
+            token_payload=self._payload(),
+            speech_service=service,
+            file=self._file(b"RIFF-audio"),
+            language="en-US",
+        ))
+
+        service.transcribe.assert_called_once_with(b"RIFF-audio", "en-US")
+        self.assertTrue(response.success)
+        self.assertEqual(response.data.text, "the mitochondria")
+
+    @patch("app.api.routes.student.speech.logger")
+    def test_rejects_oversized_upload(self, _mock_logger):
+        import asyncio
+        from app.api.routes.student import speech
+        from app.core.exceptions import ValidationException
+
+        service = MagicMock()
+        oversized = b"\x00" * (speech.MAX_AUDIO_UPLOAD_BYTES + 1)
+
+        with self.assertRaises(ValidationException):
+            asyncio.run(speech.transcribe_student_audio(
+                token_payload=self._payload(),
+                speech_service=service,
+                file=self._file(oversized),
+                language="en-US",
+            ))
+        service.transcribe.assert_not_called()
 
 
 class TestLazyPauseIfStale(unittest.TestCase):

@@ -78,3 +78,11 @@ class SessionPausedException(Exception):
     def __init__(self, detail: str = "Exam session is paused"):
         self.detail = detail
         super().__init__(self.detail)
+
+
+class ServiceUnavailableException(Exception):
+    """Raised when an optional server capability (e.g. offline speech
+    recognition) is not available on this deployment (HTTP 503)."""
+    def __init__(self, detail: str = "Service is temporarily unavailable"):
+        self.detail = detail
+        super().__init__(self.detail)

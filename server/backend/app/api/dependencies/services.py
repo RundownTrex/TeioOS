@@ -1,5 +1,9 @@
+from functools import lru_cache
 from typing import Annotated
 from fastapi import Depends
+
+from app.core.config import settings
+from app.services.speech_service import SpeechTranscriptionService, VoskModelProvider
 
 from app.api.dependencies.database import SessionDep
 from app.api.dependencies.repositories import (
@@ -171,4 +175,23 @@ ExamSessionServiceDep = Annotated[ExamSessionService, Depends(get_exam_session_s
 ExamDeliveryServiceDep = Annotated[ExamDeliveryService, Depends(get_exam_delivery_service)]
 EvaluationServiceDep = Annotated[EvaluationService, Depends(get_evaluation_service)]
 AnalyticsServiceDep = Annotated[AnalyticsService, Depends(get_analytics_service)]
+
+
+@lru_cache(maxsize=1)
+def get_vosk_model_provider() -> VoskModelProvider:
+    """Process-wide model provider so the acoustic model is loaded only once."""
+    return VoskModelProvider(settings.stt_model_path)
+
+
+def get_speech_service(
+    model_provider: Annotated[VoskModelProvider, Depends(get_vosk_model_provider)],
+) -> SpeechTranscriptionService:
+    return SpeechTranscriptionService(
+        model_provider=model_provider,
+        supported_languages=settings.stt_supported_languages,
+        max_audio_seconds=settings.stt_max_audio_seconds,
+    )
+
+
+SpeechServiceDep = Annotated[SpeechTranscriptionService, Depends(get_speech_service)]
 

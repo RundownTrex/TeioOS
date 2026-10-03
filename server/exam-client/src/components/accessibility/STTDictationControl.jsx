@@ -153,7 +153,7 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
                   ? 'Processing Audio'
                   : isListening
                   ? dictationMode === 'audio_recorder'
-                    ? 'Mic Recording (Firefox)'
+                    ? 'Recording (Press Stop to Insert)'
                     : 'Listening (Mic On)'
                   : isPaused
                   ? 'Dictation Paused'
@@ -167,6 +167,8 @@ export const STTDictationControl = ({ textareaRef, value, onChange, className = 
       {/* Guidance Note */}
       {isListening && (
         <p className="text-[11px] text-text-muted italic px-1">
+          {dictationMode === 'audio_recorder' &&
+            'Your speech is transcribed on the exam server when you press Stop Dictation (Alt+D). '}
           Tip: Use headphones or lower speaker volume to prevent microphone feedback from text-to-speech reading.
         </p>
       )}

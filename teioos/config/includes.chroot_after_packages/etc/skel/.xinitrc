@@ -112,5 +112,6 @@ exec chromium \
     --enable-speech-dispatcher \
     --force-renderer-accessibility \
     --use-fake-ui-for-media-stream \
+    --unsafely-treat-insecure-origin-as-secure="http://${SERVER_HOST}:${SERVER_PORT}" \
     --check-for-update-interval=31536000 \
     --disable-context-menu

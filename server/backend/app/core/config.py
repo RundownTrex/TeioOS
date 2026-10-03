@@ -38,13 +38,23 @@ class Settings(BaseSettings):
     # Safety net: a session paused for longer than this many minutes is
     # auto-submitted so an abandoned exam still produces a result.
     exam_max_pause_minutes: int = 120
+
+    # Offline speech-to-text (descriptive answer dictation)
+    # Directory of the Vosk acoustic model. The Docker image bundles the small
+    # English model at this path so dictation works on air-gapped exam LANs.
+    stt_model_path: str = "/opt/vosk-model"
+    # Language prefixes the bundled model can transcribe (BCP-47, e.g. "en-US").
+    stt_supported_languages: list[str] | str = ["en"]
+    # Upper bound on a single dictation clip, protecting server CPU and memory.
+    stt_max_audio_seconds: int = 120
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
 
-    @field_validator("cors_origins", mode="before")
+    @field_validator("cors_origins", "stt_supported_languages", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: Any) -> list[str]:
         if isinstance(v, str):

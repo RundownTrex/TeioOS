@@ -15,13 +15,24 @@ COPY requirements.txt .
 # Install dependencies into temporary prefix directory
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Stage 2: Minimal runtime image
+# Stage 2: Fetch the offline speech-to-text model (Vosk, small English, ~40 MB)
+# Bundled into the image so dictation works on air-gapped exam networks without
+# any manual setup by the administrator. The archive is checksum-verified.
+FROM python:3.12-slim AS stt-model
+
+COPY scripts/fetch_model.py /tmp/fetch_model.py
+RUN python3 /tmp/fetch_model.py && rm /tmp/fetch_model.py
+
+# Stage 3: Minimal runtime image
 FROM python:3.12-slim AS runner
 
 WORKDIR /app
 
 # Copy installed Python packages from builder stage
 COPY --from=builder /install /usr/local
+
+# Copy the offline speech recognition model (path matches STT_MODEL_PATH default)
+COPY --from=stt-model /opt/vosk-model /opt/vosk-model
 
 # Create non-root user and group
 RUN groupadd -r teioos -g 10001 && \

@@ -30,6 +30,9 @@
   "PromptForDownloadLocation": false,
   "DownloadRestrictions": 3,
   "AudioCaptureAllowed": true,
+  "OverrideSecurityRestrictionsOnInsecureOrigin": [
+    "http://teioos-server.local:8080"
+  ],
   "AudioCaptureAllowedUrls": [
     "http://teioos-server.local:8080",
     "http://teioos-server.local:8080/*",

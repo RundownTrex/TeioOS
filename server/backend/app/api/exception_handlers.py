@@ -15,6 +15,7 @@ from app.core.exceptions import (
     SessionExpiredException,
     SessionAlreadySubmittedException,
     SessionPausedException,
+    ServiceUnavailableException,
 )
 from app.schemas.response import APIResponse
 import logging
@@ -184,6 +185,19 @@ def add_exception_handlers(app: FastAPI) -> None:
         )
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
+            content=response_model.model_dump(mode='json'),
+        )
+
+    @app.exception_handler(ServiceUnavailableException)
+    async def service_unavailable_exception_handler(request: Request, exc: ServiceUnavailableException):
+        logger.warning(f"ServiceUnavailableException at {request.url.path}: {exc.detail}")
+        response_model = APIResponse(
+            success=False,
+            message=exc.detail,
+            errors=[exc.detail]
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content=response_model.model_dump(mode='json'),
         )
 

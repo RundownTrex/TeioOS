@@ -16,6 +16,8 @@ from app.repositories.question_repository import QuestionRepository
 from app.repositories.student_answer_repository import StudentAnswerRepository
 from app.services.exam_session_service import ExamSessionService
 from app.services.result_calculation_service import ResultCalculationService
+from app.api.dependencies.services import get_vosk_model_provider
+from app.core.exceptions import ServiceUnavailableException
 
 # Initialize logging before creating the app
 setup_logging()
@@ -73,17 +75,31 @@ async def _run_auto_submit_sweeper() -> None:
         await asyncio.sleep(settings.auto_submit_sweep_interval_seconds)
 
 
+async def _preload_speech_model() -> None:
+    """Warm the offline speech model so the first dictation is not delayed.
+
+    Failure is non-fatal: the exam server keeps running and the transcription
+    endpoint reports dictation as unavailable.
+    """
+    try:
+        await asyncio.to_thread(get_vosk_model_provider().get_model)
+    except ServiceUnavailableException:
+        logger.warning("Offline speech dictation is unavailable on this server")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     sweeper = asyncio.create_task(_run_auto_submit_sweeper())
+    speech_preload = asyncio.create_task(_preload_speech_model())
     try:
         yield
     finally:
-        sweeper.cancel()
-        try:
-            await sweeper
-        except asyncio.CancelledError:
-            pass
+        for task in (sweeper, speech_preload):
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
 
 
 app = FastAPI(

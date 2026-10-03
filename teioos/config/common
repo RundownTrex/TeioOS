@@ -58,10 +58,10 @@ LB_SYSTEM="live"
 LB_IMAGE_NAME="live-image"
 
 # Set options to use with apt
-APT_OPTIONS="--yes -o Acquire::Retries=5"
+APT_OPTIONS="--yes -o Acquire::Retries=5 -o Acquire::ForceIPv4=true"
 
 # Set options to use with aptitude
-APTITUDE_OPTIONS="--assume-yes -o Acquire::Retries=5"
+APTITUDE_OPTIONS="--assume-yes -o Acquire::Retries=5 -o Acquire::ForceIPv4=true"
 
 # Set options to use with debootstrap
 DEBOOTSTRAP_OPTIONS=""

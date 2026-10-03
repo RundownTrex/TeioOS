@@ -4,9 +4,21 @@ lb config noauto \
     --distribution trixie \
     --architectures amd64 \
     --archive-areas "main contrib non-free non-free-firmware" \
+    --mirror-bootstrap "http://cdn-aws.deb.debian.org/debian/" \
+    --mirror-chroot "http://cdn-aws.deb.debian.org/debian/" \
+    --mirror-chroot-security "http://cdn-aws.deb.debian.org/debian-security/" \
+    --mirror-binary "http://cdn-aws.deb.debian.org/debian/" \
+    --mirror-binary-security "http://cdn-aws.deb.debian.org/debian-security/" \
+    --parent-mirror-bootstrap "http://cdn-aws.deb.debian.org/debian/" \
+    --parent-mirror-chroot "http://cdn-aws.deb.debian.org/debian/" \
+    --parent-mirror-chroot-security "http://cdn-aws.deb.debian.org/debian-security/" \
+    --parent-mirror-binary "http://cdn-aws.deb.debian.org/debian/" \
+    --parent-mirror-binary-security "http://cdn-aws.deb.debian.org/debian-security/" \
+    --apt-options "--yes -o Acquire::ForceIPv4=true" \
     --binary-images iso-hybrid \
     --debian-installer live \
     --debian-installer-gui true \
     --debian-installer-preseedfile preseed.cfg \
     "${@}"
+
 

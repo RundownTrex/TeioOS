@@ -171,6 +171,8 @@ export const AccessibilityModal = () => {
       title="Accessibility Preferences"
       footer={footerActions}
       size="lg"
+      returnFocusId="skip-to-accessibility"
+      isolateKeys
     >
       <Tabs defaultValue={activeTab} value={activeTab} onChange={setActiveTab}>
         {/* Category Navigation Tabs */}

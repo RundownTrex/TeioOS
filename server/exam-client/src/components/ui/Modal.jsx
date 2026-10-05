@@ -2,6 +2,18 @@ import React, { useEffect, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Accessible modal dialog.
+ *
+ * @param {string} [returnFocusId] - Element id to receive focus on close when the
+ *   element focused at open time is gone or was just <body> (e.g. opened by a hotkey).
+ * @param {boolean} [isolateKeys] - When true, keydown events do not reach page-level
+ *   shortcut listeners while the dialog is open (stops Enter/Arrows/Escape in the
+ *   dialog from also driving the page behind it).
+ */
 export const Modal = ({
   isOpen = false,
   onClose,
@@ -10,9 +22,12 @@ export const Modal = ({
   footer,
   size = 'md',
   className = '',
+  returnFocusId,
+  isolateKeys = false,
 }) => {
   const dialogRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const wasOpenRef = useRef(false);
   const titleId = useId();
   const descId = useId();
 
@@ -26,6 +41,7 @@ export const Modal = ({
   // Focus management: store trigger, focus dialog container, restore on close
   useEffect(() => {
     if (isOpen) {
+      wasOpenRef.current = true;
       previousFocusRef.current = document.activeElement;
       document.body.style.overflow = 'hidden';
       // Focus the dialog container itself so screen readers announce the dialog
@@ -34,12 +50,24 @@ export const Modal = ({
       });
     } else {
       document.body.style.overflow = '';
-      // Restore focus to the element that triggered the modal
-      requestAnimationFrame(() => {
-        if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
-          previousFocusRef.current.focus();
-        }
-      });
+      // Restore focus only after a real close (never on initial mount)
+      if (wasOpenRef.current) {
+        wasOpenRef.current = false;
+        requestAnimationFrame(() => {
+          let target = previousFocusRef.current;
+          const isUsable =
+            target &&
+            target !== document.body &&
+            target.isConnected &&
+            typeof target.focus === 'function';
+          if (!isUsable && returnFocusId) {
+            target = document.getElementById(returnFocusId);
+          }
+          if (target && typeof target.focus === 'function') {
+            target.focus();
+          }
+        });
+      }
     }
 
     return () => {
@@ -52,6 +80,10 @@ export const Modal = ({
     const handleKeyDown = (e) => {
       if (!isOpen) return;
 
+      // Keep page-level hotkeys (registered on window, bubble phase) from also
+      // reacting. React handlers inside the dialog have already run by now.
+      if (isolateKeys) e.stopPropagation();
+
       if (e.key === 'Escape' && onClose) {
         e.preventDefault();
         onClose();
@@ -59,27 +91,37 @@ export const Modal = ({
       }
 
       if (e.key === 'Tab' && dialogRef.current) {
-        const focusables = dialogRef.current.querySelectorAll(
-          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
-        if (!focusables.length) return;
+        const dialog = dialogRef.current;
+        const focusables = dialog.querySelectorAll(FOCUSABLE_SELECTOR);
+        if (!focusables.length) {
+          e.preventDefault();
+          dialog.focus();
+          return;
+        }
 
         const first = focusables[0];
         const last = focusables[focusables.length - 1];
+        const active = document.activeElement;
 
-        if (e.shiftKey && document.activeElement === first) {
+        // Focus is on the dialog container itself or has escaped: pull it back in
+        if (!dialog.contains(active) || active === dialog) {
+          e.preventDefault();
+          (e.shiftKey ? last : first).focus();
+        } else if (e.shiftKey && active === first) {
           e.preventDefault();
           last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
+        } else if (!e.shiftKey && active === last) {
           e.preventDefault();
           first.focus();
         }
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+    // document sits after React's root listeners but before window-level page hotkeys
+    const target = isolateKeys ? document : window;
+    target.addEventListener('keydown', handleKeyDown);
+    return () => target.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, isolateKeys]);
 
   if (!isOpen) return null;
 

@@ -7,6 +7,7 @@ import { useShortcuts } from '../hooks/useShortcuts';
 import { useAccessibility } from '../hooks/useAccessibility';
 import { useTTS } from '../hooks/useTTS';
 import { announceToScreenReader } from '../utils/ariaAnnounce';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 
 export const RootLayout = () => {
   const location = useLocation();
@@ -67,7 +68,9 @@ export const RootLayout = () => {
       <SkipLinks />
 
       {/* Dynamic Main Routing Content */}
-      <Outlet />
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
 
       {/* Global Accessibility Settings Modal */}
       <AccessibilityModal />

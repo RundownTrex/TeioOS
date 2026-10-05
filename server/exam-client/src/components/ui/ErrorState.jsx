@@ -7,6 +7,8 @@ export const ErrorState = ({
   message = 'An unexpected error occurred while communicating with the server. Local data progress has been preserved.',
   retryLabel = 'Retry Synchronization',
   onRetry,
+  actionLabel,
+  onAction,
   className = '',
 }) => {
   return (
@@ -23,11 +25,18 @@ export const ErrorState = ({
 
       <p className="text-sm text-text-muted leading-relaxed mb-5">{message}</p>
 
-      {onRetry && (
-        <Button variant="primary" size="sm" onClick={onRetry} leftIcon={<RotateCcw className="w-4 h-4" />}>
-          {retryLabel}
-        </Button>
-      )}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        {onRetry && (
+          <Button variant="primary" size="sm" onClick={onRetry} leftIcon={<RotateCcw className="w-4 h-4" />}>
+            {retryLabel}
+          </Button>
+        )}
+        {onAction && actionLabel && (
+          <Button variant="secondary" size="sm" onClick={onAction}>
+            {actionLabel}
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

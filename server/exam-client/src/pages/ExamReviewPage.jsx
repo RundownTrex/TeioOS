@@ -35,50 +35,19 @@ export const ExamReviewPage = () => {
 
   const studentName = userProfile?.name || userProfile?.full_name || 'Candidate';
   const rollNumber = userProfile?.roll_number || '';
-
-  if (isLoading) {
-    return (
-      <ExamLayout paperTitle="Loading Review..." sectionTitle="Paper Review">
-        <div className="max-w-4xl mx-auto space-y-4 p-4">
-          <Skeleton variant="rectangular" height={120} />
-          <Skeleton variant="rectangular" height={180} />
-          <Skeleton variant="rectangular" height={180} />
-        </div>
-      </ExamLayout>
-    );
-  }
-
-  if (isError || !reviewData) {
-    return (
-      <ExamLayout paperTitle="Review Unavailable" sectionTitle="Paper Review">
-        <div className="max-w-2xl mx-auto my-8 p-4">
-          <ErrorState
-            title="Unable to Load Exam Review"
-            message={
-              error?.response?.data?.message ||
-              error?.message ||
-              'Exam review is unavailable or results have not been published by the administration yet.'
-            }
-            actionLabel="Back to Dashboard"
-            onAction={() => navigate('/dashboard')}
-            onRetry={() => refetch()}
-          />
-        </div>
-      </ExamLayout>
-    );
-  }
-
   const {
-    subject_name,
-    subject_code,
-    department_name,
-    total_marks,
-    obtained_marks,
-    percentage,
+    subject_name = 'Examination',
+    subject_code = 'EXAM',
+    department_name = 'Department',
+    total_marks = 0,
+    obtained_marks = 0,
+    percentage = 0,
     grade,
     published_at,
     questions = [],
-  } = reviewData;
+  } = reviewData || {};
+
+  const formattedPercentage = percentage != null ? Number(percentage).toFixed(1) : '0.0';
 
   const filteredQuestions = questions.filter((q) => {
     if (filter === 'CORRECT') return q.status === 'CORRECT';
@@ -259,6 +228,39 @@ export const ExamReviewPage = () => {
       return () => clearTimeout(timer);
     }
   }, [isLoading, isError, reviewData, speakText]);
+
+  if (isLoading) {
+    return (
+      <ExamLayout paperTitle="Loading Review..." sectionTitle="Paper Review">
+        <div className="max-w-4xl mx-auto space-y-4 p-4">
+          <Skeleton variant="rectangular" height={120} />
+          <Skeleton variant="rectangular" height={180} />
+          <Skeleton variant="rectangular" height={180} />
+        </div>
+      </ExamLayout>
+    );
+  }
+
+  if (isError || !reviewData) {
+    return (
+      <ExamLayout paperTitle="Review Unavailable" sectionTitle="Paper Review">
+        <div className="max-w-2xl mx-auto my-8 p-4">
+          <ErrorState
+            title="Unable to Load Exam Review"
+            message={
+              error?.response?.data?.message ||
+              error?.message ||
+              'Exam review is unavailable or results have not been published by the administration yet.'
+            }
+            actionLabel="Back to Dashboard"
+            onAction={() => navigate('/dashboard')}
+            onRetry={() => refetch()}
+          />
+        </div>
+      </ExamLayout>
+    );
+  }
+
   const sidebarContent = (
     <div className="space-y-5">
       {/* Return to Dashboard Button placed at the VERY TOP for instant access */}
@@ -294,7 +296,7 @@ export const ExamReviewPage = () => {
             </span>
             <span className="text-sm font-mono text-text-muted">/ {total_marks} Marks</span>
             <span className="ml-auto text-xs font-bold text-navy-primary font-mono">
-              ({percentage?.toFixed(1)}%)
+              ({formattedPercentage}%)
             </span>
           </div>
         </div>
@@ -424,7 +426,7 @@ export const ExamReviewPage = () => {
 
             <div className="flex items-center gap-2">
               <Badge variant="purple" size="md">
-                Grade: {grade || 'P'} ({percentage?.toFixed(1)}%)
+                Grade: {grade || 'P'} ({formattedPercentage}%)
               </Badge>
               <Badge variant="success" size="md">
                 Score: {obtained_marks} / {total_marks} Marks

@@ -47,7 +47,7 @@ export const DEFAULT_SHORTCUTS = {
   clearResponse: { key: 'C', alt: true, ctrl: false, shift: false, label: 'Clear Selected Response', category: 'Question Actions', primaryKey: 'C', chordKey: 'Alt + C', description: 'Clear response selection' },
   saveResponse: { key: 'S', alt: true, ctrl: false, shift: false, label: 'Save Response to Server', category: 'Question Actions', primaryKey: 'S', chordKey: 'Alt + S', description: 'Manually flush response to backend' },
   focusPalette: { key: 'Q', alt: true, ctrl: false, shift: false, label: 'Focus Question Palette Grid', category: 'Quick Focus', primaryKey: 'Q', chordKey: 'Alt + Q', description: 'Jump focus to palette; use arrows to move tiles' },
-  focusTimer: { key: 'T', alt: true, ctrl: false, shift: false, label: 'Announce Remaining Time', category: 'Quick Focus', primaryKey: 'T', chordKey: 'Alt + T', description: 'Speak remaining examination duration' },
+  focusTimer: { key: 'T', alt: true, ctrl: false, shift: false, label: 'Announce Remaining Time', category: 'Quick Focus', primaryKey: 'T', chordKey: 'Alt + T', description: 'Speak remaining examination duration without shifting keyboard focus' },
   submitExam: { key: 'Enter', alt: false, ctrl: true, shift: false, label: 'Submit Examination', category: 'Question Actions', primaryKey: 'Ctrl + Enter', chordKey: 'Ctrl + Enter', description: 'Open final submission confirmation dialog' },
 
   // Portal & Dashboard Navigation

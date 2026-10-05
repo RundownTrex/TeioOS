@@ -22,6 +22,7 @@ import {
   Keyboard,
   ShieldCheck,
   Eye,
+  Clock,
 } from 'lucide-react';
 
 export const AccessibilityModal = () => {
@@ -57,6 +58,8 @@ export const AccessibilityModal = () => {
     setTtsVolume,
     setTtsVoiceURI,
     setSttLanguage,
+    timerAnnouncementInterval,
+    setTimerAnnouncementInterval,
     toggleTTS,
     toggleSTT,
     resetAccessibility,
@@ -109,6 +112,29 @@ export const AccessibilityModal = () => {
     { value: 'es-ES', label: 'Spanish (Spain)' },
     { value: 'fr-FR', label: 'French (France)' },
     { value: 'de-DE', label: 'German (Germany)' },
+  ];
+
+  const timerIntervalOptions = [
+    {
+      value: '5min',
+      label: 'Every 5 Minutes (Recommended for Blind Candidates)',
+      description: 'Periodic spoken updates every 5 minutes and at critical final countdown milestones (5m, 2m, 1m, 30s, 10s)',
+    },
+    {
+      value: '10min',
+      label: 'Every 10 Minutes',
+      description: 'Periodic spoken countdown updates every 10 minutes and at critical milestones',
+    },
+    {
+      value: 'milestones',
+      label: 'Standard Milestones Only',
+      description: 'Spoken announcements at 1 hour, 30m, 15m, 5m, 2m, 1m, 30s, and 10s',
+    },
+    {
+      value: 'off',
+      label: 'On-Demand Only (Manual)',
+      description: 'Countdown time is only spoken when pressing T or clicking the timer display',
+    },
   ];
 
   const voiceSelectOptions = voices.map((v) => {
@@ -466,6 +492,26 @@ export const AccessibilityModal = () => {
               </div>
             </div>
           )}
+
+          {/* Countdown Timer Spoken Announcements */}
+          <div className="p-3.5 bg-surface border border-border-main rounded space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-text-main flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-navy-primary" aria-hidden="true" />
+                Spoken Countdown Timer Announcements
+              </span>
+            </div>
+            <p className="text-[11px] text-text-muted leading-relaxed">
+              Configures how frequently remaining examination time is automatically announced aloud for screen readers and TTS. You can also press <kbd className="px-1 py-0.5 font-mono bg-subtle border border-border-main rounded text-[10px]">T</kbd> or <kbd className="px-1 py-0.5 font-mono bg-subtle border border-border-main rounded text-[10px]">Alt+T</kbd> at any second to hear the time without losing your place.
+            </p>
+            <RadioGroup
+              name="timerAnnouncementInterval"
+              label="Countdown Notification Frequency"
+              value={timerAnnouncementInterval}
+              onChange={setTimerAnnouncementInterval}
+              options={timerIntervalOptions}
+            />
+          </div>
         </TabPanel>
 
         {/* ── TAB 4: SPEECH DICTATION (STT) ── */}

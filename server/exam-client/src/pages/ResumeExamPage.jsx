@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
@@ -9,11 +9,12 @@ import { useExamSession } from '../features/exams/hooks/useExamSession';
 import { examsApi } from '../features/exams/api/examsApi';
 import { RotateCcw, ShieldCheck, Clock, FileText, Flag, PauseCircle } from 'lucide-react';
 import { restoreLocalAnswers, restoreWorkbenchState } from '../utils/resilienceManager';
-import { formatDuration } from '../utils/formatters';
+import { formatDuration, formatSpokenDuration } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useTTS } from '../hooks/useTTS';
+import { useAccessibility } from '../hooks/useAccessibility';
 import { EXAM_SESSION_STATUS } from '../utils/constants';
 
 /**
@@ -30,6 +31,7 @@ export const ResumeExamPage = () => {
   const { initExamSession } = useExam();
   const { registerHandler, unregisterHandler } = useShortcuts();
   const { speakText } = useTTS();
+  const { announceToScreenReader } = useAccessibility();
 
   const { data: sessionSnapshot, isLoading } = useExamSession(scheduleId);
 
@@ -136,9 +138,19 @@ export const ResumeExamPage = () => {
     }
   };
 
+  const handleReadTimer = useCallback(() => {
+    const spoken = formatSpokenDuration(secondsRemaining);
+    const msg = `Remaining examination time is paused at ${spoken}. Press Enter or Space to resume your examination.`;
+    speakText(msg, 'Remaining Time', { force: true });
+    if (announceToScreenReader) {
+      announceToScreenReader(msg, 'assertive');
+    }
+  }, [secondsRemaining, speakText, announceToScreenReader]);
+
   // Register Resume Page Shortcuts
   useEffect(() => {
     registerHandler('dashboardStartExam', handleResume);
+    registerHandler('focusTimer', handleReadTimer);
     registerHandler('navDashboard', () => navigate('/dashboard'));
     registerHandler('logout', () => {
       logout();
@@ -147,12 +159,13 @@ export const ResumeExamPage = () => {
 
     return () => {
       unregisterHandler('dashboardStartExam');
+      unregisterHandler('focusTimer');
       unregisterHandler('navDashboard');
       unregisterHandler('logout');
     };
-  }, [registerHandler, unregisterHandler, handleResume, navigate, logout]);
+  }, [registerHandler, unregisterHandler, handleResume, handleReadTimer, navigate, logout]);
 
-  // Global Key Listener for Enter / Space / R / Escape
+  // Global Key Listener for Enter / Space / R / Escape / T
   useEffect(() => {
     const handleKeyDown = (e) => {
       const isInputElem =
@@ -171,6 +184,9 @@ export const ResumeExamPage = () => {
           e.preventDefault();
           handleResume();
         }
+      } else if (key === 'T') {
+        e.preventDefault();
+        handleReadTimer();
       } else if (e.key === 'Escape' || key === 'D') {
         e.preventDefault();
         navigate('/dashboard');
@@ -179,7 +195,7 @@ export const ResumeExamPage = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLoading, isResuming, handleResume, navigate]);
+  }, [isLoading, isResuming, handleResume, handleReadTimer, navigate]);
 
   // Auditory Orientation on Mount
   useEffect(() => {
@@ -247,7 +263,21 @@ export const ResumeExamPage = () => {
               </span>
               <span className="font-bold text-text-main">{flaggedCount} Questions</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div
+              id="timer-display"
+              tabIndex={0}
+              role="timer"
+              aria-label={`${isPaused ? 'Remaining Time Paused' : 'Remaining Time'}: ${formatSpokenDuration(secondsRemaining)}. Press Enter or Space to announce.`}
+              onClick={handleReadTimer}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleReadTimer();
+                }
+              }}
+              className="flex justify-between items-center cursor-pointer p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary hover:bg-subtle/60"
+            >
               <span className="text-text-muted font-semibold flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-status-warning" aria-hidden="true" />
                 {isPaused ? 'Remaining Time (Frozen):' : 'Server Remaining Time:'}

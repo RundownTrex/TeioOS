@@ -3,6 +3,7 @@ import React from 'react';
 export const SkipLinks = ({
   links = [
     { targetId: 'main-content', label: 'Skip to main examination content' },
+    { targetId: 'timer-display', label: 'Skip to examination countdown timer' },
     { targetId: 'skip-to-palette', label: 'Skip to question palette grid' },
     { targetId: 'skip-to-accessibility', label: 'Skip to accessibility preferences' },
   ],

@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS = {
   ttsVoiceURI: '',
   sttEnabled: true,
   sttLanguage: 'en-US',
+  timerAnnouncementInterval: 'milestones',
 };
 
 export const AccessibilityProvider = ({ children }) => {
@@ -195,6 +196,17 @@ export const AccessibilityProvider = ({ children }) => {
     announceToScreenReader(`Speech to text recognition language changed to ${sttLanguage}`);
   };
 
+  const setTimerAnnouncementInterval = (interval) => {
+    setSettings((prev) => ({ ...prev, timerAnnouncementInterval: interval }));
+    const labels = {
+      '5min': 'every 5 minutes and milestones',
+      '10min': 'every 10 minutes and milestones',
+      'milestones': 'milestones only',
+      'off': 'manual only',
+    };
+    announceToScreenReader(`Timer notification frequency set to ${labels[interval] || interval}`);
+  };
+
   const toggleTTS = () => {
     setSettings((prev) => {
       const next = !prev.ttsEnabled;
@@ -227,8 +239,9 @@ export const AccessibilityProvider = ({ children }) => {
           ttsEnabled: true,
           ttsSpeed: 0.9,
           reducedMotion: true,
+          timerAnnouncementInterval: '5min',
         }));
-        announceToScreenReader('Applied Screen Reader Accessibility Profile.');
+        announceToScreenReader('Applied Screen Reader Accessibility Profile. Periodic 5-minute timer announcements enabled.');
         break;
       case 'high_contrast':
       case 'vision':
@@ -313,6 +326,8 @@ export const AccessibilityProvider = ({ children }) => {
     voices,
     sttEnabled: settings.sttEnabled,
     sttLanguage: settings.sttLanguage,
+    timerAnnouncementInterval: settings.timerAnnouncementInterval || 'milestones',
+    setTimerAnnouncementInterval,
     isMicActive,
     setIsMicActive,
     isModalOpen,
@@ -343,6 +358,14 @@ export const AccessibilityProvider = ({ children }) => {
       {children}
     </AccessibilityContext.Provider>
   );
+};
+
+export const useAccessibility = () => {
+  const context = React.useContext(AccessibilityContext);
+  if (!context) {
+    throw new Error('useAccessibility must be used within an AccessibilityProvider');
+  }
+  return context;
 };
 
 export default AccessibilityProvider;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { ExamLayout } from '../layouts/ExamLayout';
@@ -13,11 +13,12 @@ import { useExam } from '../hooks/useExam';
 import { useAuth } from '../hooks/useAuth';
 import { examsApi } from '../features/exams/api/examsApi';
 import { ShieldCheck, Info, ArrowLeft, Clock, Lock, CheckCircle2, FileText } from 'lucide-react';
-import { formatDateTime } from '../utils/formatters';
+import { formatDateTime, formatSpokenDuration } from '../utils/formatters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useFocusOnMount } from '../hooks/useFocusOnMount';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useTTS } from '../hooks/useTTS';
+import { useAccessibility } from '../hooks/useAccessibility';
 
 const STANDARD_CONDUCT_RULES = [
   'Ensure you remain seated at your designated computer terminal throughout the examination.',
@@ -45,6 +46,7 @@ export const InstructionsPage = () => {
   const { token: baseToken } = useAuth();
   const { registerHandler, unregisterHandler } = useShortcuts();
   const { speakText } = useTTS();
+  const { announceToScreenReader } = useAccessibility();
 
   useDocumentTitle('Examination Instructions');
   const pageHeadingRef = useFocusOnMount();
@@ -176,6 +178,16 @@ export const InstructionsPage = () => {
     }
   };
 
+  const handleReadDuration = useCallback(() => {
+    const durationMins = data.durationMinutes || 0;
+    const durationSpoken = formatSpokenDuration(durationMins * 60);
+    const text = `This examination has a scheduled duration of ${durationSpoken}.`;
+    speakText(text, 'Exam Duration', { force: true });
+    if (announceToScreenReader) {
+      announceToScreenReader(text, 'assertive');
+    }
+  }, [data.durationMinutes, speakText, announceToScreenReader]);
+
   const handleReadRulesAloud = () => {
     const rulesText = STANDARD_CONDUCT_RULES.map((r, i) => `Rule ${i + 1}: ${r}`).join('. ');
     const customText = data.customInstructions ? `Special Instructions: ${data.customInstructions}. ` : '';
@@ -195,14 +207,16 @@ export const InstructionsPage = () => {
   useEffect(() => {
     registerHandler('ttsReadQuestion', handleReadRulesAloud);
     registerHandler('clearResponse', handleToggleAgreement);
+    registerHandler('focusTimer', handleReadDuration);
     registerHandler('navDashboard', () => navigate('/dashboard'));
 
     return () => {
       unregisterHandler('ttsReadQuestion');
       unregisterHandler('clearResponse');
+      unregisterHandler('focusTimer');
       unregisterHandler('navDashboard');
     };
-  }, [registerHandler, unregisterHandler, data, hasAgreed, navigate]);
+  }, [registerHandler, unregisterHandler, data, hasAgreed, handleReadDuration, navigate]);
 
   // Global Key Listener: Auto-agrees and begins examination instantly on Enter/Space/B
   useEffect(() => {
@@ -228,6 +242,9 @@ export const InstructionsPage = () => {
       } else if (key === 'R') {
         e.preventDefault();
         handleReadRulesAloud();
+      } else if (key === 'T') {
+        e.preventDefault();
+        handleReadDuration();
       } else if (key === 'C' || key === 'A') {
         e.preventDefault();
         handleToggleAgreement();
@@ -239,7 +256,7 @@ export const InstructionsPage = () => {
 
     window.addEventListener('keydown', handleGlobalKeys);
     return () => window.removeEventListener('keydown', handleGlobalKeys);
-  }, [isUpcoming, isStarting, hasAgreed, handleBeginExam, handleReadRulesAloud, handleToggleAgreement, navigate, speakText]);
+  }, [isUpcoming, isStarting, hasAgreed, handleBeginExam, handleReadRulesAloud, handleReadDuration, handleToggleAgreement, navigate, speakText]);
 
   // Initial Auditory Cue on Instructions Page Mount
   useEffect(() => {
@@ -305,7 +322,22 @@ export const InstructionsPage = () => {
               {data.subjectName}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-text-muted font-medium pt-3 mt-2 border-t border-border-main">
-              <div><strong>Duration:</strong> {data.durationMinutes} Minutes</div>
+              <div
+                id="timer-display"
+                tabIndex={0}
+                role="timer"
+                aria-label={`Examination Duration: ${formatSpokenDuration(data.durationMinutes * 60)}. Press Enter or Space to announce.`}
+                onClick={handleReadDuration}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleReadDuration();
+                  }
+                }}
+                className="cursor-pointer rounded p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-primary hover:text-text-main"
+              >
+                <strong>Duration:</strong> {data.durationMinutes} Minutes
+              </div>
               <div><strong>Total Marks:</strong> {data.totalMarks} Marks</div>
               <div><strong>Questions:</strong> {data.totalQuestions}</div>
             </div>

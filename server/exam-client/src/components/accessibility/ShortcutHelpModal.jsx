@@ -139,7 +139,7 @@ export const SHORTCUT_ITEMS = [
     category: 'Active Exam Workbench',
     primaryKeys: ['T'],
     defaultChord: 'Alt + T',
-    description: 'Audibly announce countdown timer and focus the clock.',
+    description: 'Audibly announce remaining examination time without shifting keyboard focus.',
     scope: 'Exam',
   },
   {

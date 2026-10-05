@@ -23,7 +23,8 @@ import { ErrorState } from '../components/ui/ErrorState';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { SYNC_STATUS, SESSION_SYNC_INTERVAL_MS, EXAM_SESSION_STATUS, STORAGE_KEYS } from '../utils/constants';
-import { formatDuration } from '../utils/formatters';
+import { formatDuration, formatSpokenDuration } from '../utils/formatters';
+import { useAccessibility } from '../hooks/useAccessibility';
 import { getItem } from '../utils/storage';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import {
@@ -45,6 +46,7 @@ export const ActiveExamPage = () => {
   const { registerHandler, unregisterHandler } = useShortcuts();
   const { speakText, togglePauseResume, stopSpeech, repeatSpeech } = useTTS();
   const { toggleDictation } = useSTT();
+  const { announceToScreenReader } = useAccessibility();
 
   useDocumentTitle('Active Examination');
 
@@ -655,10 +657,13 @@ export const ActiveExamPage = () => {
   }, [currentIndex, currentQuestion, answersMap, speakText]);
 
   const handleReadTimer = useCallback(() => {
-    const timerElem = document.getElementById('timer-display');
-    if (timerElem) timerElem.focus();
-    speakText(`Remaining examination time: ${formatDuration(secondsRemaining)}`, 'Remaining Time', { force: true });
-  }, [secondsRemaining, speakText]);
+    const spoken = formatSpokenDuration(secondsRemaining);
+    const msg = `Remaining examination time: ${spoken}.`;
+    speakText(msg, 'Remaining Time', { force: true });
+    if (announceToScreenReader) {
+      announceToScreenReader(msg, 'assertive');
+    }
+  }, [secondsRemaining, speakText, announceToScreenReader]);
 
   const handleFocusPalette = useCallback(() => {
     const grid = document.getElementById('palette-grid-container');

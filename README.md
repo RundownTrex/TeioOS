@@ -244,6 +244,7 @@ Client devices on the same local network can connect using the server's LAN IP:
 - Candidate Examination Client: `http://<LAN_IP>:8080/exam/`
 - Administrator Dashboard: `http://<LAN_IP>:8080/admin/`
 - API Health Check: `http://<LAN_IP>:8080/api/v1/health`
+- Swagger UI Documentation: `http://<LAN_IP>:8080/docs`
 
 ## Required Environment Variables
 
@@ -329,10 +330,15 @@ npm run dev
 ```
 
 ## API Documentation
-
-When the backend server is running, interactive API documentation is accessible at:
-
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-- OpenAPI Schema: `http://localhost:8000/openapi.json`
+ 
+When the server is running, interactive API documentation is accessible at:
+ 
+- **Docker Container Stack (Port 8080):**
+  - Swagger UI: `http://localhost:8080/docs`
+  - ReDoc: `http://localhost:8080/redoc`
+  - OpenAPI Schema: `http://localhost:8080/openapi.json`
+- **Development Server (Direct Backend Port 8000):**
+  - Swagger UI: `http://localhost:8000/docs`
+  - ReDoc: `http://localhost:8000/redoc`
+  - OpenAPI Schema: `http://localhost:8000/openapi.json`
 

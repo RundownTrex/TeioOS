@@ -90,7 +90,7 @@ class ExamDeliveryService:
         self.db.commit()
 
         # 1. Fetch questions with options
-        schedule = self.schedule_repo.get_by_id(schedule_id)
+        schedule = self.schedule_repo.get_by_id_with_details(schedule_id)
         questions = self.question_repo.get_all(exam_id=schedule.exam_id, limit=1000)
 
         # 2. Fetch previously saved answers
@@ -130,9 +130,28 @@ class ExamDeliveryService:
 
         display_questions.sort(key=lambda q: q.display_order)
 
+        exam_title = (
+            schedule.exam.title
+            if (schedule and schedule.exam and schedule.exam.title)
+            else (schedule.exam.subject.name if (schedule and schedule.exam and schedule.exam.subject) else "Examination")
+        )
+        subject_name = (
+            schedule.exam.subject.name
+            if (schedule and schedule.exam and schedule.exam.subject)
+            else "Examination"
+        )
+        subject_code = (
+            schedule.exam.subject.subject_code
+            if (schedule and schedule.exam and schedule.exam.subject)
+            else "EXAM"
+        )
+
         return ExamQuestionsPayload(
             questions=display_questions,
-            server_current_time=datetime.now(timezone.utc)
+            server_current_time=datetime.now(timezone.utc),
+            exam_title=exam_title,
+            subject_name=subject_name,
+            subject_code=subject_code,
         )
 
     def save_answer(

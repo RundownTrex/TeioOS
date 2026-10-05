@@ -34,7 +34,7 @@ export const ResultsPage = () => {
   const rollNumber = userProfile?.roll_number || '';
 
   const subjectCode = instructionData?.subject_code || 'EXAM';
-  const subjectName = instructionData?.subject_name || 'Examination';
+  const subjectName = instructionData?.exam_title || instructionData?.subject_name || 'Examination';
   const isPublished = Boolean(resultData?.is_published);
   const evaluationStatus = resultData?.evaluation_status || 'PENDING_EVALUATION';
   const obtainedMarks = resultData?.obtained_marks ?? 0;
@@ -146,7 +146,7 @@ export const ResultsPage = () => {
   }
 
   return (
-    <ExamLayout paperTitle={subjectCode} sectionTitle="Performance Report">
+    <ExamLayout paperTitle={subjectName} sectionTitle="Performance Report">
       <div className="max-w-[900px] mx-auto space-y-6 select-none my-4">
         {/* Paper Header Card */}
         <Card className="border-border-main bg-surface">

@@ -39,6 +39,9 @@ class ExamQuestionsPayload(BaseModel):
     """Payload for GET /questions."""
     questions: List[QuestionDisplay]
     server_current_time: datetime
+    exam_title: Optional[str] = None
+    subject_name: Optional[str] = None
+    subject_code: Optional[str] = None
 
 
 # --- Request Models ---
@@ -129,6 +132,7 @@ class StudentAvailableExamResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
     schedule_id: UUID
+    exam_title: Optional[str] = None
     subject_name: str
     subject_code: str
     department_name: str
@@ -193,6 +197,7 @@ class ExamReviewResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     schedule_id: UUID
+    exam_title: Optional[str] = None
     subject_name: str
     subject_code: str
     department_name: str

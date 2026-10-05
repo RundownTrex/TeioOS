@@ -256,7 +256,7 @@ export const InstructionsPage = () => {
 
   if (isLoading) {
     return (
-      <ExamLayout paperTitle="EXAM" sectionTitle="Instructions">
+      <ExamLayout paperTitle={data.subjectName || 'Examination'} sectionTitle="Instructions">
         <div className="max-w-[800px] mx-auto space-y-6">
           <Skeleton variant="rectangular" height={120} />
           <Skeleton variant="rectangular" height={240} />
@@ -268,7 +268,7 @@ export const InstructionsPage = () => {
 
   if (isError) {
     return (
-      <ExamLayout paperTitle="EXAM" sectionTitle="Instructions Error">
+      <ExamLayout paperTitle={data.subjectName || 'Examination'} sectionTitle="Instructions Error">
         <div className="max-w-[800px] mx-auto space-y-4">
           <ErrorState
             title="Failed to Load Instructions"
@@ -287,7 +287,7 @@ export const InstructionsPage = () => {
   }
 
   return (
-    <ExamLayout paperTitle={data.subjectCode || 'EXAM'} sectionTitle="Instructions & Rules">
+    <ExamLayout paperTitle={data.subjectName || data.subjectCode || 'Examination'} sectionTitle="Instructions & Rules">
       <div className="max-w-[800px] mx-auto space-y-6 select-none my-2">
         <Card className="border-border-main bg-surface">
           {/* Paper Metadata Banner */}

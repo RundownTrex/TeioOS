@@ -36,6 +36,7 @@ export const ExamReviewPage = () => {
   const studentName = userProfile?.name || userProfile?.full_name || 'Candidate';
   const rollNumber = userProfile?.roll_number || '';
   const {
+    exam_title,
     subject_name = 'Examination',
     subject_code = 'EXAM',
     department_name = 'Department',
@@ -48,6 +49,7 @@ export const ExamReviewPage = () => {
   } = reviewData || {};
 
   const formattedPercentage = percentage != null ? Number(percentage).toFixed(1) : '0.0';
+  const examName = exam_title || subject_name;
 
   const filteredQuestions = questions.filter((q) => {
     if (filter === 'CORRECT') return q.status === 'CORRECT';
@@ -400,7 +402,7 @@ export const ExamReviewPage = () => {
 
   return (
     <ExamLayout
-      paperTitle={subject_code}
+      paperTitle={examName}
       sectionTitle="Paper Review"
       sidebarContent={sidebarContent}
     >

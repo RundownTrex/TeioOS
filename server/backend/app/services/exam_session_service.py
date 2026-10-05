@@ -165,6 +165,7 @@ class ExamSessionService:
             data.append(
                 StudentAvailableExamResponse(
                     schedule_id=sched.id,
+                    exam_title=sched.exam.title if (sched.exam and sched.exam.title) else sched.exam.subject.name,
                     subject_name=sched.exam.subject.name,
                     subject_code=sched.exam.subject.subject_code,
                     department_name=sched.exam.subject.department.name,
@@ -796,6 +797,7 @@ class ExamSessionService:
 
         return ExamReviewResponse(
             schedule_id=schedule.id,
+            exam_title=schedule.exam.title if (schedule.exam and schedule.exam.title) else schedule.exam.subject.name,
             subject_name=schedule.exam.subject.name if schedule.exam and schedule.exam.subject else "Examination",
             subject_code=schedule.exam.subject.subject_code if schedule.exam and schedule.exam.subject else "EXAM",
             department_name=schedule.exam.subject.department.name if schedule.exam and schedule.exam.subject and schedule.exam.subject.department else "Department",

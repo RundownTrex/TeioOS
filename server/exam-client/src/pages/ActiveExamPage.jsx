@@ -5,6 +5,7 @@ import { useExam } from '../hooks/useExam';
 import { useAuthoritativeTimer } from '../hooks/useAuthoritativeTimer';
 import { useExamQuestions } from '../features/exams/hooks/useExamQuestions';
 import { useExamSession } from '../features/exams/hooks/useExamSession';
+import { useExamInstructions } from '../features/exams/hooks/useExamInstructions';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { useTTS } from '../hooks/useTTS';
 import { useSTT } from '../hooks/useSTT';
@@ -48,12 +49,22 @@ export const ActiveExamPage = () => {
   useDocumentTitle('Active Examination');
 
   const { data: apiQuestionsData, isLoading, isError, error, refetch } = useExamQuestions(scheduleId);
+  const { data: apiInstructions } = useExamInstructions(scheduleId);
 
   // Periodic server synchronization of the authoritative session + clock offset
   const { data: sessionSnapshot, refetch: refetchSession } = useExamSession(scheduleId, {
     refetchInterval: SESSION_SYNC_INTERVAL_MS,
     refetchOnWindowFocus: true,
   });
+
+  const examName =
+    apiQuestionsData?.exam_title ||
+    apiQuestionsData?.subject_name ||
+    apiInstructions?.exam_title ||
+    apiInstructions?.subject_name ||
+    apiQuestionsData?.subject_code ||
+    apiInstructions?.subject_code ||
+    'Examination';
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answersMap, setAnswersMap] = useState({});
@@ -849,7 +860,7 @@ export const ActiveExamPage = () => {
 
   if (isLoading) {
     return (
-      <ExamLayout paperTitle="CS-401" sectionTitle="Loading Questions..." hideFooter={true}>
+      <ExamLayout paperTitle={examName} sectionTitle="Loading Questions..." hideFooter={true}>
         <div className="space-y-6 max-w-2xl mx-auto my-4">
           <Skeleton variant="rectangular" height={120} />
           <Skeleton variant="rectangular" height={220} />
@@ -860,7 +871,7 @@ export const ActiveExamPage = () => {
 
   if (isError) {
     return (
-      <ExamLayout paperTitle="CS-401" sectionTitle="Error Loading Paper" hideFooter={true}>
+      <ExamLayout paperTitle={examName} sectionTitle="Error Loading Paper" hideFooter={true}>
         <div className="max-w-[600px] mx-auto my-6">
           <ErrorState
             title="Failed to Load Exam Questions"
@@ -879,7 +890,7 @@ export const ActiveExamPage = () => {
 
   return (
     <ExamLayout
-      paperTitle={apiQuestionsData?.subject_code || 'EXAM'}
+      paperTitle={examName}
       timerSlot={<Timer secondsRemaining={secondsRemaining} />}
       hideFooter={false}
       footerSlot={<ExamStatusBar syncStatus={syncStatus} isConnected={isConnected} />}

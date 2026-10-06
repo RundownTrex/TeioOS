@@ -143,7 +143,7 @@ def get_exam_delivery_service(
 
 
 def get_analytics_service(analytics_repo: AnalyticsRepoDep) -> AnalyticsService:
-    return AnalyticsService(analytics_repo)
+    return AnalyticsService(analytics_repo, settings.exam_inactivity_timeout_seconds)
 
 
 def get_evaluation_service(

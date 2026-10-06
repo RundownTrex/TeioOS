@@ -215,8 +215,8 @@ html[data-letter-spacing="wider"] { letter-spacing: 0.1em !important; }
    Dyslexia-Friendly High Legibility Typography Override
    ========================================================================== */
 html[data-dyslexic-font="true"] {
-  --font-family-sans: "Lexend", "OpenDyslexic", "Comic Sans MS", -apple-system, sans-serif !important;
-  font-family: var(--font-family-sans) !important;
+  --font-family-sans:  "Lexend", "OpenDyslexic", "Comic Sans MS", sans-serif;
+  --font-family-serif: "Lexend", "OpenDyslexic", "Comic Sans MS", sans-serif;
 }
 
 /* ==========================================================================

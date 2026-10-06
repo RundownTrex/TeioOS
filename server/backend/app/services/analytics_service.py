@@ -1,7 +1,8 @@
+from datetime import datetime, timezone
 from typing import List
 
 from app.repositories.analytics_repository import AnalyticsRepository
-from app.models.student_exam import AssignmentStatus
+from app.models.student_exam import AssignmentStatus, StudentExam
 from app.models.exam import Exam
 from app.schemas.analytics import (
     AnalyticsOverviewResponse,
@@ -31,8 +32,18 @@ class AnalyticsService:
     """Aggregates examination activity for the admin analytics and monitoring
     views. Thin service: all counting happens in the repository."""
 
-    def __init__(self, analytics_repo: AnalyticsRepository):
+    def __init__(self, analytics_repo: AnalyticsRepository, inactivity_timeout_seconds: int):
         self.analytics_repo = analytics_repo
+        self.inactivity_timeout_seconds = inactivity_timeout_seconds
+
+    def _is_connected(self, session: StudentExam, now: datetime) -> bool:
+        """A session is live only if its timer is running and the client has
+        sent a heartbeat within the inactivity timeout. Evaluated at read time
+        so closed clients disappear without waiting for the background sweeper."""
+        if session.paused_at is not None or session.last_activity_at is None:
+            return False
+        idle = (now - session.last_activity_at).total_seconds()
+        return idle < self.inactivity_timeout_seconds
 
     def get_overview(self) -> AnalyticsOverviewResponse:
         scores = self.analytics_repo.get_score_summary()
@@ -52,17 +63,24 @@ class AnalyticsService:
         submitted = counts.get(AssignmentStatus.SUBMITTED.value, 0) + counts.get(
             AssignmentStatus.AUTO_SUBMITTED.value, 0
         )
+        now = datetime.now(timezone.utc)
+        unfinished = counts.get(AssignmentStatus.IN_PROGRESS.value, 0)
+        live = sum(
+            1 for s in self.analytics_repo.get_current_sessions() if self._is_connected(s, now)
+        )
         return StudentOverviewResponse(
             total_assigned=total,
             started=started,
             submitted=submitted,
-            in_progress=counts.get(AssignmentStatus.IN_PROGRESS.value, 0),
+            in_progress=live,
+            disconnected=max(unfinished - live, 0),
             not_started=total - started,
             expired=counts.get(AssignmentStatus.EXPIRED.value, 0),
             terminated=counts.get(AssignmentStatus.TERMINATED.value, 0),
         )
 
     def get_current_sessions(self) -> List[CurrentSessionResponse]:
+        now = datetime.now(timezone.utc)
         sessions = self.analytics_repo.get_current_sessions()
         return [
             CurrentSessionResponse(
@@ -74,6 +92,10 @@ class AnalyticsService:
                 startedAt=session.started_at,
                 expiresAt=session.expires_at,
                 lastActivityAt=session.last_activity_at,
+                pausedAt=session.paused_at or (
+                    session.last_activity_at if not self._is_connected(session, now) else None
+                ),
+                isConnected=self._is_connected(session, now),
             )
             for session in sessions
         ]

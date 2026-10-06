@@ -26,6 +26,7 @@ import { LoadingSkeleton } from '../../../components/ui/LoadingSkeleton';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Alert } from '../../../components/ui/Alert';
 import { StatusBadge } from '../../../components/ui/StatusBadge';
+import { Badge } from '../../../components/ui/Badge';
 import { Tabs } from '../../../components/ui/Tabs';
 
 import { dashboardApi } from '../../dashboard/api/dashboardApi';
@@ -145,7 +146,12 @@ export const AnalyticsOverviewPage = () => {
       key: 'status',
       header: 'Status',
       align: 'right',
-      render: () => <StatusBadge type="assignment" status="in_progress" />,
+      render: (row) =>
+        row.isConnected === false ? (
+          <Badge variant="warning" dot>Disconnected</Badge>
+        ) : (
+          <StatusBadge type="assignment" status="in_progress" />
+        ),
     },
   ];
 

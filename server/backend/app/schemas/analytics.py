@@ -18,14 +18,19 @@ class StudentOverviewResponse(BaseModel):
     total_assigned: int
     started: int
     submitted: int
-    in_progress: int
+    in_progress: int  # candidates with a live (connected) session
+    disconnected: int = 0  # in_progress rows that are paused or heartbeat-stale
     not_started: int
     expired: int
     terminated: int
 
 
 class CurrentSessionResponse(BaseModel):
-    """An active examination session (assignment status = in_progress)."""
+    """An unfinished examination session (assignment status = in_progress).
+
+    ``isConnected`` is False when the candidate's timer is paused or the
+    client has stopped sending heartbeats (closed browser, crash, power loss).
+    """
     id: uuid.UUID
     studentName: str
     rollNumber: str
@@ -34,6 +39,8 @@ class CurrentSessionResponse(BaseModel):
     startedAt: datetime
     expiresAt: datetime
     lastActivityAt: datetime | None
+    pausedAt: datetime | None = None
+    isConnected: bool = True
 
 
 class SubmissionStatusCount(BaseModel):

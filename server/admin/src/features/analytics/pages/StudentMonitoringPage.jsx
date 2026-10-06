@@ -37,17 +37,20 @@ const POLLING_INTERVAL_MS = 5000; // 5-second automatic refresh via React Query 
  * Updates every second for a smooth countdown.
  * Highlights urgent sessions (< 5 mins remaining) in red.
  */
-const RemainingTimeCell = ({ expiresAt }) => {
+const RemainingTimeCell = ({ expiresAt, frozenAt = null }) => {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
+    if (frozenAt) return undefined;
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [frozenAt]);
 
   if (!expiresAt) return <span className="text-text-muted">—</span>;
 
-  const diffMs = new Date(expiresAt).getTime() - now;
+  // A disconnected candidate's timer is paused: show the time frozen at disconnection.
+  const reference = frozenAt ? new Date(frozenAt).getTime() : now;
+  const diffMs = new Date(expiresAt).getTime() - reference;
   if (diffMs <= 0) {
     return <Badge variant="danger">Expired</Badge>;
   }
@@ -209,13 +212,20 @@ export const StudentMonitoringPage = () => {
       key: 'remainingTime',
       header: 'Remaining Time',
       align: 'right',
-      render: (row) => <RemainingTimeCell expiresAt={row.expiresAt} />,
+      render: (row) => (
+        <RemainingTimeCell expiresAt={row.expiresAt} frozenAt={row.isConnected ? null : row.pausedAt} />
+      ),
     },
     {
       key: 'status',
       header: 'Status',
       align: 'right',
-      render: () => <Badge variant="success" dot>In Progress</Badge>,
+      render: (row) =>
+        row.isConnected ? (
+          <Badge variant="success" dot>In Progress</Badge>
+        ) : (
+          <Badge variant="warning" dot>Disconnected</Badge>
+        ),
     },
   ];
 

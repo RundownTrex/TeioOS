@@ -19,11 +19,19 @@ TARGET_DIR = os.environ.get("VOSK_TARGET_DIR", "/opt/vosk-model")
 
 
 def main() -> None:
-    archive_path = f"/tmp/{MODEL_NAME}.zip"
-    url = f"https://alphacephei.com/vosk/models/{MODEL_NAME}.zip"
+    # The model zip is copied into the Docker build context at build time
+    # (see Dockerfile stt-model stage) to avoid a network download during every
+    # build.  The COPY instruction places it at /tmp/vosk-model.zip.
+    archive_path = "/tmp/vosk-model.zip"
 
-    print(f"Downloading Vosk speech model from {url} ...", flush=True)
-    urllib.request.urlretrieve(url, archive_path)
+    if not os.path.exists(archive_path):
+        # Fallback: download if the pre-bundled zip is missing (e.g. running
+        # fetch_model.py manually outside of Docker).
+        url = f"https://alphacephei.com/vosk/models/{MODEL_NAME}.zip"
+        print(f"Pre-bundled zip not found. Downloading from {url} ...", flush=True)
+        urllib.request.urlretrieve(url, archive_path)
+    else:
+        print(f"Using pre-bundled Vosk model zip at {archive_path}", flush=True)
 
     print("Verifying archive SHA-256 ...", flush=True)
     with open(archive_path, "rb") as f:

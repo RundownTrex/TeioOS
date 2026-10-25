@@ -15,13 +15,17 @@ COPY requirements.txt .
 # Install dependencies into temporary prefix directory
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Stage 2: Fetch the offline speech-to-text model (Vosk, small English, ~40 MB)
-# Bundled into the image so dictation works on air-gapped exam networks without
-# any manual setup by the administrator. The archive is checksum-verified.
+# Stage 2: Unpack the offline speech-to-text model (Vosk, small English, ~40 MB)
+# The zip is checked into the build context so the model is baked into the image
+# without a network download at build time.  Re-download only when upgrading the
+# model by replacing vosk-model-small-en-us-0.15.zip in server/backend/.
 FROM python:3.12-slim AS stt-model
 
+COPY vosk-model-small-en-us-0.15.zip /tmp/vosk-model.zip
 COPY scripts/fetch_model.py /tmp/fetch_model.py
-RUN python3 /tmp/fetch_model.py && rm /tmp/fetch_model.py
+# fetch_model.py consumes and deletes /tmp/vosk-model.zip itself, so only the
+# script is left to clean up here.
+RUN python3 /tmp/fetch_model.py && rm -f /tmp/fetch_model.py
 
 # Stage 3: Minimal runtime image
 FROM python:3.12-slim AS runner
@@ -38,8 +42,12 @@ COPY --from=stt-model /opt/vosk-model /opt/vosk-model
 RUN groupadd -r teioos -g 10001 && \
     useradd -r -g teioos -u 10001 -d /app -s /sbin/nologin teioos
 
-# Copy application source code
-COPY . .
+# Copy application source code. Paths are listed explicitly so the 41 MB Vosk
+# model zip in the build context does not end up in the runtime image.
+COPY app ./app
+COPY migrations ./migrations
+COPY alembic.ini ./
+COPY scripts/entrypoint.sh scripts/seed_admin.py ./scripts/
 
 # Ensure entrypoint script is executable and set ownership
 RUN chmod +x /app/scripts/entrypoint.sh && \

@@ -232,7 +232,11 @@ Write-Host "   cd server\exam-client" -ForegroundColor Cyan
 Write-Host "   npm run dev" -ForegroundColor Cyan
 Write-Host ""
 
-Write-Host "4. Admin Credentials:" -ForegroundColor White
+Write-Host "4. Broadcast mDNS Alias (without renaming PC):" -ForegroundColor White
+Write-Host "   python scripts\publish_mdns.py" -ForegroundColor Cyan
+Write-Host ""
+
+Write-Host "5. Admin Credentials:" -ForegroundColor White
 Write-Host "   Username: admin" -ForegroundColor Yellow
 Write-Host "   Password: $AdminPass" -ForegroundColor Yellow
 Write-Host ""

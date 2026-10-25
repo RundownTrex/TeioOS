@@ -17,11 +17,18 @@ const INSECURE_CONTEXT_MESSAGE =
   'Microphone access is blocked because this exam page is not running in a secure browser context. ' +
   'Please inform the invigilator, and type your response for now.';
 
-/** Pick the most specific human-readable message from a TeioOS API error. */
+/**
+ * Pick the most specific human-readable message from a TeioOS API error.
+ *
+ * The axios response interceptor rejects with a normalised object
+ * ({ message, status, details }), so the backend's message lives on
+ * `err.message`, not on `err.response`.
+ */
 const getApiErrorMessage = (err) =>
   err?.response?.data?.errors?.[0] ||
   err?.response?.data?.message ||
   err?.response?.data?.detail ||
+  (err?.status ? err?.message : null) ||
   OFFLINE_FALLBACK_MESSAGE;
 
 export const STTProvider = ({ children }) => {
@@ -431,7 +438,9 @@ export const STTProvider = ({ children }) => {
                 headers: { 'Content-Type': 'multipart/form-data' },
               });
 
-              const transcribedText = res.data?.success ? res.data?.data?.text?.trim() : '';
+              // axiosClient's response interceptor already unwraps to the
+              // APIResponse body: { success, message, data: { text, ... } }.
+              const transcribedText = res?.success ? (res.data?.text || '').trim() : '';
               if (transcribedText) {
                 setFinalTranscript((prev) => {
                   const updated = (prev + ' ' + transcribedText).trim();

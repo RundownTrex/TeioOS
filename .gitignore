@@ -60,6 +60,12 @@ backups/
 *.sql
 *.sql.gz
 
+# --------------------
+# Vosk model archive
+# (large binary, stored locally for Docker build cache, not committed to git)
+# --------------------
+server/backend/vosk-model-small-en-us-0.15.zip
+
 docs/
 scratch/
 assets/
